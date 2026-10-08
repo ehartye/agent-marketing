@@ -16,7 +16,7 @@ In Claude Code, add the [Hartye marketplace](https://github.com/ehartye/hartye-c
 /agent-marketing:market-setup
 ```
 
-Node 24+ is required. Run market-setup after plugin updates to refresh the managed runtime. The [0.2.0 release](https://github.com/ehartye/agent-marketing/releases/tag/v0.2.0) adds durable briefs and the journey-based campaign desk to the nine skills and sourced demand-report workflow of [0.1.0](https://github.com/ehartye/agent-marketing/releases/tag/v0.1.0).
+Node 24+ is required. Run market-setup after plugin updates to refresh the managed runtime. The [0.3.0 release](https://github.com/ehartye/agent-marketing/releases/tag/v0.3.0) adds TikTok, Facebook, X and Steam channel modules, brings LinkedIn up to the same standard and adds a wishlist metric. [0.2.0](https://github.com/ehartye/agent-marketing/releases/tag/v0.2.0) added durable briefs and the journey-based campaign desk to the nine skills and sourced demand-report workflow of [0.1.0](https://github.com/ehartye/agent-marketing/releases/tag/v0.1.0).
 
 ## Try the desk
 
