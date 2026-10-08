@@ -13,6 +13,8 @@ export const channels = [
   "tiktok",
   "facebook",
   "steam",
+  "apple-app-store",
+  "google-play",
   "instagram",
   "twitch",
   "bluesky",

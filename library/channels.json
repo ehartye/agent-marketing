@@ -140,6 +140,34 @@
     "referenceIds": ["bluesky-community-guidelines", "bluesky-rate-limits", "bluesky-bots", "measurement"]
   },
   {
+    "id": "apple-app-store",
+    "name": "Apple App Store",
+    "categories": ["app", "game", "tool"],
+    "audiences": ["learner", "student", "parent", "consumer", "mobile"],
+    "hours": 4,
+    "cost": "$99 per year for the Apple Developer Program (USD, may vary by region), plus production effort; accredited educational institutions can apply for a fee waiver; verify current terms",
+    "approach": "Ship an accurate listing, send tagged traffic from your other channels to the product page through campaign links, and read product page views, downloads and conversion by source type and campaign",
+    "measure": "Unique impressions, unique product page views, total and first-time downloads and conversion rate by source type and campaign link, later your own analytics for use and return",
+    "risk": "Listings that mislead, manipulate reviews or rankings, or use kids terms outside the Kids Category can be removed and the developer expelled; metrics appear only above small thresholds and downloads are not use",
+    "complexity": "Moderate: Developer Program enrollment, App Store Connect setup, a build and listing that pass App Review, plus extra constraints if an app is aimed at children",
+    "maintainability": "Check App Analytics weekly around releases; make a new campaign link per outbound source; Apple's guidelines and fees change, so re-read them before each submission",
+    "referenceIds": ["apple-review-guidelines", "apple-analytics-acquisition", "apple-campaign-links", "apple-developer-program-enrollment", "measurement"]
+  },
+  {
+    "id": "google-play",
+    "name": "Google Play",
+    "categories": ["app", "game", "tool"],
+    "audiences": ["learner", "student", "parent", "consumer", "mobile"],
+    "hours": 4,
+    "cost": "$25 one-time Play Console registration fee, plus production effort; verify current terms",
+    "approach": "Publish an accurate store listing, send UTM-tagged traffic from your other channels to it, and read store listing visitors, first-time installers and tracked channels in Play Console",
+    "measure": "Store listing visitors, first-time installers and conversion between segments, with UTM-tagged channels shown separately from untagged third-party referrers",
+    "risk": "Incentivized or fraudulent ratings, reviews and installs breach policy; apps whose audience includes children must meet the Families requirements; new personal accounts have testing and device checks before release; installs are not use",
+    "complexity": "Moderate: account identity verification, a signed build, listing, target-audience and content declarations, and a policy review; higher if children are in the target audience",
+    "maintainability": "Check Play Console statistics weekly around releases; tag every outbound link; policies and report labels change, so re-read them before each release",
+    "referenceIds": ["google-play-ratings-installs", "google-play-families", "google-play-acquisition-reports", "google-play-registration", "measurement"]
+  },
+  {
     "id": "reddit",
     "name": "Relevant Reddit communities",
     "categories": ["tool", "app", "game", "education", "creative"],
