@@ -13,6 +13,9 @@ marketing put <collection> <record.json> --workspace <file> [--revision n]
 marketing document save <strategy|campaign> <record-id> <brief.md> --workspace <file> --revision n
 marketing document show <strategy|campaign> <record-id> --workspace <file>
 marketing document export <strategy|campaign> <record-id> --workspace <file> [--out brief.md]
+marketing document save report <report-id> <report.md> --title <title> --workspace <file> --revision n [--project id --kind k --vault-url u]
+marketing document show report <report-id> --workspace <file>
+marketing document export report <report-id> --workspace <file> [--out report.md]
 marketing report --workspace <file> [--project id --initiative id --from YYYY-MM-DD --to YYYY-MM-DD]
 marketing advise <project-id> --workspace <file>
 marketing channels [project-id] --workspace <file>
@@ -46,6 +49,24 @@ The authoritative document is stored as optional `projects[].strategy` or `initi
 
 In the desk, choose the project under **Decide & plan** to read/download its strategy, then the initiative for its campaign brief. The workspace JSON export includes document text and can be imported into a fresh workspace; CSV only carries observations. Downloaded `.md` files are editable copies: saving them back is explicit, with no automatic file synchronization. External images and linked assets are not bundled. The ledger stores the latest document, not document history; keep workspace backups for earlier versions. The HTTP importer remains limited to 2 MB, so larger complete backups can be restored with the CLI.
 
+## The studio workspace
+
+Records that belong to no project, such as a market analysis, have an official home: the studio workspace at `<plugin home>/studio/workspace.json` (by default `~/.agent-marketing/studio/workspace.json`; `AGENT_MARKETING_HOME` relocates it). Pass `--studio` instead of `--workspace` to any command. `marketing init --studio` creates it once and is safe to repeat; it reports the existing file and revision. Setup and updates manage only `releases/` and the receipt next to it and never read or write the studio, so a plugin update cannot touch your data. Back it up like any ledger with `export`. `--studio` and `--workspace` cannot be combined. Project work still belongs in its own workspace file.
+
+```powershell
+marketing init --studio
+marketing document save report game-market-2026 report.md --title "Game market landscape" --kind market-landscape --studio --revision 0
+marketing serve --studio
+```
+
+## Saved research reports
+
+A research report is workspace-level Markdown that you read in the desk: it appears under **Research fit → Research reports**, with tables, links and a download. It needs no project, so a market analysis that spans projects is a valid report; `--project` scopes one to a project. The record is `reports[]`: `{ id, title, markdown, updatedAt, kind?, projectId?, vaultUrl? }`. `kind` is `market-landscape`, `demand`, `competition`, `positioning` or `other`. `vaultUrl` is an optional `obsidian://`, `http` or `https` link to the source note in the owner's wiki; the desk shows it as **Open in vault**. Saving with an existing ID replaces that report and requires the current revision, like a brief. Markdown is limited to 100,000 characters and is rendered with every character escaped; only `http(s)` links become anchors; a leading YAML frontmatter block is not shown. Workspaces saved before reports existed gain an empty collection and need no migration. Reports are included in JSON backups.
+
+```powershell
+marketing document save report game-market-2026 report.md --title "Game market landscape" --kind market-landscape --workspace <ledger> --revision <current-revision>
+```
+
 ## Record fields
 
 The example [studio.json](../examples/studio.json) is a fully validated ledger. Its metrics and competitor entries are illustrative, not real family results. Fields below are required unless marked optional. Counts must be safe nonnegative integers; currency values and hours may be nonnegative decimals. Dates use actual `YYYY-MM-DD`; collection timestamps use ISO UTC. URLs use HTTP(S).
@@ -58,7 +79,7 @@ The example [studio.json](../examples/studio.json) is a fully validated ledger. 
 | reactions | projectId, text, url, collectedAt, sentiment (`positive/negative/neutral/mixed/unknown`), reviewed (boolean), theme; optional initiativeId, channel |
 | competitors | projectId, name, kind (`direct/substitute/do-nothing`), positioning, url, checkedAt, claims (array of `{dimension,value,url,checkedAt}`) |
 | experiments | projectId, name, hypothesis, primaryMetric, stoppingRule, targetPerArm (positive integer), randomized (boolean), arms (exactly two `{name,trials,successes}` with successes ≤ trials); optional initiativeId |
-| evidence | projectId, claim, dimension (`problem/activation/retention/payment/positioning/channel`), result (`supports/contradicts/unknown`), strength (`primary/secondary/anecdote/hypothesis`), url, checkedAt; optional initiativeId |
+| evidence | projectId, claim, dimension (`problem/activation/retention/payment/positioning/channel`), result (`supports/contradicts/unknown`), strength (`primary/secondary/anecdote/hypothesis`), url, checkedAt; optional initiativeId, publishedAt (`YYYY-MM-DD`), dataPeriod, denominator, limit (text), credibility and relevance (`high/medium/low`, judged separately), status (`observed/modeled-estimate/documented-rule/anecdote/hypothesis`). The audit fields keep a researched claim's trail with it and appear on the evidence card in the desk |
 | sources | projectId, name, adapter (`github/hn`), channel, target (`owner/repository` for GitHub, integer item ID for HN); optional initiativeId, traffic (GitHub boolean), lastCheckedAt, lastError |
 
 Channels: `youtube, tiktok, facebook, steam, google-play, apple-app-store, bluesky, twitch, instagram, x, reddit, hacker-news, github, search, email, itch, discord, linkedin, product-hunt, direct`. Metrics: `views, impressions, visitors, clicks, starts, signups, returns, purchases, revenue, cost, hours, stars, votes, comments, clones, uniqueVisitors, wishlists, installs, unsubscribes, follows`. `installs` counts first-time installs or downloads of an app from a store, `unsubscribes` counts people who opted out of a list, and `follows` counts new followers; each platform's own definition still goes in `definition`. Preserve vendor-specific meaning in `definition`. The common names `visitors` and `starts` are used for the observed funnel only when windows/attribution match. Use `cohort` only for actually verified cohort membership.

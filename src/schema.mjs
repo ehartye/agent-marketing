@@ -7,6 +7,7 @@ export const collections = [
   "experiments",
   "evidence",
   "sources",
+  "reports",
 ];
 export const channels = [
   "youtube",
@@ -110,9 +111,20 @@ function document(v, p) {
     fail(p + ".markdown", "expected nonempty Markdown (max 100000 characters)");
   timestamp(v.updatedAt, p + ".updatedAt");
 }
+const reportKinds = ["market-landscape", "demand", "competition", "positioning", "other"];
+const levels = ["high", "medium", "low"];
+function vaultLink(v, p) {
+  try {
+    if (!["http:", "https:", "obsidian:"].includes(new URL(v).protocol)) throw Error();
+  } catch {
+    fail(p, "expected an http(s) or obsidian:// link");
+  }
+}
 export function validateWorkspace(w) {
   if (!w || w.schema !== "marketing/workspace@1")
     fail("schema", "expected marketing/workspace@1");
+  // Workspaces saved before reports existed have no collection; they gain an empty one.
+  if (w.reports === undefined) w.reports = [];
   number(w.revision, "revision", true);
   for (const k of Object.keys(w))
     if (!["schema", "revision", ...collections].includes(k))
@@ -137,7 +149,9 @@ export function validateWorkspace(w) {
       const p = `${k}.${r.id}`,
         t = (key) => text(r[key], `${p}.${key}`),
         n = (key, integer = false) => number(r[key], `${p}.${key}`, integer);
-      if (k !== "projects" && !projects.has(r.projectId))
+      if (k === "reports" && r.projectId === undefined) {
+        // Workspace-level report: no project required.
+      } else if (k !== "projects" && !projects.has(r.projectId))
         fail(p, "projectId does not exist");
       if (
         r.initiativeId &&
@@ -255,6 +269,23 @@ export function validateWorkspace(w) {
           );
           url(r.url, p + ".url");
           date(r.checkedAt, p + ".checkedAt");
+          if (r.publishedAt !== undefined) date(r.publishedAt, p + ".publishedAt");
+          for (const key of ["dataPeriod", "denominator", "limit"])
+            if (r[key] !== undefined) t(key);
+          for (const key of ["credibility", "relevance"])
+            if (r[key] !== undefined) one(r[key], levels, p + "." + key);
+          if (r.status !== undefined)
+            one(
+              r.status,
+              ["observed", "modeled-estimate", "documented-rule", "anecdote", "hypothesis"],
+              p + ".status",
+            );
+          break;
+        case "reports":
+          t("title");
+          document({ markdown: r.markdown, updatedAt: r.updatedAt }, p);
+          if (r.kind !== undefined) one(r.kind, reportKinds, p + ".kind");
+          if (r.vaultUrl !== undefined) vaultLink(r.vaultUrl, p + ".vaultUrl");
           break;
         case "sources":
           t("name");

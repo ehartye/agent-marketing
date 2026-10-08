@@ -34,6 +34,12 @@ const files = [
   "docs/images/campaign-desk-desktop.png",
   "docs/images/campaign-desk-mobile.png",
 ];
+// The studio workspace holds records that have no project home, such as research
+// reports. It sits under the plugin home but apart from releases/, which setup
+// manages; setup never reads or writes it.
+export function studioWorkspace() {
+  return join(runtimeHome(), "studio", "workspace.json");
+}
 export function runtimeHome() {
   return resolve(
     process.env.AGENT_MARKETING_HOME || join(homedir(), ".agent-marketing"),

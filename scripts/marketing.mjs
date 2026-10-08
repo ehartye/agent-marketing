@@ -12,7 +12,8 @@ import { report, advise, analyzeExperiment } from "../src/analysis.mjs";
 import { parseImport, taggedUrl, observationsCsv } from "../src/import.mjs";
 import { monitor } from "../src/collectors.mjs";
 import { recommendChannels, channelLibrary } from "../src/channels.mjs";
-import { readDocument, saveDocument } from "../src/documents.mjs";
+import { readDocument, saveDocument, saveReport } from "../src/documents.mjs";
+import { studioWorkspace } from "./runtime.mjs";
 function writeExport(workspace, output, text) {
   if (existsSync(output)) {
     const source = statSync(workspace, { bigint: true }), destination = statSync(output, { bigint: true });
@@ -27,7 +28,7 @@ function writeExport(workspace, output, text) {
 const help = {
   name: "marketing",
   version: "0.6.0",
-  workspace: "--workspace <file> (default .agent-marketing/workspace.json)",
+  workspace: "--workspace <file> (default .agent-marketing/workspace.json) or --studio for the studio workspace, the home for records with no project such as research reports",
   commands: [
     "init",
     "demo",
@@ -35,8 +36,9 @@ const help = {
     "import <json-or-csv>",
     "put <collection> <record.json>",
     "document save <strategy|campaign> <record-id> <brief.md> --revision n",
-    "document show <strategy|campaign> <record-id>",
-    "document export <strategy|campaign> <record-id> [--out brief.md]",
+    "document save report <report-id> <report.md> --title t --revision n [--project id --kind k --vault-url u]",
+    "document show <strategy|campaign|report> <record-id>",
+    "document export <strategy|campaign|report> <record-id> [--out file.md]",
     "report [--project id --initiative id --from date --to date]",
     "advise <project-id>",
     "channels [project-id]",
@@ -53,7 +55,9 @@ let command;
 try {
   const { values: v, positionals: p } = parseArgs({
     allowPositionals: true,
-    options: Object.fromEntries(
+    options: {
+      studio: { type: "boolean" },
+      ...Object.fromEntries(
       [
         "workspace",
         "project",
@@ -69,11 +73,16 @@ try {
         "format",
         "out",
         "revision",
+        "title",
+        "kind",
+        "vault-url",
       ].map((k) => [k, { type: "string" }]),
-    ),
+      ),
+    },
   });
   command = p.shift() || "help";
-  const file = resolve(v.workspace || ".agent-marketing/workspace.json");
+  if (v.studio && v.workspace) throw new Error("Use either --studio or --workspace, not both");
+  const file = v.studio ? studioWorkspace() : resolve(v.workspace || ".agent-marketing/workspace.json");
   const required = (x, name) => {
     if (!x) throw new Error(`Required: ${name}`);
     return x;
@@ -86,7 +95,12 @@ try {
   };
   let result;
   if (command === "help") result = help;
-  else if (command === "init") result = createWorkspace(file);
+  else if (command === "init") {
+    // The studio is shared, so creating it twice is not an error.
+    result = v.studio && existsSync(file)
+      ? { workspace: file, exists: true, revision: readWorkspace(file).revision }
+      : createWorkspace(file);
+  }
   else if (command === "demo")
     result = createWorkspace(
       file,
@@ -130,7 +144,12 @@ try {
       throw new Error("Document action must be save, show or export");
     required(kind, "document kind");
     required(id, "record ID");
-    if (action === "save") {
+    if (action === "save" && kind === "report") {
+      result = { workspace: file, ...saveReport(file, {
+        id, title: v.title, markdown: readFileSync(required(input, "report.md"), "utf8"),
+        projectId: v.project, kind: v.kind, vaultUrl: v["vault-url"],
+      }, Number(v.revision)) };
+    } else if (action === "save") {
       result = { workspace: file, ...saveDocument(file, kind, id,
         readFileSync(required(input, "brief.md"), "utf8"), Number(v.revision)) };
     } else {
