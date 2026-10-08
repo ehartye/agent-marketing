@@ -160,12 +160,12 @@
     "audiences": ["professional", "business"],
     "hours": 2,
     "cost": "0 for organic participation",
-    "approach": "Concrete before/after workflow for the professional audience",
-    "measure": "Qualified conversations and product use",
-    "risk": "Impressions and generic praise can be weak demand signals",
-    "complexity": "Requires clear professional relevance and a credible demo",
-    "maintainability": "Reuse actual user stories with permission",
-    "referenceIds": ["positioning", "measurement"]
+    "approach": "Concrete before/after workflow for the professional audience, shared as a post or in answer to a real question, with one tryable link",
+    "measure": "Qualified conversations, tagged link visits and product use, with post impressions kept as exposure only",
+    "risk": "Impressions and generic praise are weak demand signals; promotional invitations to strangers, repetitive messages and automation tools break the rules and can restrict the account",
+    "complexity": "Requires clear professional relevance and a credible demo; analytics definitions differ between LinkedIn's own pages",
+    "maintainability": "Reuse actual user stories with permission; no scraping, extensions or outreach automation",
+    "referenceIds": ["linkedin-community-policies", "linkedin-prohibited-software", "linkedin-analytics", "positioning", "measurement"]
   },
   {
     "id": "product-hunt",

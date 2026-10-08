@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+li-impr,orbit,orbit-video,linkedin,impressions,1900,2026-10-01,2026-10-07,period,"LinkedIn Page impressions: times the post was shown, on screen at least 300 ms with half in view; an estimate",https://example.com/linkedin-evidence,2026-10-08T12:00:00Z
+li-clicks,orbit,orbit-video,linkedin,clicks,23,2026-10-01,2026-10-07,period,"Tagged visits from the post link (utm_source=linkedin), counted by the site's own analytics",https://example.com/linkedin-evidence,2026-10-08T12:00:00Z
+li-comments,orbit,orbit-video,linkedin,comments,6,2026-10-01,2026-10-07,period,"Comments read and logged by hand, including objections",https://example.com/linkedin-evidence,2026-10-08T12:00:00Z
