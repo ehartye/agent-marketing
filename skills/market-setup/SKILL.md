@@ -7,7 +7,7 @@ description: Install or check the managed agent-marketing runtime before using i
 
 Resolve the plugin root from this file: two directories above the skill directory. Node 24+ is required. The runtime has no npm dependencies; setup copies verified content outside the plugin cache.
 
-Run `node "<plugin-root>/scripts/setup.mjs" --check`. If missing or stale, run `node "<plugin-root>/scripts/setup.mjs"`, then check again. Require `ok: true` and report the version/runtime path. `AGENT_MARKETING_HOME` can select a managed install directory.
+After a plugin update the launcher refreshes a missing or stale runtime itself, but only for an installed plugin; a modified runtime, an old Node or an unwritable home is reported, not overwritten. Use this skill to check or repair explicitly. Run `node "<plugin-root>/scripts/setup.mjs" --check`. If missing or stale, run `node "<plugin-root>/scripts/setup.mjs"`, then check again. Require `ok: true` and report the version/runtime path. `AGENT_MARKETING_HOME` can select a managed install directory.
 
 In other marketing skills, `marketing` means `node "<plugin-root>/scripts/run-managed.mjs"`. Use that absolute launcher path; do not install dependencies into the plugin cache.
 

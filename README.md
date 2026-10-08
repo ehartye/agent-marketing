@@ -16,7 +16,7 @@ In Claude Code, add the [Hartye marketplace](https://github.com/ehartye/hartye-c
 /agent-marketing:market-setup
 ```
 
-Node 24+ is required. `market-setup` installs a verified runtime outside the plugin cache. After a plugin update, ask Claude to run it again; the launcher refuses a stale runtime and tells you to. See the [releases](https://github.com/ehartye/agent-marketing/releases) for what changed in each version.
+Node 24+ is required. `market-setup` installs a verified runtime outside the plugin cache. After a plugin update the launcher refreshes the runtime itself on first use, so you do not need to run it again; run `market-setup` to check or repair explicitly. See the [releases](https://github.com/ehartye/agent-marketing/releases) for what changed in each version.
 
 ## Use it
 

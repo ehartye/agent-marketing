@@ -2,9 +2,17 @@
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
-import { inspectInstallation } from "./runtime.mjs";
+import {
+  inspectInstallation,
+  healRuntime,
+  isInstalledPlugin,
+} from "./runtime.mjs";
 const source = fileURLToPath(new URL("../", import.meta.url)),
-  report = inspectInstallation(source);
+  report = isInstalledPlugin(source)
+    ? await healRuntime(source, undefined, {
+        log: (line) => console.error(line),
+      })
+    : inspectInstallation(source);
 if (!report.ok) {
   console.error(
     JSON.stringify({
