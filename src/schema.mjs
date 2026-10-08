@@ -90,6 +90,13 @@ function url(v, p) {
     fail(p, "expected http(s) source URL");
   }
 }
+function document(v, p) {
+  if (!v || typeof v !== "object" || Array.isArray(v))
+    fail(p, "expected {markdown, updatedAt}");
+  if (typeof v.markdown !== "string" || !v.markdown.trim() || v.markdown.length > 100000)
+    fail(p + ".markdown", "expected nonempty Markdown (max 100000 characters)");
+  timestamp(v.updatedAt, p + ".updatedAt");
+}
 export function validateWorkspace(w) {
   if (!w || w.schema !== "marketing/workspace@1")
     fail("schema", "expected marketing/workspace@1");
@@ -128,6 +135,7 @@ export function validateWorkspace(w) {
       if (r.channel !== undefined) one(r.channel, channels, `${p}.channel`);
       switch (k) {
         case "projects":
+          if (r.strategy !== undefined) document(r.strategy, p + ".strategy");
           for (const key of ["name", "problem", "promise", "objective"]) t(key);
           one(
             r.category,
@@ -143,6 +151,7 @@ export function validateWorkspace(w) {
           t("currency");
           break;
         case "initiatives":
+          if (r.brief !== undefined) document(r.brief, p + ".brief");
           for (const key of ["name", "hypothesis", "cta", "owner"]) t(key);
           one(r.channel, channels, p + ".channel");
           one(

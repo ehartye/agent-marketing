@@ -552,6 +552,11 @@ td { overflow-wrap: anywhere; }
 .results-actions .actions { margin: 18px 0; }
 .results-actions details { border-top: 1px solid var(--line); padding-top: 14px; }
 summary { cursor: pointer; }
+.saved-document { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
+.saved-document summary { color: var(--blue); font-weight: bold; }
+.document-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+.document-body { white-space: pre-wrap; overflow-wrap: anywhere; font: 14px/1.7 var(--body-font); max-height: 34rem; overflow: auto; padding: 16px; background: var(--paper); border-radius: 6px; }
+.document-body:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
 .skip-link { position: fixed; left: 20px; top: -100px; z-index: 20; background: var(--white); padding: 12px; }
 .skip-link:focus { top: 8px; }
 .view:focus-visible, .table-scroll:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
@@ -676,6 +681,7 @@ details > summary {
   .notice, .skip-link { display: none; }
   table { min-width: 0; }
   .table-scroll { overflow: visible; }
+  .document-body { max-height: none; overflow: visible; }
   .view[hidden] {
     display: block !important;
   }

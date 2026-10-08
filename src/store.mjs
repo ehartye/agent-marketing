@@ -92,7 +92,12 @@ export function importRecords(file, patch, expectedRevision) {
           if (incoming.has(r.id))
             throw new Error(`${k}: duplicate import ID ${r.id}`);
           incoming.add(r.id);
-          merged.set(r.id, structuredClone(r));
+          const next = structuredClone(r);
+          // Legacy record edits must not silently erase a saved document.
+          const field = k === "projects" ? "strategy" : k === "initiatives" ? "brief" : null;
+          if (field && next[field] === undefined && merged.get(r.id)?.[field] !== undefined)
+            next[field] = merged.get(r.id)[field];
+          merged.set(r.id, next);
         }
         w[k] = [...merged.values()];
       }

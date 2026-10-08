@@ -1,10 +1,15 @@
 import { $, esc, num, pct, empty, link, projectLabel, refLinks as references } from "../shared.js";
+import { documentCard } from "../documents.js";
 
 export function renderCampaign({ workspace, data, actions, channels, refs, selection }) {
   const p = workspace.projects.find(p => p.id === selection.projectId);
   const refLinks = ids => references(ids, refs);
   const initiatives = () => workspace.initiatives.filter(i => (!selection.projectId || i.projectId === selection.projectId) && (!selection.initiativeId || i.id === selection.initiativeId));
   const a = actions[0];
+  const projects = workspace.projects.filter(project => !selection.projectId || project.id === selection.projectId);
+  $("strategy").innerHTML = projects.length ? projects.map(project =>
+    `<article>${!selection.projectId ? `<h3>${esc(project.name)}</h3>` : ""}${documentCard(project, "strategy")}</article>`).join("")
+    : empty("Create a project first, then use market-strategy to save the audience, channel choices and rationale.");
   $("decision").innerHTML = a
     ? `<div class="decision"><div><span class="label">EVIDENCE</span><h2>${esc(a.title)}</h2><p>${esc(a.reason)}</p>${a.evidence
         .map((id) => {
@@ -26,7 +31,7 @@ export function renderCampaign({ workspace, data, actions, channels, refs, selec
     ? initiatives()
         .map(
           (i) =>
-            `<article class="initiative">${!selection.projectId ? projectLabel(i.projectId, workspace) : ""}<div class="row"><div><span class="pill">${esc(i.channel)}</span><h3>${esc(i.name)}</h3></div><label>Status<select data-initiative="${esc(i.id)}">${["planned", "running", "paused", "complete"].map((s) => `<option ${i.status === s ? "selected" : ""}>${s}</option>`).join("")}</select></label></div><p>${esc(i.hypothesis)}</p><p class="caption">${esc(i.cta)} · ${esc(i.start)} → ${esc(i.end)} · ${esc(i.owner)}</p></article>`,
+            `<article class="initiative">${!selection.projectId ? projectLabel(i.projectId, workspace) : ""}<div class="row"><div><span class="pill">${esc(i.channel)}</span><h3>${esc(i.name)}</h3></div><label>Status<select data-initiative="${esc(i.id)}">${["planned", "running", "paused", "complete"].map((s) => `<option ${i.status === s ? "selected" : ""}>${s}</option>`).join("")}</select></label></div><p>${esc(i.hypothesis)}</p><p class="caption">${esc(i.cta)} · ${esc(i.start)} → ${esc(i.end)} · ${esc(i.owner)}</p>${documentCard(i, "campaign")}</article>`,
         )
         .join("")
     : empty(
