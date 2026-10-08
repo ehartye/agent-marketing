@@ -92,5 +92,29 @@
     "kind": "external",
     "rule": "Research direct alternatives, substitutes and the current way of doing the job, including doing nothing.",
     "referenceIds": ["positioning"]
+  },
+  {
+    "id": "paying-gap-before-region",
+    "topic": "demand",
+    "kind": "heuristic",
+    "rule": "Define language, geography/payment access, platform, genre, constraint and price; require purchasing evidence and inadequate substitutes before calling a cohort underserved.",
+    "referenceIds": ["gcc-localization", "german-game-market", "localization-results"],
+    "reason": "House decision framework; market growth, wealth, preference and low language supply are separate proxies, not a validated opportunity score."
+  },
+  {
+    "id": "demand-source-scope",
+    "topic": "demand",
+    "kind": "heuristic",
+    "rule": "Present each material demand claim with its primary source, publication/data/check dates, denominator, scope, credibility, relevance, counterevidence and inference status.",
+    "referenceIds": ["gcc-localization", "mena-country-differences", "consumer-information"],
+    "reason": "House reporting contract; trusted sources can still have weak relevance to a specific paying cohort."
+  },
+  {
+    "id": "incremental-localization-economics",
+    "topic": "demand",
+    "kind": "derived",
+    "rule": "Divide additional fixed delivery cost by net contribution per incremental retained sale; include QA and updates, regional realized receipts and buyers who would already buy English.",
+    "referenceIds": ["localization-economics", "steam-pricing", "localization-results"],
+    "reason": "Break-even arithmetic is not a sales forecast; a new-game decision must also include development cost."
   }
 ]

@@ -142,5 +142,86 @@
     "checkedAt": "2026-10-08",
     "supports": "Wilson confidence bounds for proportions",
     "limit": "Independent Bernoulli observations and a fixed analysis design"
+  },
+  {
+    "id": "steam-localization",
+    "title": "Valve — Localization and languages",
+    "url": "https://partner.steamgames.com/doc/store/localization",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Independent store/in-game localization and regional wishlist prioritization",
+    "limit": "Platform guidance; language share and wishlists do not establish paid demand"
+  },
+  {
+    "id": "steam-reviews",
+    "title": "Valve — IUserReviewsService",
+    "url": "https://partner.steamgames.com/doc/webapi/IUserReviewsService",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Review language, purchase/free flags, playtime, refund status and current interface",
+    "limit": "Voluntary reviews do not identify country, income, transaction price or all buyers"
+  },
+  {
+    "id": "steam-pricing",
+    "title": "Valve — Pricing",
+    "url": "https://partner.steamgames.com/doc/store/pricing",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Developer-managed regional prices and pricing tools",
+    "limit": "Pricing mechanics, not affordability, willingness to pay or revenue forecasts"
+  },
+  {
+    "id": "gcc-localization",
+    "title": "Niko Partners and SEF — Speaking the Language (2024)",
+    "url": "https://nikopartners.com/wp-content/uploads/2024/08/Speaking-The-Language_Localization-in-the-MENA-Region_SEF-x-Niko-Partners-Whitepaper_English.pdf",
+    "quality": "medium",
+    "checkedAt": "2026-10-08",
+    "supports": "GCC premium purchasing, stated Arabic preference and report-date language supply",
+    "limit": "December 2023 survey of 1,225; sponsor interests and limited sample detail; not genre-specific premium PC conversion"
+  },
+  {
+    "id": "mena-country-differences",
+    "title": "Niko Partners — MENA-3 opportunity summary (2025)",
+    "url": "https://nikopartners.com/the-future-of-gaming-in-mena-3-understanding-the-opportunity/",
+    "quality": "medium",
+    "checkedAt": "2026-10-08",
+    "supports": "Country spending differences and established sports/football engagement",
+    "limit": "Vendor market estimates and public survey summary; total ARPU is not premium indie revenue"
+  },
+  {
+    "id": "german-game-market",
+    "title": "game — Annual Report of the German Games Industry 2026 summary",
+    "url": "https://www.game.de/en/publications/annual-report-of-the-german-games-industry-2026/",
+    "quality": "medium",
+    "checkedAt": "2026-10-08",
+    "supports": "2025 German market spending types and PC audience context",
+    "limit": "Industry-commissioned research with revised methodology; no German-language genre gap"
+  },
+  {
+    "id": "localization-results",
+    "title": "Sumo — Academia localization outcomes (2021)",
+    "url": "https://www.squeakywheel.ph/blog/localization-for-indie-game-developers",
+    "quality": "medium",
+    "checkedAt": "2026-10-08",
+    "supports": "Firsthand Thai success and weaker regional outcomes after localization",
+    "limit": "One historical before/after game; launch, sales and mods confound attribution; absolute worksheet uncaptured"
+  },
+  {
+    "id": "localization-economics",
+    "title": "Harris — Indie strategy translation business case (2021)",
+    "url": "https://www.positech.co.uk/cliffsblog/2021/01/16/an-indie-strategy-game-translation-business-case-lets-do-the-maths/",
+    "quality": "medium",
+    "checkedAt": "2026-10-08",
+    "supports": "Include implementation, QA, updates and buyers who would purchase English anyway",
+    "limit": "Successor projections and attribution assumptions, not realized localization ROI or current cost quotes"
+  },
+  {
+    "id": "consumer-information",
+    "title": "Reimers et al. — Imperfect consumer information, working paper (2025)",
+    "url": "https://www.ftc.gov/system/files/ftc_gov/pdf/waldfogelreimersriedl.pdf",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Discovery/information friction as an alternative explanation for unmet gamer desire",
+    "limit": "2021 selected enthusiast usage, modeled welfare, working version; FTC hosting is not endorsement; captured tables degraded"
   }
 ]

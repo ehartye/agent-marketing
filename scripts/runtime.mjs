@@ -20,6 +20,7 @@ const directories = [
   "skills",
   "craft",
   "library",
+  "docs/research",
   "examples",
   ".claude-plugin",
 ];

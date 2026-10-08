@@ -56,6 +56,7 @@ const walk = (dir) =>
 const documents = [
   ...walk(join(root, "skills")),
   ...walk(join(root, "craft")),
+  ...walk(join(root, "library")),
   ...walk(join(root, "docs")),
   join(root, "README.md"),
 ].filter((f) => f.endsWith(".md"));

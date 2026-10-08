@@ -5,6 +5,7 @@ Marketing helps the right people discover a project, understand its promise, try
 The guides distinguish published findings, practitioner methods, derived arithmetic and house heuristics. [References](REFERENCES.md) list access dates and limits. [Rules](rules.json) are queryable with `marketing rules <topic>`. A cited source is evidence for a bounded claim, not a guarantee that a campaign works. Verify changing platform rules when planning a real launch.
 
 - [Discovery and viability](discovery.md): distinguish encouragement, use, retention and paid demand.
+- [Demand research](demand.md): find underserved paying cohorts, assess sources and compare language markets with a falsifiable test and a readable [report](../library/demand-report.md).
 - [Channels](channels.md): choose an audience and a sustainable distribution test.
 - [Competition and positioning](competition.md): research alternatives and explain distinctive value.
 - [Campaigns](campaigns.md): connect hypothesis, asset, CTA, measurement and review.
