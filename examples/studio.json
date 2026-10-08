@@ -13,7 +13,11 @@
       "objective": "Learn whether 20 new players return for a second session",
       "weeklyHours": 3,
       "budget": 300,
-      "currency": "USD"
+      "currency": "USD",
+      "strategy": {
+        "markdown": "# Orbit Garden strategy — synthetic demo\n\n## Audience and promise\nRelaxing-game fans who want a five-minute break. Grow a little world in one short round.\n\n## Channel choice and rationale\nUse the existing YouTube clip as one bounded discovery test. The demo ledger has 90 attributed visitors and 8 starts; those synthetic counts illustrate an activation question, not market demand. Prioritize a direct first-round playtest before increasing reach. Reddit remains a conditional alternative pending community fit and posting permission.\n\n## Assumptions and evidence\nAll counts and claims in this workspace are examples, not observed commercial evidence. Source placeholder: https://example.com/demo-evidence. The hypothesis that a visible payoff brings qualified players remains untested. Returning players require a defined follow-up cohort.\n\n## Effort and next decision\nOwner: Family studio. Limit the next test to three maker-hours and no ad spend. Inspect three intended-player sessions; change one repeated point of confusion, then measure starts and return use with consistent definitions. Review on 2026-10-15. Do not increase distribution until the first-use problem is understood.\n",
+        "updatedAt": "2026-10-08T12:00:00.000Z"
+      }
     },
     {
       "id": "sketch",
@@ -41,7 +45,11 @@
       "start": "2026-10-01",
       "end": "2026-10-14",
       "budget": 0,
-      "owner": "Family studio"
+      "owner": "Family studio",
+      "brief": {
+        "markdown": "# A planet in one coffee break — synthetic campaign brief\n\n## Audience and hypothesis\nFor relaxing-game fans: a short clip of growing a tiny planet will bring players who complete a first round. This is a demonstration hypothesis, not a validated result.\n\n## Message, asset and CTA\nDraft caption: Grow a little world in five minutes. Show the first action and its visible payoff in a short gameplay capture. Asset: capture still to be produced. CTA: Play a five-minute round. No publication is authorized by this sample.\n\n## Measurement\nUse an initiative-tagged try link. Record attributed visitors and starts over the same period, plus a separately defined return cohort. Reach alone is not success. Inspect with: marketing report --project orbit --initiative orbit-video --workspace <ledger>.\n\n## Constraints and review\nOwner: Family studio. Dates: 2026-10-01 through 2026-10-14. Budget: 0 USD; cap clip preparation at one hour. Review on 2026-10-14. Continue only if observed players understand and complete the first action; change the try path if the same hesitation repeats; pause the clip if support or preparation exceeds the cap.\n\n## Evidence and limits\nRead the saved Orbit Garden strategy for the shared rationale. Demo source: https://example.com/demo-evidence. Synthetic counts do not establish channel effectiveness, payment intent or a causal effect.\n",
+        "updatedAt": "2026-10-08T12:00:00.000Z"
+      }
     },
     {
       "id": "orbit-playtest",

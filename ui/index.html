@@ -9,6 +9,7 @@
     <script src="/app.js" type="module"></script>
   </head>
   <body>
+    <a class="skip-link" href="#desk">Skip to campaign desk</a>
     <header>
       <a href="/" class="brand"
         ><span class="mark" aria-hidden="true">↗</span> agent marketing<span
@@ -17,31 +18,23 @@
         ></a
       >
       <div class="actions">
-        <button id="refresh">Refresh</button
-        ><button id="collect">Collect now</button
-        ><label class="button" for="upload">Import results</label
-        ><input id="upload" type="file" accept=".json,.csv" hidden /><a
-          class="button"
-          href="/api/export?format=json"
-          download
-          >Export ledger</a
-        >
+        <button id="refresh" disabled>Refresh evidence</button>
+        <button data-open-view="results">Results &amp; sources</button>
       </div>
     </header>
-    <main>
+    <main id="desk" tabindex="-1" aria-busy="true">
       <div class="intro">
         <div>
-          <p class="eyebrow">A PLACE TO TURN RESPONSE INTO DIRECTION</p>
+          <p class="eyebrow">YOUR NEXT SMALL TEST STARTS HERE</p>
           <h1>Campaign desk<span class="dot">.</span></h1>
           <p id="project-summary">Loading your studio…</p>
         </div>
-        <div class="studio-note">
-          Make something people want.<br /><strong
-            >Find out what happens next.</strong
-          >
+        <div class="project-goal">
+          <span class="eyebrow">Working toward</span>
+          <strong id="project-objective">Loading your project goal…</strong>
+          <span id="project-resources" class="caption"></span>
         </div>
       </div>
-      <div id="status" role="status" aria-live="polite"></div>
       <form class="filters" id="filters">
         <label
           >Project<select id="project">
@@ -51,23 +44,29 @@
           >Initiative<select id="initiative">
             <option value="">All initiatives</option>
           </select></label
-        ><label>From<input id="from" type="date" /></label
+        ><label>Readings from<input id="from" type="date" /></label
         ><label>Through<input id="to" type="date" /></label
         ><button type="button" id="clear">Clear dates</button
         ><span id="revision" class="meta"></span>
       </form>
-      <nav class="tabs" aria-label="Desk views">
-        <button data-tab="campaign" aria-pressed="true">
-          Campaigns &amp; direction</button
-        ><button data-tab="reception" aria-pressed="false">Reception</button
-        ><button data-tab="market" aria-pressed="false">
-          Market &amp; alternatives</button
-        ><button data-tab="experiments" aria-pressed="false">
-          Experiments
-        </button>
+      <p id="scope-summary" class="caption scope-summary"></p>
+      <nav class="tabs" role="tablist" aria-label="Desk views">
+        <button id="tab-campaign" role="tab" data-tab="campaign" aria-controls="campaign" aria-selected="true">Decide &amp; plan</button>
+        <button id="tab-reception" role="tab" data-tab="reception" aria-controls="reception" aria-selected="false" tabindex="-1">Review feedback</button>
+        <button id="tab-market" role="tab" data-tab="market" aria-controls="market" aria-selected="false" tabindex="-1">Research fit</button>
+        <button id="tab-experiments" role="tab" data-tab="experiments" aria-controls="experiments" aria-selected="false" tabindex="-1">Compare tests</button>
+        <button id="tab-results" role="tab" data-tab="results" aria-controls="results" aria-selected="false" tabindex="-1">Results &amp; sources</button>
       </nav>
-      <section id="campaign" class="view">
+      <p id="load-note" class="empty" role="status">Loading the selected evidence…</p>
+      <div id="views" hidden>
+      <section id="campaign" class="view" role="tabpanel" aria-labelledby="tab-campaign" tabindex="0">
+        <div id="welcome" class="panel" hidden>
+          <h2>Start with one project and a question</h2>
+          <p>Use market-discover to save your audience and goal, then market-campaign to record the first small test. Return here to review results and choose the next action.</p>
+          <button data-open-view="results">Import an existing workspace</button>
+        </div>
         <div id="decision"></div>
+        <section class="panel"><h2>Project strategy</h2><div id="strategy"></div></section>
         <div class="desk-grid">
           <section class="panel">
             <div class="section-head">
@@ -96,26 +95,18 @@
             <div id="channels"></div>
           </section>
         </div>
-        <section class="panel">
-          <h2>Collected readings</h2>
-          <div id="readings"></div>
-        </section>
-        <section class="panel">
-          <h2>Monitoring sources</h2>
-          <div id="sources"></div>
-        </section>
       </section>
-      <section id="reception" class="view" hidden>
+      <section id="reception" class="view" role="tabpanel" aria-labelledby="tab-reception" tabindex="0" hidden>
         <div class="section-head">
           <div>
-            <h2>What people are saying</h2>
+            <h2>Review what people are saying</h2>
             <p>
               Review the source context, then label the reaction. This sample
               represents the people who spoke.
             </p>
           </div>
           <label
-            >Filter<select id="sentiment-filter">
+            >Show reactions<select id="sentiment-filter">
               <option value="">All reactions</option>
               <option value="unreviewed">Needs review</option>
               <option>positive</option>
@@ -126,10 +117,11 @@
             </select></label
           >
         </div>
+        <p id="review-count" class="meta"></p>
         <div id="sentiment"></div>
-        <div id="reactions"></div>
+        <div id="reactions" class="reactions-grid"></div>
       </section>
-      <section id="market" class="view" hidden>
+      <section id="market" class="view" role="tabpanel" aria-labelledby="tab-market" tabindex="0" hidden>
         <div class="desk-grid">
           <section class="panel">
             <h2>Evidence for viability</h2>
@@ -148,7 +140,7 @@
           </section>
         </div>
       </section>
-      <section id="experiments" class="view" hidden>
+      <section id="experiments" class="view" role="tabpanel" aria-labelledby="tab-experiments" tabindex="0" hidden>
         <h2>Small tests, honest uncertainty</h2>
         <p>
           Prespecify the audience, primary outcome and stop rule. A promising
@@ -156,6 +148,26 @@
         </p>
         <div id="experiments-list"></div>
       </section>
+      <section id="results" class="view" role="tabpanel" aria-labelledby="tab-results" tabindex="0" hidden>
+        <section class="panel results-actions">
+          <div><h2>Bring results back to the decision</h2><p id="data-scope"></p></div>
+          <div class="actions">
+            <button id="import" class="primary" disabled>Import results</button>
+            <input id="upload" type="file" accept=".json,.csv" hidden aria-label="Choose results file" />
+            <button id="collect" disabled>Collect all sources</button>
+            <a class="button" href="/api/export?format=json" download>Download full workspace</a>
+            <a class="button" href="/api/export?format=csv" download>Download all readings CSV</a>
+          </div>
+          <p class="caption">Import a normalized results CSV or a workspace JSON file, up to 2 MB. Existing IDs are updated; other records are kept. Review changes here before acting on them.</p>
+          <details><summary>Where are plans and results saved?</summary>
+            <p>They live in the workspace file selected when this desk was opened. Campaign actions are saved as initiatives; the full-workspace download includes every project and its records.</p>
+            <p>Saved strategy documents and campaign briefs live with their project and initiative records. Read or download them in Decide &amp; plan. A full-workspace JSON download includes their text; CSV includes readings only. Linked images and other external assets are not bundled.</p>
+          </details>
+        </section>
+        <section class="panel"><h2>Collected readings</h2><div id="readings"></div></section>
+        <section class="panel"><h2>Monitoring sources</h2><div id="sources"></div></section>
+      </section>
+      </div>
       <details class="panel caveats">
         <summary>Reading the evidence</summary>
         <ul id="warnings"></ul>
@@ -167,9 +179,12 @@
       </details>
       <footer>
         <span>Agent Marketing · evidence before escalation</span
-        ><a href="/api/export?format=csv" download>Download observations CSV</a
         ><span id="updated"></span>
       </footer>
     </main>
+    <aside id="notice" class="notice" hidden aria-label="Desk notification">
+      <p id="status" role="status" aria-live="polite" aria-atomic="true"></p>
+      <div class="actions"><button id="retry" hidden>Refresh evidence</button><button id="dismiss" aria-label="Dismiss notification">Dismiss</button></div>
+    </aside>
   </body>
 </html>

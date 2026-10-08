@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync } from "node:fs";
 import { resolve, dirname, extname } from "node:path";
 import { parseArgs } from "node:util";
 import {
@@ -12,6 +12,18 @@ import { report, advise, analyzeExperiment } from "../src/analysis.mjs";
 import { parseImport, taggedUrl, observationsCsv } from "../src/import.mjs";
 import { monitor } from "../src/collectors.mjs";
 import { recommendChannels, channelLibrary } from "../src/channels.mjs";
+import { readDocument, saveDocument } from "../src/documents.mjs";
+function writeExport(workspace, output, text) {
+  if (existsSync(output)) {
+    const source = statSync(workspace, { bigint: true }), destination = statSync(output, { bigint: true });
+    if (source.dev === destination.dev && source.ino === destination.ino)
+      throw new Error("Choose an output file separate from the workspace");
+  }
+  const out = resolve(output);
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, text);
+  return out;
+}
 const help = {
   name: "marketing",
   version: "0.1.0",
@@ -22,6 +34,9 @@ const help = {
     "validate",
     "import <json-or-csv>",
     "put <collection> <record.json>",
+    "document save <strategy|campaign> <record-id> <brief.md> --revision n",
+    "document show <strategy|campaign> <record-id>",
+    "document export <strategy|campaign> <record-id> [--out brief.md]",
     "report [--project id --initiative id --from date --to date]",
     "advise <project-id>",
     "channels [project-id]",
@@ -109,6 +124,26 @@ try {
       },
       v.revision === undefined ? undefined : Number(v.revision),
     );
+  } else if (command === "document") {
+    const [action, kind, id, input] = p;
+    if (!["save", "show", "export"].includes(action))
+      throw new Error("Document action must be save, show or export");
+    required(kind, "document kind");
+    required(id, "record ID");
+    if (action === "save") {
+      result = { workspace: file, ...saveDocument(file, kind, id,
+        readFileSync(required(input, "brief.md"), "utf8"), Number(v.revision)) };
+    } else {
+      result = { workspace: file, ...readDocument(readWorkspace(file), kind, id) };
+      if (action === "export") {
+        if (v.out) {
+          result = { out: writeExport(file, v.out, result.document.markdown), format: "markdown" };
+        } else {
+          process.stdout.write(result.document.markdown);
+          process.exit(0);
+        }
+      }
+    }
   } else if (command === "report") result = report(readWorkspace(file), filter);
   else if (command === "advise")
     result = advise(
@@ -159,9 +194,7 @@ try {
         ? observationsCsv(w.observations)
         : JSON.stringify(w, null, 2) + "\n";
     if (v.out) {
-      mkdirSync(dirname(resolve(v.out)), { recursive: true });
-      writeFileSync(v.out, body);
-      result = { out: resolve(v.out), format };
+      result = { out: writeExport(file, v.out, body), format };
     } else {
       process.stdout.write(body);
       process.exit(0);

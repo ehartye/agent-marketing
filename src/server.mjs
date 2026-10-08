@@ -5,6 +5,7 @@ import { report, advise } from "./analysis.mjs";
 import { recommendChannels, channelLibrary } from "./channels.mjs";
 import { parseImport, observationsCsv } from "./import.mjs";
 import { monitor } from "./collectors.mjs";
+import { readDocument } from "./documents.mjs";
 async function body(req) {
   let size = 0,
     chunks = [];
@@ -67,6 +68,14 @@ export async function startServer(file, { port = 4318 } = {}) {
           );
         }
         if (u.pathname === "/api/workspace") return send(readWorkspace(file));
+        if (u.pathname === "/api/document") {
+          const saved = readDocument(readWorkspace(file), u.searchParams.get("kind"), u.searchParams.get("id"));
+          res.writeHead(200, {
+            "Content-Type": "text/plain; charset=utf-8",
+            "Content-Disposition": `attachment; filename="${saved.kind}-${saved.id}.md"`,
+          });
+          return res.end(saved.document.markdown);
+        }
         if (u.pathname === "/api/report")
           return send(report(readWorkspace(file), filter));
         if (u.pathname === "/api/advise")
@@ -109,6 +118,10 @@ export async function startServer(file, { port = 4318 } = {}) {
           "/": ["index.html", "text/html"],
           "/app.js": ["app.js", "text/javascript"],
           "/style.css": ["style.css", "text/css"],
+          ...Object.fromEntries([
+            "state.js", "shared.js", "chart.js", "documents.js", "views/campaign.js",
+            "views/reception.js", "views/research.js", "views/experiments.js", "views/results.js",
+          ].map(name => ["/" + name, [name, "text/javascript"]])),
         };
         if (assets[u.pathname]) {
           const [name, type] = assets[u.pathname];
@@ -156,7 +169,7 @@ export async function startServer(file, { port = 4318 } = {}) {
     } catch (e) {
       send(
         { error: e.message },
-        /revision|locked/i.test(e.message) ? 409 : 400,
+        e.status || (/revision|locked/i.test(e.message) ? 409 : 400),
       );
     }
   });

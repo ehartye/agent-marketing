@@ -8,6 +8,13 @@
   --line: #cad6e2;
   --muted: #50677f;
   --white: #fff;
+  --tint: #e5edf8;
+  --range: #a9c5e7;
+  --display-font: "Trebuchet MS", sans-serif;
+  --body-font: Verdana, sans-serif;
+  --utility-font: Consolas, monospace;
+  --radius: 12px;
+  --control-height: 44px;
 }
 * {
   box-sizing: border-box;
@@ -16,9 +23,7 @@ body {
   margin: 0;
   color: var(--ink);
   background: var(--paper);
-  font:
-    14px/1.55 Verdana,
-    sans-serif;
+  font: 14px/1.6 var(--body-font);
 }
 a {
   color: var(--blue);
@@ -39,13 +44,21 @@ button,
   cursor: pointer;
   text-decoration: none;
   display: inline-block;
-  font-size: 12px;
+  font-size: 13px;
+  min-height: var(--control-height);
+  align-content: center;
 }
 button:hover,
 .button:hover {
   border-color: var(--blue);
-  background: #e5edf8;
+  background: var(--tint);
 }
+button.primary {
+  color: var(--white);
+  background: var(--blue);
+  border-color: var(--blue);
+}
+button.primary:hover { background: var(--ink); }
 button:disabled {
   opacity: 0.6;
   cursor: wait;
@@ -103,15 +116,17 @@ header {
 main {
   max-width: 1440px;
   margin: auto;
-  padding: 28px 32px;
+  padding: 24px 32px 100px;
 }
 .intro {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 }
+.intro > div { min-width: 0; }
+.intro p { overflow-wrap: anywhere; }
 .eyebrow,
 .meta,
 .caption {
@@ -126,8 +141,7 @@ main {
 }
 h1 {
   font:
-    700 clamp(34px, 4vw, 58px)/1.05 "Trebuchet MS",
-    sans-serif;
+    700 clamp(34px, 4vw, 50px)/1.1 var(--display-font);
   letter-spacing: -2px;
   margin: 0 0 12px;
 }
@@ -150,18 +164,19 @@ h3 {
 p {
   margin: 8px 0 15px;
 }
-.studio-note {
-  padding: 17px 20px;
+.project-goal {
+  flex: 0 1 350px;
+  padding: 12px 20px;
   border-left: 4px solid var(--citrus);
-  color: var(--muted);
-  font-size: 12px;
 }
-.studio-note strong {
-  color: var(--ink);
+.project-goal > * { display: block; }
+.project-goal strong {
+  font: 700 18px/1.4 var(--display-font);
+  margin-bottom: 6px;
 }
 .filters {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
   align-items: end;
   border-block: 1px solid var(--line);
@@ -169,7 +184,7 @@ p {
 }
 label {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
 }
 select,
@@ -182,6 +197,7 @@ input {
   padding: 8px;
   margin-top: 5px;
   max-width: 100%;
+  min-height: var(--control-height);
 }
 select {
   min-width: 150px;
@@ -198,7 +214,7 @@ select {
 .tabs {
   display: flex;
   gap: 6px;
-  padding: 18px 0;
+  padding: 8px 0 20px;
   flex-wrap: wrap;
 }
 .tabs button {
@@ -206,14 +222,14 @@ select {
   border-color: transparent;
   font-weight: bold;
 }
-.tabs button[aria-pressed="true"] {
+.tabs button[aria-selected="true"] {
   background: var(--blue);
   color: var(--white);
 }
 .panel {
   background: var(--white);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius);
   padding: 23px;
   margin-bottom: 20px;
   min-width: 0;
@@ -226,9 +242,7 @@ select {
 .desk-grid > .panel {
   margin-bottom: 0;
 }
-.desk-grid {
-  margin-bottom: 20px;
-}
+.desk-grid { margin-bottom: 20px; }
 .section-head {
   display: flex;
   align-items: center;
@@ -247,7 +261,7 @@ select {
   grid-template-columns: 1.15fr 1fr 1fr;
   background: var(--blue);
   color: var(--white);
-  border-radius: 12px;
+  border-radius: var(--radius);
   margin-bottom: 22px;
   overflow: hidden;
 }
@@ -267,7 +281,7 @@ select {
   margin: 8px 0;
 }
 .decision p {
-  font-size: 12px;
+  font-size: 14px;
   margin: 10px 0;
 }
 .decision a {
@@ -299,12 +313,12 @@ select {
   gap: 16px;
 }
 .initiative p {
-  font-size: 12px;
+  font-size: 13px;
   margin: 7px 0;
 }
 .initiative select {
   min-width: 105px;
-  font-size: 11px;
+  font-size: 12px;
 }
 .pill {
   display: inline-block;
@@ -361,6 +375,7 @@ select {
 }
 table {
   width: 100%;
+  min-width: 560px;
   border-collapse: collapse;
   font-size: 12px;
 }
@@ -380,7 +395,10 @@ td {
 }
 .table-scroll {
   overflow: auto;
+  max-width: 100%;
 }
+.project-label { display: block; margin-bottom: 6px; }
+td { overflow-wrap: anywhere; }
 .plot {
   width: 100%;
   height: 200px;
@@ -408,8 +426,10 @@ td {
   border-radius: 8px;
   padding: 22px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 14px;
 }
+.empty p:first-child { margin-top: 0; }
+.empty p:last-child { margin-bottom: 0; }
 .summary-grid {
   display: flex;
   gap: 10px;
@@ -450,13 +470,18 @@ td {
   min-width: 110px;
 }
 .reaction input {
-  width: 140px;
+  width: 100%;
 }
+.reaction .theme-field { flex: 1; min-width: 140px; }
+.draft-note { flex-basis: 100%; min-height: 1.5em; }
 .channel summary {
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   font-weight: bold;
+  min-height: var(--control-height);
+  align-items: center;
+  gap: 12px;
 }
 .channel p {
   font-size: 12px;
@@ -499,7 +524,7 @@ td {
   height: 24px;
 }
 .interval .range {
-  fill: #a9c5e7;
+  fill: var(--range);
 }
 .interval .point {
   fill: var(--blue);
@@ -507,12 +532,35 @@ td {
 .view[hidden] {
   display: none;
 }
-#status:not(:empty) {
-  padding: 12px 16px;
-  background: #fff3c8;
-  border-radius: 6px;
-  margin-bottom: 14px;
+.notice {
+  position: fixed;
+  bottom: 16px;
+  right: 20px;
+  z-index: 10;
+  max-width: min(520px, calc(100% - 40px));
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--teal);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--ink) 20%, transparent);
 }
+.notice.error { border-left-color: var(--alert); }
+.notice p { margin: 0 0 10px; overflow-wrap: anywhere; }
+.notice .actions { justify-content: flex-end; }
+.scope-summary { margin: 8px 0; }
+.results-actions .actions { margin: 18px 0; }
+.results-actions details { border-top: 1px solid var(--line); padding-top: 14px; }
+summary { cursor: pointer; }
+.saved-document { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
+.saved-document summary { color: var(--blue); font-weight: bold; }
+.document-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+.document-body { white-space: pre-wrap; overflow-wrap: anywhere; font: 14px/1.7 var(--body-font); max-height: 34rem; overflow: auto; padding: 16px; background: var(--paper); border-radius: 6px; }
+.document-body:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
+.skip-link { position: fixed; left: 20px; top: -100px; z-index: 20; background: var(--white); padding: 12px; }
+.skip-link:focus { top: 8px; }
+.view:focus-visible, .table-scroll:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
+h2, h3, .project-goal, .initiative, .source { overflow-wrap: anywhere; }
 footer {
   display: flex;
   justify-content: space-between;
@@ -556,13 +604,15 @@ details > summary {
   header {
     padding: 15px 20px;
   }
-  .edition,
-  .studio-note {
+  .edition {
     display: none;
   }
   main {
-    padding: 24px 20px;
+    padding: 20px 20px 130px;
   }
+  .intro { align-items: stretch; flex-direction: column; gap: 10px; }
+  .project-goal { flex-basis: auto; padding: 10px 14px; }
+  .project-goal strong { font-size: 16px; }
   .desk-grid,
   .reactions-grid {
     grid-template-columns: 1fr;
@@ -591,15 +641,17 @@ details > summary {
     flex-wrap: wrap;
   }
   .tabs button {
-    font-size: 11px;
-    padding: 8px;
+    font-size: 12px;
+    padding: 8px 10px;
   }
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; }
+  .tabs button:last-child { grid-column: 1 / -1; }
   h1 {
     letter-spacing: -1px;
   }
   .actions .button,
   .actions button {
-    font-size: 11px;
+    font-size: 12px;
   }
   .panel {
     padding: 18px;
@@ -607,6 +659,9 @@ details > summary {
   .reaction blockquote {
     font-size: 14px;
   }
+  .initiative .row { flex-wrap: wrap; }
+  .results-actions .actions > * { flex: 1 1 150px; text-align: center; }
+  .notice { right: 12px; bottom: 12px; max-width: calc(100% - 24px); }
 }
 @media (prefers-reduced-motion: no-preference) {
   button,
@@ -623,8 +678,12 @@ details > summary {
   footer {
     display: none;
   }
+  .notice, .skip-link { display: none; }
+  table { min-width: 0; }
+  .table-scroll { overflow: visible; }
+  .document-body { max-height: none; overflow: visible; }
   .view[hidden] {
-    display: block;
+    display: block !important;
   }
   .panel {
     break-inside: avoid;
