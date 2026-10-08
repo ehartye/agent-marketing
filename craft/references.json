@@ -304,5 +304,32 @@
     "checkedAt": "2026-10-08",
     "supports": "Inauthentic accounts, bulk or unsolicited replies and mentions, engagement trading schemes and follow churn are prohibited; limits on running multiple accounts",
     "limit": "help.x.com returned HTTP 403 to direct fetches; wording is from search extracts, one dated April 2025; confirm the live page before relying on exact text"
+  },
+  {
+    "id": "linkedin-community-policies",
+    "title": "LinkedIn Professional Community Policies",
+    "url": "https://www.linkedin.com/legal/professional-community-policies",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Do not use invitations to send promotional messages to people you do not know; untargeted, unwanted, gratuitously repetitive promotional messages and artificially increasing engagement are prohibited",
+    "limit": "Page states no effective date; spam rules are general, and the explicit ban on automation tools sits in the separate Help Center page and the User Agreement"
+  },
+  {
+    "id": "linkedin-prohibited-software",
+    "title": "LinkedIn Help: prohibited software and extensions",
+    "url": "https://www.linkedin.com/help/linkedin/answer/a1341387/prohibited-software-and-extensions?lang=en",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Crawlers, bots and browser extensions that scrape, modify or automate activity on LinkedIn, and fake accounts or fake engagement, are not allowed; members risk restriction or shutdown",
+    "limit": "Help Center page is undated; it describes consequences in general terms and does not list every tool"
+  },
+  {
+    "id": "linkedin-analytics",
+    "title": "LinkedIn Help: content analytics for your Page",
+    "url": "https://www.linkedin.com/help/lms/answer/a564051",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Impressions count times a post was shown, with 300 milliseconds and half the post on screen, as an estimate; members reached counts distinct members without repeat displays; clicks exclude reactions, comments and reposts; click-through rate is clicks divided by impressions",
+    "limit": "Page shows Last updated 1 year ago; it counts clicks inside engagements, while LinkedIn's separate post analytics page leaves clicks out of engagements, and Campaign Manager defines engagement rate again, so state which page and period you used"
   }
 ]
