@@ -6,12 +6,12 @@
     "audiences": ["developer", "coder", "engineer"],
     "hours": 1,
     "cost": "0",
-    "approach": "Useful README, working quickstart, example project and release notes",
-    "measure": "Repository traffic plus downstream successful installs/use",
-    "risk": "Stars can come from curiosity; rolling traffic history is short",
-    "complexity": "Low; public metrics or repository-scoped read token",
-    "maintainability": "Keep examples tested and collect traffic weekly",
-    "referenceIds": ["github-traffic"]
+    "approach": "A README with a working quickstart, an example project and release notes, so the first visit can end in a successful install or run",
+    "measure": "Stars as a weak interest signal, 14-day traffic (views, unique visitors, clones, referrers) collected weekly, and downstream installs or use from your own analytics",
+    "risk": "Stars measure appreciation, can be removed and can come from curiosity; traffic history is only 14 days and needs write access; buying stars or automated starring breaks GitHub's rules",
+    "complexity": "Low; public metrics need no token, traffic needs a token for a repository you can push to",
+    "maintainability": "Keep the quickstart tested and collect traffic at least every 14 days, since older days are lost",
+    "referenceIds": ["github-traffic", "github-traffic-guide", "github-acceptable-use", "github-stars", "measurement"]
   },
   {
     "id": "hacker-news",
@@ -20,12 +20,12 @@
     "audiences": ["developer", "maker", "engineer"],
     "hours": 2,
     "cost": "0",
-    "approach": "Tryable substantive project, maker explanation and thoughtful replies",
-    "measure": "Thread feedback and tagged product activation",
-    "risk": "One-off generated projects and signup-only pages may be ineligible",
-    "complexity": "Low setup; launch timing and discussion are unpredictable",
-    "maintainability": "Be available for support; no repeated routine version posts",
-    "referenceIds": ["channels", "hn-api"]
+    "approach": "A substantive project people can try without signing up, a plain maker explanation, and thoughtful replies from someone present in the thread",
+    "measure": "Thread comments read for objections and questions, tagged product activation, with points kept as a weak attention signal",
+    "risk": "Points are not readers and some votes are dropped by anti-abuse software; asking friends to vote, signup-gated pages and quick one-offs break the guidelines and can bury the post",
+    "complexity": "Low setup; timing, ranking and discussion tone are unpredictable and flags can end a post",
+    "maintainability": "Be available to answer for the first hours; no routine version-bump posts and no delete-and-resubmit",
+    "referenceIds": ["channels", "hn-api", "hn-guidelines", "hn-faq", "measurement"]
   },
   {
     "id": "youtube",
@@ -188,11 +188,11 @@
     "audiences": ["maker", "early adopter"],
     "hours": 3,
     "cost": "0 for a basic launch; verify current terms",
-    "approach": "Prepared maker launch with concise gallery, demo and available support",
-    "measure": "Tagged activation and thoughtful feedback",
-    "risk": "Launch-day rank is not durable demand; do not solicit upvotes",
-    "complexity": "Moderate preparation, fast discussion response",
-    "maintainability": "Plan support and a follow-up beyond launch day",
-    "referenceIds": ["product-hunt"]
+    "approach": "A prepared maker launch from a personal account: short tagline, two or more gallery images, a first comment asking for feedback, and a maker available to answer all day",
+    "measure": "Visits arriving from Product Hunt in your own analytics, activation, and the content of comments; votes and rank are recorded by hand as context",
+    "risk": "Launch-day rank rests on upvotes, comments and undisclosed factors and is not durable demand; asking for upvotes, paying for traffic or upvote contests can remove the post",
+    "complexity": "Moderate preparation; the submission link cannot be a tracking link, so attribution relies on referrers",
+    "maintainability": "Plan support and a follow-up beyond launch day; check the live launch guide before each launch",
+    "referenceIds": ["product-hunt", "product-hunt-how-it-works", "product-hunt-preparing", "product-hunt-sharing", "product-hunt-api", "measurement"]
   }
 ]

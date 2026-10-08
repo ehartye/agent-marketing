@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+ph-votes,orbit,orbit-video,product-hunt,votes,212,2026-10-01,2026-10-07,period,"Upvotes shown on the Product Hunt launch page, read by hand on 2026-10-07; rank also depends on comments and time",https://example.com/product-hunt-evidence,2026-10-08T12:00:00Z
+ph-comments,orbit,orbit-video,product-hunt,comments,34,2026-10-01,2026-10-07,period,"Comments on the launch page, read by hand, including the maker's first comment and replies",https://example.com/product-hunt-evidence,2026-10-08T12:00:00Z
+ph-visits,orbit,orbit-video,product-hunt,visitors,540,2026-10-01,2026-10-07,period,"Site analytics visitors whose referrer is producthunt.com; the launch link itself could not carry a tracking tag",https://example.com/product-hunt-evidence,2026-10-08T12:00:00Z
