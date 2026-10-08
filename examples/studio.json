@@ -1,0 +1,485 @@
+{
+  "schema": "marketing/workspace@1",
+  "revision": 0,
+  "projects": [
+    {
+      "id": "orbit",
+      "name": "Orbit Garden · demo",
+      "audience": [
+        "indie players",
+        "relaxing-game fans"
+      ],
+      "category": "game",
+      "problem": "A relaxing five-minute break",
+      "promise": "Grow a little world in five minutes",
+      "stage": "beta",
+      "objective": "Learn whether 20 new players return for a second session",
+      "weeklyHours": 3,
+      "budget": 300,
+      "currency": "USD"
+    },
+    {
+      "id": "sketch",
+      "name": "Sketch Relay · demo",
+      "audience": [
+        "developers",
+        "creative makers"
+      ],
+      "category": "tool",
+      "problem": "Sharing a quick UI idea takes too long",
+      "promise": "Turn a rough sketch into a runnable interaction",
+      "stage": "prototype",
+      "objective": "Observe five successful first-use sessions",
+      "weeklyHours": 2,
+      "budget": 50,
+      "currency": "USD"
+    }
+  ],
+  "initiatives": [
+    {
+      "id": "orbit-video",
+      "projectId": "orbit",
+      "name": "A planet in one coffee break",
+      "channel": "youtube",
+      "hypothesis": "A clip of the payoff brings players who try a full round",
+      "cta": "Play a five-minute round",
+      "status": "running",
+      "start": "2026-10-01",
+      "end": "2026-10-14",
+      "budget": 0,
+      "owner": "Family studio"
+    },
+    {
+      "id": "orbit-playtest",
+      "projectId": "orbit",
+      "name": "First round playtest",
+      "channel": "direct",
+      "hypothesis": "A clearer first action improves successful starts",
+      "cta": "Try a round and describe where you hesitate",
+      "status": "planned",
+      "start": "2026-10-09",
+      "end": "2026-10-15",
+      "budget": 0,
+      "owner": "Family studio"
+    },
+    {
+      "id": "sketch-github",
+      "projectId": "sketch",
+      "name": "A working example worth cloning",
+      "channel": "github",
+      "hypothesis": "A short runnable example activates developers better than feature lists",
+      "cta": "Run the starter example",
+      "status": "running",
+      "start": "2026-10-01",
+      "end": "2026-10-14",
+      "budget": 0,
+      "owner": "Family studio"
+    }
+  ],
+  "observations": [
+    {
+      "id": "orbit-views",
+      "projectId": "orbit",
+      "initiativeId": "orbit-video",
+      "channel": "youtube",
+      "metric": "views",
+      "value": 2400,
+      "start": "2026-10-01",
+      "end": "2026-10-07",
+      "kind": "period",
+      "definition": "views",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z"
+    },
+    {
+      "id": "orbit-visitors",
+      "projectId": "orbit",
+      "initiativeId": "orbit-video",
+      "channel": "youtube",
+      "metric": "visitors",
+      "value": 90,
+      "start": "2026-10-01",
+      "end": "2026-10-07",
+      "kind": "period",
+      "definition": "visitors",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z"
+    },
+    {
+      "id": "orbit-starts",
+      "projectId": "orbit",
+      "initiativeId": "orbit-video",
+      "channel": "youtube",
+      "metric": "starts",
+      "value": 8,
+      "start": "2026-10-01",
+      "end": "2026-10-07",
+      "kind": "period",
+      "definition": "starts",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z"
+    },
+    {
+      "id": "orbit-returns",
+      "projectId": "orbit",
+      "initiativeId": "orbit-video",
+      "channel": "youtube",
+      "metric": "returns",
+      "value": 1,
+      "start": "2026-10-01",
+      "end": "2026-10-07",
+      "kind": "period",
+      "definition": "returns",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z"
+    },
+    {
+      "id": "orbit-cost",
+      "projectId": "orbit",
+      "initiativeId": "orbit-video",
+      "channel": "youtube",
+      "metric": "cost",
+      "value": 0,
+      "start": "2026-10-01",
+      "end": "2026-10-07",
+      "kind": "period",
+      "definition": "cost",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z",
+      "currency": "USD"
+    },
+    {
+      "id": "orbit-daily-2026-10-01",
+      "projectId": "orbit",
+      "initiativeId": "orbit-video",
+      "channel": "youtube",
+      "metric": "views",
+      "value": 160,
+      "start": "2026-10-01",
+      "end": "2026-10-01",
+      "kind": "period",
+      "definition": "YouTube playback starts (daily demo)",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z"
+    },
+    {
+      "id": "orbit-daily-2026-10-02",
+      "projectId": "orbit",
+      "initiativeId": "orbit-video",
+      "channel": "youtube",
+      "metric": "views",
+      "value": 220,
+      "start": "2026-10-02",
+      "end": "2026-10-02",
+      "kind": "period",
+      "definition": "YouTube playback starts (daily demo)",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z"
+    },
+    {
+      "id": "orbit-daily-2026-10-03",
+      "projectId": "orbit",
+      "initiativeId": "orbit-video",
+      "channel": "youtube",
+      "metric": "views",
+      "value": 180,
+      "start": "2026-10-03",
+      "end": "2026-10-03",
+      "kind": "period",
+      "definition": "YouTube playback starts (daily demo)",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z"
+    },
+    {
+      "id": "orbit-daily-2026-10-04",
+      "projectId": "orbit",
+      "initiativeId": "orbit-video",
+      "channel": "youtube",
+      "metric": "views",
+      "value": 390,
+      "start": "2026-10-04",
+      "end": "2026-10-04",
+      "kind": "period",
+      "definition": "YouTube playback starts (daily demo)",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z"
+    },
+    {
+      "id": "orbit-daily-2026-10-05",
+      "projectId": "orbit",
+      "initiativeId": "orbit-video",
+      "channel": "youtube",
+      "metric": "views",
+      "value": 420,
+      "start": "2026-10-05",
+      "end": "2026-10-05",
+      "kind": "period",
+      "definition": "YouTube playback starts (daily demo)",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z"
+    },
+    {
+      "id": "orbit-daily-2026-10-06",
+      "projectId": "orbit",
+      "initiativeId": "orbit-video",
+      "channel": "youtube",
+      "metric": "views",
+      "value": 510,
+      "start": "2026-10-06",
+      "end": "2026-10-06",
+      "kind": "period",
+      "definition": "YouTube playback starts (daily demo)",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z"
+    },
+    {
+      "id": "orbit-daily-2026-10-07",
+      "projectId": "orbit",
+      "initiativeId": "orbit-video",
+      "channel": "youtube",
+      "metric": "views",
+      "value": 520,
+      "start": "2026-10-07",
+      "end": "2026-10-07",
+      "kind": "period",
+      "definition": "YouTube playback starts (daily demo)",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z"
+    },
+    {
+      "id": "sketch-visitors",
+      "projectId": "sketch",
+      "initiativeId": "sketch-github",
+      "channel": "github",
+      "metric": "visitors",
+      "value": 62,
+      "start": "2026-10-01",
+      "end": "2026-10-07",
+      "kind": "period",
+      "definition": "visitors",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z"
+    },
+    {
+      "id": "sketch-starts",
+      "projectId": "sketch",
+      "initiativeId": "sketch-github",
+      "channel": "github",
+      "metric": "starts",
+      "value": 18,
+      "start": "2026-10-01",
+      "end": "2026-10-07",
+      "kind": "period",
+      "definition": "starts",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z"
+    },
+    {
+      "id": "sketch-stars",
+      "projectId": "sketch",
+      "initiativeId": "sketch-github",
+      "channel": "github",
+      "metric": "stars",
+      "value": 41,
+      "start": "2026-10-01",
+      "end": "2026-10-07",
+      "kind": "snapshot",
+      "definition": "stars",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z",
+      "series": "sketch-stars"
+    }
+  ],
+  "reactions": [
+    {
+      "id": "r1",
+      "projectId": "orbit",
+      "initiativeId": "orbit-video",
+      "channel": "youtube",
+      "text": "The world looks beautiful. I did not know which seed to choose.",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z",
+      "sentiment": "mixed",
+      "reviewed": true,
+      "theme": "onboarding"
+    },
+    {
+      "id": "r2",
+      "projectId": "orbit",
+      "initiativeId": "orbit-video",
+      "channel": "youtube",
+      "text": "I love the tiny planet. Can I save and come back?",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z",
+      "sentiment": "positive",
+      "reviewed": true,
+      "theme": "return use"
+    },
+    {
+      "id": "r3",
+      "projectId": "orbit",
+      "initiativeId": "orbit-video",
+      "channel": "youtube",
+      "text": "Great art but the controls are confusing on my phone.",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z",
+      "sentiment": "mixed",
+      "reviewed": false,
+      "theme": "unclassified"
+    },
+    {
+      "id": "r4",
+      "projectId": "orbit",
+      "initiativeId": "orbit-video",
+      "channel": "youtube",
+      "text": "I played once. The first round was fun.",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z",
+      "sentiment": "positive",
+      "reviewed": true,
+      "theme": "first session"
+    },
+    {
+      "id": "r5",
+      "projectId": "orbit",
+      "initiativeId": "orbit-video",
+      "channel": "youtube",
+      "text": "What happens after the first five minutes?",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z",
+      "sentiment": "unknown",
+      "reviewed": false,
+      "theme": "unclassified"
+    },
+    {
+      "id": "r6",
+      "projectId": "sketch",
+      "initiativeId": "sketch-github",
+      "channel": "github",
+      "text": "Useful example. I needed clearer setup instructions.",
+      "url": "https://example.com/demo-evidence",
+      "collectedAt": "2026-10-08T06:00:00Z",
+      "sentiment": "mixed",
+      "reviewed": true,
+      "theme": "installation"
+    }
+  ],
+  "competitors": [
+    {
+      "id": "orbit-alt",
+      "projectId": "orbit",
+      "name": "Other relaxing browser games · illustrative",
+      "kind": "direct",
+      "positioning": "A familiar genre creates an expectation of an immediate playable loop",
+      "url": "https://example.com/demo-evidence",
+      "checkedAt": "2026-10-08",
+      "claims": [
+        {
+          "dimension": "Time to payoff",
+          "value": "Test your opening against a comparable five-minute game; no real competitor claim recorded",
+          "url": "https://example.com/demo-evidence",
+          "checkedAt": "2026-10-08"
+        }
+      ]
+    },
+    {
+      "id": "orbit-do-nothing",
+      "projectId": "orbit",
+      "name": "Watch a relaxing video instead",
+      "kind": "do-nothing",
+      "positioning": "The player can spend the break watching rather than learning a new game",
+      "url": "https://example.com/demo-evidence",
+      "checkedAt": "2026-10-08",
+      "claims": []
+    },
+    {
+      "id": "sketch-substitute",
+      "projectId": "sketch",
+      "name": "Screenshot plus chat message",
+      "kind": "substitute",
+      "positioning": "Already available and easy to share, but cannot demonstrate interaction",
+      "url": "https://example.com/demo-evidence",
+      "checkedAt": "2026-10-08",
+      "claims": []
+    }
+  ],
+  "experiments": [
+    {
+      "id": "orbit-first-action",
+      "projectId": "orbit",
+      "name": "First action: label versus animated hint",
+      "hypothesis": "A visible hint improves first-round starts",
+      "primaryMetric": "Unique assigned visitors completing a first round within one session",
+      "stoppingRule": "Analyze once after 100 assigned visitors per arm and a full seven-day window; stop early only for a broken flow",
+      "targetPerArm": 100,
+      "randomized": true,
+      "arms": [
+        {
+          "name": "A · text label",
+          "trials": 18,
+          "successes": 3
+        },
+        {
+          "name": "B · animated hint",
+          "trials": 21,
+          "successes": 5
+        }
+      ]
+    },
+    {
+      "id": "sketch-install",
+      "projectId": "sketch",
+      "name": "Runnable README example versus feature list",
+      "hypothesis": "A runnable example improves first successful setup",
+      "primaryMetric": "Assigned developers successfully running the example",
+      "stoppingRule": "Compare after 100 unique assigned visitors per arm over a full two-week window; report failures separately",
+      "targetPerArm": 100,
+      "randomized": true,
+      "arms": [
+        {
+          "name": "A · feature list",
+          "trials": 100,
+          "successes": 11
+        },
+        {
+          "name": "B · example",
+          "trials": 100,
+          "successes": 39
+        }
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "orbit-first-play",
+      "projectId": "orbit",
+      "dimension": "activation",
+      "claim": "Eight attributed first sessions in the demo reporting window; identities and return cohort need verification",
+      "result": "supports",
+      "strength": "primary",
+      "url": "https://example.com/demo-evidence",
+      "checkedAt": "2026-10-08"
+    },
+    {
+      "id": "orbit-payment",
+      "projectId": "orbit",
+      "dimension": "payment",
+      "claim": "No price test has been conducted in this synthetic example",
+      "result": "unknown",
+      "strength": "hypothesis",
+      "url": "https://example.com/demo-evidence",
+      "checkedAt": "2026-10-08"
+    },
+    {
+      "id": "sketch-problem",
+      "projectId": "sketch",
+      "dimension": "problem",
+      "claim": "Three synthetic maker interviews describe a recent need for a runnable sketch",
+      "result": "supports",
+      "strength": "primary",
+      "url": "https://example.com/demo-evidence",
+      "checkedAt": "2026-10-08"
+    }
+  ],
+  "sources": []
+}

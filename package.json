@@ -1,0 +1,11 @@
+{
+  "name": "agent-marketing",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "description": "Evidence-led marketing for family-made tools, apps and projects",
+  "engines": { "node": ">=24" },
+  "bin": { "marketing": "scripts/marketing.mjs" },
+  "scripts": { "test": "node --test", "check": "node scripts/check.mjs", "setup": "node scripts/setup.mjs", "demo": "node scripts/marketing.mjs demo --workspace .agent-marketing/demo.json" },
+  "license": "MIT"
+}

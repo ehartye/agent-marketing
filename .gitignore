@@ -1,0 +1,5 @@
+node_modules/
+.agent-marketing/
+artifacts/
+*.log
+.playwright-mcp/
