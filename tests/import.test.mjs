@@ -38,7 +38,7 @@ test("campaign tagging preserves existing query/fragment and canonicalizes label
   assert.equal(u.searchParams.get("utm_content"), "clip-a");
   assert.throws(() => taggedUrl("https://example.com", { source: "x" }));
 });
-for (const channel of ["tiktok", "facebook", "x", "linkedin", "steam", "itch", "discord", "email", "github", "hacker-news", "product-hunt", "youtube", "reddit", "search"]) {
+for (const channel of ["tiktok", "facebook", "x", "linkedin", "steam", "itch", "discord", "email", "github", "hacker-news", "product-hunt", "youtube", "reddit", "search", "instagram", "twitch", "bluesky"]) {
   test(`${channel} example import validates and keeps definitions distinct`, () => {
     const base = JSON.parse(readFileSync("examples/studio.json", "utf8")),
       patch = parseImport(

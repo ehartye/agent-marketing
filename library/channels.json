@@ -98,6 +98,48 @@
     "referenceIds": ["steam-wishlist-reporting", "steam-utm-analytics", "steam-advertising", "steam-direct", "player-discovery"]
   },
   {
+    "id": "instagram",
+    "name": "Instagram",
+    "categories": ["creative", "game", "app", "education"],
+    "audiences": ["creator", "visual", "family", "community", "parent"],
+    "hours": 3,
+    "cost": "0 for organic posts; ads and creator fees are separate spend",
+    "approach": "Post one short, honest piece of work with a tagged link in the bio or caption, disclose any paid partner, and read accounts reached and tagged visits",
+    "measure": "Tagged link visits, comments and saves read by hand, first use and return, with Plays and Accounts reached kept as exposure only",
+    "risk": "Exposure counts overstate interest; Meta renames and redefines Instagram metrics; bought engagement, automation and undisclosed paid partnerships break the rules; teen audiences need extra care",
+    "complexity": "Moderate: visual production each post, and Meta's metric names and partnership tools change",
+    "maintainability": "Re-check the in-app (i) metric definitions before each export; keep disclosure and tagging habits the same every post",
+    "referenceIds": ["instagram-meta-standards", "instagram-insights", "instagram-branded-content", "meta-spam", "facebook-branded-content", "measurement"]
+  },
+  {
+    "id": "twitch",
+    "name": "Twitch",
+    "categories": ["game", "creative", "app"],
+    "audiences": ["streamer", "gamer", "viewer", "community", "indie"],
+    "hours": 4,
+    "cost": "0 to stream; production time and any ads are separate",
+    "approach": "Go live on a schedule with the project as the subject, take part in the chat as a person, and send viewers to one tagged link",
+    "measure": "Average viewers, unique viewers, follows and minutes watched from Twitch analytics, plus tagged link visits and first use from your own analytics",
+    "risk": "Small channels get few viewers; artificial viewers or follows break the rules; viewers must be 13 or older and minors need supervision",
+    "complexity": "Moderate: streaming setup, schedule and live moderation",
+    "maintainability": "Needs steady live hours; Twitch redesigns its analytics, so re-check metric names before comparing weeks",
+    "referenceIds": ["twitch-channel-analytics", "twitch-developer-insights", "twitch-viewbot-blog", "twitch-rules-age", "measurement"]
+  },
+  {
+    "id": "bluesky",
+    "name": "Bluesky",
+    "categories": ["creative", "app", "game", "education"],
+    "audiences": ["developer", "open", "community", "creator", "writer"],
+    "hours": 2,
+    "cost": "0 for organic posts; API use is rate limited, not priced, in the pages read",
+    "approach": "Post as a person, share one tryable link with context, and build or follow a feed or bot only if it self-labels and acts on request",
+    "measure": "Tagged link visits, replies and objections read by hand, first use and return from your own analytics",
+    "risk": "Small reach is unproven; artificially manipulating social signals and unlabelled or unwanted bot replies break the rules; no first-party analytics found in the pages read",
+    "complexity": "Low for posting, moderate for bots or feeds because of rate limits and labelling",
+    "maintainability": "Guidelines and API limits change; re-read them before running anything automated",
+    "referenceIds": ["bluesky-community-guidelines", "bluesky-rate-limits", "bluesky-bots", "measurement"]
+  },
+  {
     "id": "reddit",
     "name": "Relevant Reddit communities",
     "categories": ["tool", "app", "game", "education", "creative"],

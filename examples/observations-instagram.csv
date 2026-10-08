@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+ig-views,orbit,orbit-video,instagram,views,5200,2026-10-01,2026-10-07,period,"Instagram post insights Plays for the period, copied with the in-app (i) wording",https://example.com/instagram-evidence,2026-10-08T12:00:00Z
+ig-comments,orbit,orbit-video,instagram,comments,11,2026-10-01,2026-10-07,period,"Comments read and logged by hand, including objections",https://example.com/instagram-evidence,2026-10-08T12:00:00Z
+ig-clicks,orbit,orbit-video,instagram,clicks,37,2026-10-01,2026-10-07,period,"Tagged visits from the bio link (utm_source=instagram), counted by the site's own analytics",https://example.com/instagram-evidence,2026-10-08T12:00:00Z
