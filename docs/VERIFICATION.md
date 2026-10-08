@@ -1,13 +1,13 @@
-# Release verification — 0.2.0
+# Release verification — 0.3.0
 
-0.2.0 adds durable briefs with workspace backups (PR #4: 35 native tests and resource checks pass; see [durable briefs](evaluations/durable-briefs-2026-10-08.md) and [UI cohesion](evaluations/ui-cohesion-2026-10-08.md)). The 0.1.0 verification below was performed on 2026-10-08 on Windows with Node v24.18.0. Version 0.1.0 is distributed through the [public release](https://github.com/ehartye/agent-marketing/releases/tag/v0.1.0) and the [hartye-plugins entry](https://github.com/ehartye/hartye-claude-plugins/pull/125). The demand-research increment was reviewed on `feat/demand-research`; first-release metadata and the full-library audit were reviewed on `chore/release-0-1-0`. The example portfolio and screenshots contain synthetic evidence.
+0.3.0 adds TikTok, Facebook, X and Steam channel cards, a LinkedIn upgrade, dated platform references and example imports (PRs #6-#10: 40 native tests and resource checks pass; policy pages that could not be fetched directly are marked medium quality with the limit stated; the skill smoke check was not run). 0.2.0 added durable briefs with workspace backups (PR #4: 35 native tests and resource checks pass; see [durable briefs](evaluations/durable-briefs-2026-10-08.md) and [UI cohesion](evaluations/ui-cohesion-2026-10-08.md)). The 0.1.0 verification below was performed on 2026-10-08 on Windows with Node v24.18.0. Version 0.1.0 is distributed through the [public release](https://github.com/ehartye/agent-marketing/releases/tag/v0.1.0) and the [hartye-plugins entry](https://github.com/ehartye/hartye-claude-plugins/pull/125). The demand-research increment was reviewed on `feat/demand-research`; first-release metadata and the full-library audit were reviewed on `chore/release-0-1-0`. The example portfolio and screenshots contain synthetic evidence.
 
 ## Coverage of the requested workflows
 
 | Requested outcome | Implementation and reviewable artifact |
 |---|---|
 | Audience and useful promise | [market-discover](../skills/market-discover/SKILL.md), [discovery craft](../craft/discovery.md), validated project brief |
-| Channels and approach | [market-strategy](../skills/market-strategy/SKILL.md), ten [channel cards](../library/channels.json), explicit planning scores and tradeoffs |
+| Channels and approach | [market-strategy](../skills/market-strategy/SKILL.md), fourteen [channel cards](../library/channels.json), explicit planning scores and tradeoffs |
 | Prior art and competitive analysis | [market-research](../skills/market-research/SKILL.md), [competition craft](../craft/competition.md), dated direct/substitute/do-nothing claims |
 | Paying demand and non-English markets | [Demand methodology](../craft/demand.md), [report format](../library/demand-report.md), [worked gamer report](research/gamer-demand-2026-10-08.md), purchasing/substitute/economics evidence and one falsifiable probe |
 | Campaign advice and collateral | [market-campaign](../skills/market-campaign/SKILL.md), [market-collateral](../skills/market-collateral/SKILL.md), tagged URLs and concrete draft/asset contracts |
@@ -59,7 +59,7 @@ Artifacts: `.agent-marketing/demand-evaluation-input.json`, `demand-evals/with/`
 
 The [all-nine audit](evaluations/yoda-0.1.0.md) records structural checks, two fixed tasks per skill with/without instructions, independent criterion review, metadata-routing near misses, an observed strategy-platform mistake and its matched follow-up. All 40 task ledgers validate and retain existing records. The four fresh strategy follow-ups pass the platform/source consistency gate. The original scores remain visible; this bounded comparison does not establish broad skill efficacy, automatic host activation, safety or marketing effectiveness.
 
-Plugin, package and local/central marketplace versions agree at 0.2.0. Native manifest validation accepts the plugin and local marketplace without warnings. The central marketplace keeps its pre-existing missing-description warning. Shared-resource installation requirements are explicit; the managed bundle includes the audit and worked demand report. The source publication, tag/release, merged central registration and isolated catalog installation are separately verified before completion.
+Plugin, package and local/central marketplace versions agree at 0.3.0. Native manifest validation accepts the plugin and local marketplace without warnings. The central marketplace keeps its pre-existing missing-description warning. Shared-resource installation requirements are explicit; the managed bundle includes the audit and worked demand report. The source publication, tag/release, merged central registration and isolated catalog installation are separately verified before completion.
 
 ## Material limits
 
