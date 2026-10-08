@@ -21,6 +21,7 @@ const directories = [
   "craft",
   "library",
   "docs/research",
+  "docs/evaluations",
   "examples",
   ".claude-plugin",
 ];

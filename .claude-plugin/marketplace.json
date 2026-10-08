@@ -1,0 +1,14 @@
+{
+  "name": "agent-marketing",
+  "description": "Local marketplace for the agent-marketing plugin",
+  "owner": { "name": "ehartye" },
+  "plugins": [
+    {
+      "name": "agent-marketing",
+      "description": "Evidence-led project marketing, paying-demand research and sourced decision reports",
+      "version": "0.1.0",
+      "source": "./",
+      "license": "MIT"
+    }
+  ]
+}
