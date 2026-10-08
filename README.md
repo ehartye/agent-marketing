@@ -16,9 +16,15 @@ In Claude Code, add the [Hartye marketplace](https://github.com/ehartye/hartye-c
 /agent-marketing:market-setup
 ```
 
-Node 24+ is required. Run market-setup after plugin updates to refresh the managed runtime. The [0.4.0 release](https://github.com/ehartye/agent-marketing/releases/tag/v0.4.0) brings every channel card up to the same standard (dated platform sources, a guidance section, an example import) and adds Instagram, Twitch, Bluesky, Apple App Store and Google Play, nineteen channels in all. [0.3.0](https://github.com/ehartye/agent-marketing/releases/tag/v0.3.0) added TikTok, Facebook, X and Steam channel modules, brings LinkedIn up to the same standard and adds a wishlist metric. [0.2.0](https://github.com/ehartye/agent-marketing/releases/tag/v0.2.0) added durable briefs and the journey-based campaign desk to the nine skills and sourced demand-report workflow of [0.1.0](https://github.com/ehartye/agent-marketing/releases/tag/v0.1.0).
+Node 24+ is required. `market-setup` installs a verified runtime outside the plugin cache. After a plugin update, ask Claude to run it again; the launcher refuses a stale runtime and tells you to. See the [releases](https://github.com/ehartye/agent-marketing/releases) for what changed in each version.
 
-## Try the desk
+## Use it
+
+Ask Claude for the work, and the skills run the CLI for you: `market-discover` and `market-strategy` to choose an audience and channels, `market-campaign` to plan a test, `market-monitor` to collect or import results and open the local campaign desk, `market-insights` and `market-experiment` to decide what to do next. The skills use a real workspace file you name, and keep synthetic demo data in a separate one. The desk opens at `http://127.0.0.1:4318`.
+
+## From a source checkout
+
+This section is for working on the plugin itself or trying it without installing. Plugin users can skip it.
 
 Node 24+:
 
