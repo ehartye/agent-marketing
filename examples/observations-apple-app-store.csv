@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+apple-impressions,orbit,orbit-video,apple-app-store,impressions,4800,2026-10-01,2026-10-07,period,"App Store Connect Unique Impressions: unique devices that viewed the app on the App Store",https://example.com/apple-app-store-evidence,2026-10-08T12:00:00Z
+apple-ppv,orbit,orbit-video,apple-app-store,views,610,2026-10-01,2026-10-07,period,"App Store Connect Unique Product Page Views: unique devices that viewed the product page",https://example.com/apple-app-store-evidence,2026-10-08T12:00:00Z
+apple-downloads,orbit,orbit-video,apple-app-store,starts,92,2026-10-01,2026-10-07,period,"First-time downloads from App Analytics (excludes redownloads, iCloud restores and auto-downloads); recorded as starts because the ledger has no installs metric",https://example.com/apple-app-store-evidence,2026-10-08T12:00:00Z

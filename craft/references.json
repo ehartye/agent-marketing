@@ -736,5 +736,77 @@
     "checkedAt": "2026-10-08",
     "supports": "Per search extracts: bot accounts should identify themselves with a bot self-label on their profile, a bot that acts on other users' content should do so only on an opt-in basis (for example when tagged) or it may be seen as spam, and login rate limits are much lower than write limits",
     "limit": "The page body did not load when fetched (empty), so this is from search extracts; I could not verify custom feeds discovery from page text, and no first-party analytics were found in the pages read"
+  },
+  {
+    "id": "apple-review-guidelines",
+    "title": "App Review Guidelines",
+    "url": "https://developer.apple.com/app-store/review/guidelines/",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Metadata including description, screenshots and previews must accurately reflect the app (2.3); keywords must not pack trademarked terms, popular app names or irrelevant phrases (2.3.7); 'For Kids' and 'For Children' in metadata are reserved for the Kids Category (2.3.8); apps outside the Kids Category cannot imply children are the main audience (5.1.4); Kids Category apps should not include third-party analytics or advertising and no links out or purchases outside a parental gate (1.3, 5.1.4); attempts to manipulate reviews or inflate rankings with paid, incentivized, filtered or fake feedback can lead to expulsion from the Developer Program (Section 3 introduction); apps must not force users to rate or review (3.2.2)",
+    "limit": "Fetched text was truncated near 100,000 characters, so Section 5.6 and later were not read; no clause on paying for reviews was found in the numbered 3.1.1 text, only in the Section 3 introduction; guidelines change without dated notice"
+  },
+  {
+    "id": "apple-analytics-acquisition",
+    "title": "App Store Connect Analytics Help: Acquisition",
+    "url": "https://developer.apple.com/help/app-store-connect-analytics/acquisition/acquisition/",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Unique Impressions are unique devices that viewed the app on the App Store; Unique Product Page Views are unique devices that viewed the product page; Total Downloads can be split into first-time downloads and redownloads and exclude iCloud restores and auto-downloads; Conversion Rate shows how often unique impressions turn into total downloads; source types are App referrer, Institutional Purchase, App Store browse, Web referrer, App Clip, App Store search and Unavailable; data is attributed to the source recorded at the most recent download and manual redownloads reset it",
+    "limit": "Does not separately define 'first-time download'; promo-code and gift-card downloads show source Unavailable; the filters reference states App Store dimensions need at least five first-time downloads; the separate Metric definitions page was not read"
+  },
+  {
+    "id": "apple-campaign-links",
+    "title": "App Store Connect Analytics Help: Campaign links",
+    "url": "https://developer.apple.com/help/app-store-connect-analytics/acquisition/campaign-links",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Campaign links are URLs with provider (pt), campaign (ct) and media type (mt) tokens, created under Apps > Analytics > Acquisition > Campaigns; they capture impressions, product page views, downloads, usage, sales and subscriptions per campaign token; a first-time download counts if within 24 hours of using the link; only the most recent link is credited; campaigns display after 24 hours and need at least five first-time downloads from individual users",
+    "limit": "Campaigns tab needs the app to have analytics data first; small groups can be withheld or combined in the detailed API reports; credit window and last-link rule mean tagged counts are not every download from a channel"
+  },
+  {
+    "id": "apple-developer-program-enrollment",
+    "title": "Apple Developer Help: Enroll in the Apple Developer Program",
+    "url": "https://developer.apple.com/help/account/membership/program-enrollment",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "The Apple Developer Program annual fee is 99 USD (prices may vary by region); accredited educational institutions can enroll with a fee waiver; organizations can buy a membership only after Apple verifies the enrollment information; if no confirmation arrives within 24 hours of purchase, contact Apple",
+    "limit": "No processing time for organization verification is stated; no fee waiver for individuals; App Review timing is on a separate Apple page (stated there as at least 50% of submissions in under 24 hours and 90% in under 48 hours) which is not cited here"
+  },
+  {
+    "id": "google-play-ratings-installs",
+    "title": "Play Console Help: User Ratings, Reviews, and Installs",
+    "url": "https://support.google.com/googleplay/android-developer/answer/9898684?hl=en",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Any manipulation of ratings, reviews or install counts is prohibited; do not offer rewards or incentives for ratings or reviews (sample violation: a discount in exchange for a high rating); do not repeatedly submit ratings posing as users; prompt for a rating in a clear, non-deceptive way and do not force users to rate; replies to reviews should not ask for a higher rating",
+    "limit": "Page carries no revision date; the separate metadata policy (no ranking claims like '#1', no unattributed testimonials, 30-character titles) was read at /answer/9898842 but is not cited as a ref; the fetched text did not detail incentivized-install rules beyond the summary"
+  },
+  {
+    "id": "google-play-families",
+    "title": "Play Console Help: Google Play Families Policies",
+    "url": "https://support.google.com/googleplay/android-developer/answer/9893335?hl=en",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "If a target audience for the app is children, the Families requirements apply; the target audience age group must be declared before publishing; store listings promoting play for children must match the app; ads to children or users of unknown age must use Families Self-Certified Ads SDKs without interest-based advertising; apps solely targeting children must not transmit the advertising ID; mixed-audience apps need a neutral age screen; the privacy policy must reflect data practices",
+    "limit": "Page does not mention teens or analytics SDKs by name and gives no age cut-offs in the text read, so whether a teen-focused app is covered depends on the audience you declare; page is a policy summary, not the full SDK program rules"
+  },
+  {
+    "id": "google-play-acquisition-reports",
+    "title": "Play Console Help: Measure your app's acquisition and retention",
+    "url": "https://support.google.com/googleplay/android-developer/answer/6263332?hl=en",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Store listing visitors are unique users who visited the store listing on the Play Store app but have not installed the app; first-time installers are unique users who installed some days after visiting the listing; installs without store listing visit are unique users who installed without seeing the listing or had it pre-installed; charts show conversion from one segment to the next; Tracked channels (UTM) are unique users who visited the listing from a UTM-tagged link and untagged links fall under third-party referrers; data below minimum thresholds is not displayed or is grouped as Other",
+    "limit": "Page does not define store listing acquisitions or conversion formally; the Statistics page (answer 139628) defines install events, user acquisitions and device acquisition differently and reports installs in Pacific Time; search extracts mention a July 2026 shift to click-based listing metrics that the fetched pages did not confirm"
+  },
+  {
+    "id": "google-play-registration",
+    "title": "Play Console Help: Get started with Play Console",
+    "url": "https://support.google.com/googleplay/android-developer/answer/6112435?hl=en",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "There is a US$25 one-time registration fee payable by listed credit or debit cards (prepaid not accepted); a government ID and credit card in the legal name may be requested and the fee is not refunded if the information is invalid; personal accounts created after November 13, 2023 must meet testing requirements before release and verify access to an Android device",
+    "limit": "Page does not state app review time (the publishing page, answer 9859751, says standard updates are processed as soon as possible and some reviews can take up to 7 days or longer in exceptional cases, but it is not cited here); testing requirement details are on a separate page"
   }
 ]
