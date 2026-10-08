@@ -1,0 +1,2 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+new-reading,orbit,orbit-video,youtube,visitors,22,2026-10-08,2026-10-08,period,visitors,https://example.com/demo-evidence,2026-10-09T12:00:00Z

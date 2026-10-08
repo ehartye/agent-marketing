@@ -1,0 +1,49 @@
+# Release verification — 0.1.0
+
+Verified on 2026-10-08 on Windows with Node v24.18.0. This is a local plugin release on `feat/initial-plugin`; marketplace publication is a separate distribution step. The example portfolio and screenshots contain synthetic evidence.
+
+## Coverage of the requested workflows
+
+| Requested outcome | Implementation and reviewable artifact |
+|---|---|
+| Audience and useful promise | [market-discover](../skills/market-discover/SKILL.md), [discovery craft](../craft/discovery.md), validated project brief |
+| Channels and approach | [market-strategy](../skills/market-strategy/SKILL.md), ten [channel cards](../library/channels.json), explicit planning scores and tradeoffs |
+| Prior art and competitive analysis | [market-research](../skills/market-research/SKILL.md), [competition craft](../craft/competition.md), dated direct/substitute/do-nothing claims |
+| Campaign advice and collateral | [market-campaign](../skills/market-campaign/SKILL.md), [market-collateral](../skills/market-collateral/SKILL.md), tagged URLs and concrete draft/asset contracts |
+| Monitoring and reach | [market-monitor](../skills/market-monitor/SKILL.md), official GitHub/HN collectors, JSON/CSV import, definition-specific activity history |
+| Sentiment, reaction and reception | Captured source text, human review and themes, separate unreviewed suggestions, selected-sample counts |
+| Viability, insights and next steps | [market-insights](../skills/market-insights/SKILL.md), separate evidence dimensions, source-linked next action and stop/review rule |
+| Experiment decisions | [market-experiment](../skills/market-experiment/SKILL.md), Wilson arm intervals, conservative difference bounds, sample-target and randomization checks |
+| Research-backed craft | Eight subject guides, sixteen [dated references](../craft/REFERENCES.md), thirteen [rules](../craft/rules.json) labeled external/derived/heuristic |
+| CLI, visualization and runtime | Shared portable ledger, fifteen documented commands, local campaign desk, managed install/check/launch |
+| Wiki knowledge and project documentation | Seventeen captures, sixteen hash-joined summaries, synthesis/task map, overview/architecture/roadmap, catalog and semantic refresh, main synchronized upstream |
+
+## Executed checks
+
+`node --test` passed **27/27** tests. These exercise invalid/dangling records, atomic failure preservation, writer locks and revision conflicts; incompatible definitions/windows, snapshot history and overlap; small-sample intervals; CSV quoting and complete JSON interchange; partial collection failures, repeat collection, edited-comment review invalidation, source-attribution races and long IDs; CLI journeys; HTTP mutations/exports and Host/Origin rejection; and managed install, launch, parity and tamper detection.
+
+`npm run check` passed manifest/version/license parity, all nine skill metadata checks, unique and resolved reference IDs, channel/rule provenance, example validation, relative resource targets, JavaScript syntax and generated reference freshness. The skill-creator validator separately accepted all nine skills using an isolated PyYAML environment. That dependency is used only for development validation.
+
+A managed-runtime smoke journey executed 19 invocations spanning every CLI command except the long-running server, which was exercised separately. It initialized a fresh ledger, imported observations, wrote monitoring sources, collected them, inspected filtered reports/advice/channels/experiments, generated a tagged URL, exported JSON/CSV and restored the full JSON into a second ledger. All eight collections matched after the round trip; destination revision policy was preserved.
+
+Live public reads collected two story snapshots and three unreviewed comments from HN thread 50001750, and the GitHub stars snapshot from `HackerNews/API`, without collection errors. Both sources were also written and monitored through the real managed CLI. Protected GitHub traffic has fixture coverage for permission failure and partial success; no owner traffic credential was used for a live check.
+
+Browser journeys verified project/initiative/date filtering, status persistence, human sentiment/theme review, CSV upload and ledger download. A single-day filter showed only the imported 22-visitor reading and excluded the older 90-visitor record; advice changed consistently. The empty real ledger rendered useful empty states and exported successfully. Reception, alternatives and experiment views were inspected. Final 1440×1000 and 390×844 layouts had no horizontal overflow, retained the seven-point activity series and produced no console errors.
+
+See the actual [desktop](images/campaign-desk-desktop.png) and [mobile](images/campaign-desk-mobile.png) screenshots. The displayed 8/90 = 8.9% is explicitly an observed ratio, with no assertion that both counts describe the same people.
+
+## Independent review and paired skill evaluation
+
+Independent code review found eight integrity defects: full-ledger JSON import, review of edited comments, incompatible chart series, filtered advice, source changes during collection, long collected IDs, order-dependent funnel windows, and missing observation channels. Each was reproduced, fixed and independently rechecked. A subsequent review found repeated chart scans; a single grouping/count pass resolved that blocker. The reviewer measured 3,000 distinct series at 4.25 ms versus 3,135 ms for the prior comparator, and 50,000 at 60.59 ms. These are Node grouping benchmarks, not browser-rendering guarantees. The final reviewer reported no remaining release-blocking correctness findings in scope.
+
+Two independent agents received the same synthetic Orbit decision: 2,400 views, 90 visits, eight starts, one return, a USD 300 budget and three hours/week; decide whether to buy promotion, assess positive reactions and existing A/B evidence, and save the next initiative. One used CLI documentation without plugin skills/craft; the other read market-insights and market-strategy. Both kept paid spend at zero, prioritized direct observation, rejected market-wide sentiment inference and a premature Orbit A/B winner, and added one planned initiative. Both preserved all 34 existing records. The assisted run made research provenance and design checks more explicit, but the baseline was already sound. One paired comparison does not establish a general skill advantage or marketing effectiveness.
+
+Metadata inspection distinguished setup, discovery, strategy, external research, campaign planning, asset drafting, collection, evidence review and experiment design. These positive/near-miss boundaries are inspection evidence, not measured automatic selection in every plugin host. Only the combined insights/strategy workflow received the paired behavioral evaluation.
+
+Local raw verification artifacts are retained under `.agent-marketing/`: `CLI-smoke.json`, `live-collection.json`, `evals/with/`, `evals/without/`, `code-review-final.md` and `wiki-retrieval.json`. They are excluded from the distributable runtime.
+
+## Material limits
+
+The plugin supplies evidence and decision aids; no field study establishes improved product outcomes. Platform fit, activation, repeat use and payment still require real observations. Unique cross-platform reach and causal ad lift are not inferred. Lexical sentiment is a small unvalidated English helper. Experiment duration/stopping text requires operator review. Other analytics need normalized exports, and monitoring is one-shot unless an owner schedules it.
+
+Two GitHub wiki captures omitted rolling-window and permission-table sections; the derived notes explicitly record that gap. Working papers, practitioner transfer limits and changing platform policies are labeled. The wiki’s Obsidian backup committed the research and authored pages while operations were open; operation-specific logs followed, actual committed paths were verified, and main was pushed and checked at zero ahead/behind. Unrelated concurrent wiki edits were left alone.

@@ -1,0 +1,96 @@
+[
+  {
+    "id": "behavior-before-praise",
+    "topic": "discovery",
+    "kind": "external",
+    "rule": "Ask about a recent concrete use/problem and existing alternatives before interpreting encouragement as demand.",
+    "referenceIds": ["discovery", "player-discovery"]
+  },
+  {
+    "id": "audience-before-channel",
+    "topic": "channels",
+    "kind": "heuristic",
+    "rule": "Choose one channel with evidence that the intended audience is there, a native useful contribution, and an effort cap.",
+    "referenceIds": ["channels", "reddit", "player-discovery"]
+  },
+  {
+    "id": "benefit-led-positioning",
+    "topic": "positioning",
+    "kind": "external",
+    "rule": "Connect alternatives, distinctive capability, user value and best-fit audience before writing the headline.",
+    "referenceIds": ["positioning"]
+  },
+  {
+    "id": "attribution-not-causality",
+    "topic": "measurement",
+    "kind": "external",
+    "rule": "Tagged visits and attributed conversions do not prove incremental causal effects.",
+    "referenceIds": ["measurement", "causality"]
+  },
+  {
+    "id": "reach-is-not-people",
+    "topic": "measurement",
+    "kind": "derived",
+    "rule": "Do not sum platform reach into unique people without deduplicated identities and permission to use them.",
+    "referenceIds": ["ga4-schema", "github-traffic"],
+    "reason": "Repeated visitors and overlapping platform audiences violate distinct-person addition."
+  },
+  {
+    "id": "definitions-and-windows",
+    "topic": "measurement",
+    "kind": "external",
+    "rule": "Preserve raw metric definition, period, source and collection time; compare only compatible reporting scopes.",
+    "referenceIds": ["youtube", "ga4-schema", "github-traffic"]
+  },
+  {
+    "id": "comments-are-a-sample",
+    "topic": "reception",
+    "kind": "external",
+    "rule": "Describe captured reviewed reactions; do not label their sentiment distribution as market-wide opinion.",
+    "referenceIds": ["sentiment"]
+  },
+  {
+    "id": "sentiment-needs-review",
+    "topic": "reception",
+    "kind": "heuristic",
+    "rule": "Keep lexical suggestions visibly unreviewed; read context, negation, sarcasm, language and identity before labeling.",
+    "referenceIds": ["sentiment"]
+  },
+  {
+    "id": "stop-before-test",
+    "topic": "experiments",
+    "kind": "derived",
+    "rule": "Prespecify the audience, unit, allocation, outcome, duration, sample target and stop/review rule before interpreting a difference.",
+    "referenceIds": ["experimentation", "intervals"],
+    "reason": "A fixed-design confidence interval cannot correct uncontrolled sampling or repeated peeking."
+  },
+  {
+    "id": "activation-investigation",
+    "topic": "insights",
+    "kind": "heuristic",
+    "rule": "An observed starts/visitors ratio below 20% prompts a small usability investigation; it is not an industry benchmark or viability gate.",
+    "referenceIds": ["discovery"],
+    "reason": "House triage threshold; intended to direct attention, not judge success."
+  },
+  {
+    "id": "viability-dimensions",
+    "topic": "viability",
+    "kind": "heuristic",
+    "rule": "Review separate evidence for problem/desire, activation, retained use and payment; do not collapse them into a popularity score.",
+    "referenceIds": ["experimentation", "discovery", "causality"]
+  },
+  {
+    "id": "one-next-action",
+    "topic": "campaign",
+    "kind": "external",
+    "rule": "Give each asset a clear next action and a tryable product that matches the audience's expectation.",
+    "referenceIds": ["campaign", "channels"]
+  },
+  {
+    "id": "substitutes-count",
+    "topic": "competition",
+    "kind": "external",
+    "rule": "Research direct alternatives, substitutes and the current way of doing the job, including doing nothing.",
+    "referenceIds": ["positioning"]
+  }
+]
