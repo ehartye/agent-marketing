@@ -18,9 +18,12 @@ test("a complete exported ledger imports as validated collection arrays", () => 
   const w = ledger();
   assert.deepEqual(
     parseImport(JSON.stringify(w)),
-    Object.fromEntries(
-      Object.entries(w).filter(([k]) => !["schema", "revision"].includes(k)),
-    ),
+    {
+      ...Object.fromEntries(
+        Object.entries(w).filter(([k]) => !["schema", "revision"].includes(k)),
+      ),
+      reports: [], // ledgers saved before reports existed gain an empty collection
+    },
   );
 });
 test("campaign tagging preserves existing query/fragment and canonicalizes labels", () => {

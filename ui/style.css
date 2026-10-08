@@ -556,6 +556,24 @@ summary { cursor: pointer; }
 .saved-document summary { color: var(--blue); font-weight: bold; }
 .document-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
 .document-body { white-space: pre-wrap; overflow-wrap: anywhere; font: 14px/1.7 var(--body-font); max-height: 34rem; overflow: auto; padding: 16px; background: var(--paper); border-radius: 6px; }
+.report { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
+.report:first-child { border-top: 0; margin-top: 0; padding-top: 0; }
+.report-links { display: flex; gap: 8px; flex-wrap: wrap; }
+.report-body { overflow-wrap: anywhere; font: 15px/1.65 var(--body-font); padding: 16px 20px; background: var(--paper); border-radius: 6px; margin-top: 12px; }
+.report-body:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
+.report-body h3, .report-body h4, .report-body h5, .report-body h6 { margin: 1.4em 0 .5em; line-height: 1.25; }
+.report-body h3 { font-size: 1.25rem; }
+.report-body h4 { font-size: 1.1rem; }
+.report-body p, .report-body ul, .report-body ol, .report-body blockquote { margin: .6em 0; max-width: 76ch; }
+.report-body blockquote { border-left: 3px solid var(--line); padding-left: 12px; color: var(--muted, inherit); }
+.report-body code { font-family: ui-monospace, Consolas, monospace; font-size: .9em; }
+.report-body pre { overflow: auto; padding: 12px; border: 1px solid var(--line); border-radius: 6px; }
+.report-body .table-scroll { overflow-x: auto; margin: .8em 0; }
+.report-body table { border-collapse: collapse; min-width: 100%; font-size: 13.5px; line-height: 1.45; }
+.report-body th, .report-body td { border: 1px solid var(--line); padding: 6px 9px; vertical-align: top; text-align: left; min-width: 7rem; }
+.report-body th { background: rgba(127, 127, 127, .12); position: sticky; top: 0; }
+.report-body td:first-child { min-width: 10rem; }
+.audit { display: inline-block; margin-top: 2px; }
 .document-body:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
 .skip-link { position: fixed; left: 20px; top: -100px; z-index: 20; background: var(--white); padding: 12px; }
 .skip-link:focus { top: 8px; }
@@ -682,6 +700,8 @@ details > summary {
   table { min-width: 0; }
   .table-scroll { overflow: visible; }
   .document-body { max-height: none; overflow: visible; }
+  .report-body { max-height: none; overflow: visible; }
+  .report-reader:not([open]) .report-body { display: none; }
   .view[hidden] {
     display: block !important;
   }

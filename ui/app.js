@@ -4,6 +4,7 @@ import { renderActivity, drawChart } from "./chart.js";
 import { renderCampaign } from "./views/campaign.js";
 import { renderReception } from "./views/reception.js";
 import { renderResearch } from "./views/research.js";
+import { renderReports } from "./views/reports.js";
 import { renderExperiments } from "./views/experiments.js";
 import { renderResults } from "./views/results.js";
 
@@ -60,6 +61,7 @@ function render(snapshot) {
   metricKey = renderActivity(workspace, data, metricKey);
   renderReception(snapshot, drafts);
   renderResearch(snapshot);
+  renderReports(snapshot);
   renderExperiments(snapshot);
   renderResults(snapshot);
   $("warnings").innerHTML = data.warnings.map(w => `<li>${esc(w)}</li>`).join("");

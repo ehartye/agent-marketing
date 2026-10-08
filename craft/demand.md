@@ -51,9 +51,20 @@ This arithmetic is a planning estimate, not a sales forecast. Distinguish buyers
 
 Compare options on time now and later, risk, implementation complexity, best practice and continuing maintenance. For Arabic, budget right-to-left/mixed-direction UI and native review as applicable; for every language, budget terminology, patch translation and support. A local partner can reduce cultural and channel uncertainty while adding coordination and cost. These are delivery considerations, not proof of market demand.
 
+## Market landscape questions
+
+Some questions are about a whole market, not a buyer cohort: which kinds of games do well, which do badly, and where a maker with cheap production should place a bet. Use the [market landscape format](../library/market-landscape-report.md). These rules matter most there.
+
+- **Base rates first.** Give the denominator and the unit for every figure: releases in the period, how a "hit" is defined, and which games are in the sample. Prefer medians and shares under small thresholds to averages and totals, because a few hits dominate any total. A number that arrives without a denominator is a lead, not evidence.
+- **Winners per tag are not odds per release.** A tag can top the list of successful games because it is large. Ask for hits divided by releases in that tag, check the sample size, and treat a small cell as noise. Supply growth erodes a demand claim: a rising tag with surging releases is not an underserved one.
+- **Breakout lists are survivor lists.** Failures are under-reported, postmortems are selected, and survey respondents skew toward those who did well. Say so wherever a pattern rests on them, and look for counterexamples that broke the pattern.
+- **Modeled estimates are modeled.** Many sales and revenue figures are a formula applied to public counts (for example reviews times a multiplier times price). Write the formula, treat the result as order of magnitude, and note who sells it: data vendors and consultants have an interest. A number that drives a decision needs a primary source or a second independent one.
+- **Proxy outcomes hide the middle.** A threshold such as a thousand reviews hides outcomes that would still matter to a small maker. State what range the sources do not cover.
+- **Check the whole portfolio and the owner's pipeline.** Build the candidate list from every place projects live, not one index. Where building is cheap, the useful output is a staged set of concept tests with a cap and stop rules, because the base rate favors many cheap tries over one large build, and distribution, not production, is the scarce input.
+
 ## Produce the decision report
 
-Use the [report format](../library/demand-report.md). Lead with a bounded recommendation and evidence status. Show a compact comparable cohort table, claim/source audit, counterevidence and one cheapest falsifiable next test. Link citations beside the claims they support. State search coverage and what remains unverified; do not substitute a country leaderboard or opaque opportunity score for reasoning.
+Use the [report format](../library/demand-report.md) for a cohort question or the [market landscape format](../library/market-landscape-report.md) for a market-wide one. Lead with a bounded recommendation and evidence status. Show a compact comparable cohort table, claim/source audit, counterevidence and one cheapest falsifiable next test. Link citations beside the claims they support. State search coverage and what remains unverified; do not substitute a country leaderboard or opaque opportunity score for reasoning.
 
 An initial two-week research window, twenty comparables and five buyer interviews per candidate are **example effort caps**, not universal validation thresholds. Set the actual caps with the owner. The test must name an observation that would change the decision, who owns it, a time/spend ceiling, a review date, and continue/change/stop rules. No outbound recruitment or spending follows automatically from a research recommendation.
 
