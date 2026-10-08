@@ -12,6 +12,12 @@ const pkg = json("package.json"),
 assert.equal(manifest.name, pkg.name);
 assert.equal(manifest.version, pkg.version);
 assert.equal(manifest.license, pkg.license);
+const localEntry = json(".claude-plugin/marketplace.json").plugins.find(
+  (entry) => entry.name === pkg.name,
+);
+assert.ok(localEntry, "Missing local marketplace entry");
+assert.equal(localEntry.version, pkg.version);
+assert.equal(localEntry.license, pkg.license);
 const refs = json("craft/references.json"),
   rules = json("craft/rules.json"),
   channels = json("library/channels.json");

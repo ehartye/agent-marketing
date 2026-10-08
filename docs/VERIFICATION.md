@@ -1,6 +1,6 @@
 # Release verification — 0.1.0
 
-Verified on 2026-10-08 on Windows with Node v24.18.0. The initial source release is public in [ehartye/agent-marketing](https://github.com/ehartye/agent-marketing); the demand-research increment was reviewed on `feat/demand-research`. Marketplace publication is a separate distribution step. The example portfolio and screenshots contain synthetic evidence.
+Verified on 2026-10-08 on Windows with Node v24.18.0. Version 0.1.0 is distributed through the [public release](https://github.com/ehartye/agent-marketing/releases/tag/v0.1.0) and the [hartye-plugins entry](https://github.com/ehartye/hartye-claude-plugins/pull/125). The demand-research increment was reviewed on `feat/demand-research`; first-release metadata and the full-library audit were reviewed on `chore/release-0-1-0`. The example portfolio and screenshots contain synthetic evidence.
 
 ## Coverage of the requested workflows
 
@@ -17,7 +17,7 @@ Verified on 2026-10-08 on Windows with Node v24.18.0. The initial source release
 | Experiment decisions | [market-experiment](../skills/market-experiment/SKILL.md), Wilson arm intervals, conservative difference bounds, sample-target and randomization checks |
 | Research-backed craft | Nine subject guides, twenty-five [dated references](../craft/REFERENCES.md), sixteen [rules](../craft/rules.json) labeled external/derived/heuristic |
 | CLI, visualization and runtime | Shared portable ledger, fifteen documented commands, local campaign desk, managed install/check/launch |
-| Wiki knowledge and project documentation | Seventeen captures, sixteen hash-joined summaries, synthesis/task map, overview/architecture/roadmap, catalog and semantic refresh, main synchronized upstream |
+| Wiki knowledge and project documentation | Twenty-six captures, twenty-five hash-joined summaries, two inspected GCC figure pages, syntheses/task map, overview/architecture/roadmap, catalog and semantic refresh, main synchronized upstream |
 
 ## Executed checks
 
@@ -54,6 +54,12 @@ Independent review checked the report's material claims against all nine capture
 Two independent agents answered the same two fixed-evidence tasks: finding a paying non-English gamer cohort, and evaluating Japanese localization for an English strategy game. One used only the evidence packet; the other read the revised research skill and required craft/report resources. Neither could browse or use the worked example. Both preserved source limits, rejected a proven regional opportunity/ROI claim, distinguished purchasing and language preference, and proposed staged validation. The assisted reports used explicit claim-audit and delivery-comparison tables; the baseline reasoning was already sound. Both excluded demand research from a GitHub-stars monitoring near-miss. This unblinded two-task comparison verifies exercised behavior, not a general skill advantage, measured automatic triggering or commercial effectiveness. No market observations or ledger changes were fabricated.
 
 Artifacts: `.agent-marketing/demand-evaluation-input.json`, `demand-evals/with/`, `demand-evals/without/`, `demand-review.md`, `demand-capture-results.json` and the named-set wiki provenance paths. These evaluation and capture receipts remain outside the distributable runtime.
+
+## Full-library Yoda audit and publication
+
+The [all-nine audit](evaluations/yoda-0.1.0.md) records structural checks, two fixed tasks per skill with/without instructions, independent criterion review, metadata-routing near misses, an observed strategy-platform mistake and its matched follow-up. All 40 task ledgers validate and retain existing records. The four fresh strategy follow-ups pass the platform/source consistency gate. The original scores remain visible; this bounded comparison does not establish broad skill efficacy, automatic host activation, safety or marketing effectiveness.
+
+Plugin, package and local/central marketplace versions agree at 0.1.0. Native manifest validation accepts the plugin and local marketplace without warnings. The central marketplace keeps its pre-existing missing-description warning. Shared-resource installation requirements are explicit; the managed bundle includes the audit and worked demand report. The source publication, tag/release, merged central registration and isolated catalog installation are separately verified before completion.
 
 ## Material limits
 

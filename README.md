@@ -6,6 +6,18 @@ The local campaign desk connects each recommendation to a source. It shows activ
 
 ![The campaign desk with synthetic project evidence](docs/images/campaign-desk-desktop.png)
 
+## Install the plugin
+
+In Claude Code, add the [Hartye marketplace](https://github.com/ehartye/hartye-claude-plugins), then install:
+
+```text
+/plugin marketplace add ehartye/hartye-claude-plugins
+/plugin install agent-marketing@hartye-plugins
+/agent-marketing:market-setup
+```
+
+Node 24+ is required. Run market-setup after plugin updates to refresh the managed runtime. The [0.1.0 release](https://github.com/ehartye/agent-marketing/releases/tag/v0.1.0) includes all nine skills and the sourced demand-report workflow.
+
 ## Try the desk
 
 Node 24+:
@@ -39,7 +51,7 @@ Setup installs a content-verified runtime under `~/.agent-marketing/releases/` a
 | market-insights | Reach/reception/viability review and a bounded next action |
 | market-experiment | Experiment design, counts, uncertainty and stop review |
 
-The `.claude-plugin` manifest follows the sibling agent projects. Load this repository as a local plugin in a compatible host; the skills use relative resources and the absolute managed launcher. Skill folders are also portable Agent Skills entry points. The plugin has not been published to a marketplace. Optional agent-vids/prose/sprites/beeps integrations are advisory and do not affect core operation.
+The `.claude-plugin` manifest follows the sibling agent projects. The plugin is listed in hartye-plugins; this repository can also be loaded as a local plugin in a compatible host. The skills use relative resources and the absolute managed launcher. The skill entry points use portable Agent Skills metadata; retain the repository layout and shared resources when loading them. Optional agent-vids/prose/sprites/beeps integrations are advisory and do not affect core operation.
 
 ## What the tools do
 
