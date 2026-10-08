@@ -39,7 +39,7 @@ export function runtimeHome() {
     process.env.AGENT_MARKETING_HOME || join(homedir(), ".agent-marketing"),
   );
 }
-function runtimeFiles(root) {
+export function runtimeFiles(root) {
   const found = [];
   const scan = (path) => {
     for (const entry of readdirSync(path, { withFileTypes: true }).toSorted(
@@ -66,6 +66,8 @@ export function fingerprint(root) {
   }
   return hash.digest("hex");
 }
+const failure = (reason, message) =>
+  Object.assign(new Error(message), { reason });
 export function inspectInstallation(source, home = runtimeHome()) {
   const result = {
     ok: false,
@@ -75,7 +77,7 @@ export function inspectInstallation(source, home = runtimeHome()) {
   };
   try {
     if (Number(process.versions.node.split(".")[0]) < 24)
-      throw new Error("Node 24 or newer required");
+      throw failure("node", "Node 24 or newer required");
     const receipt = JSON.parse(
       readFileSync(join(home, "receipt.json"), "utf8"),
     );
@@ -83,37 +85,78 @@ export function inspectInstallation(source, home = runtimeHome()) {
       runtimeRoot = realpathSync(receipt.runtimeRoot);
     const rel = relative(releases, runtimeRoot);
     if (!rel || rel.startsWith("..") || resolve(releases, rel) !== runtimeRoot)
-      throw new Error(
+      throw failure(
+        "other",
         "Receipt must reference a release inside the managed home",
       );
     const hash = fingerprint(source);
     if (receipt.fingerprint !== hash || receipt.version !== result.version)
-      throw new Error("Source updated: install the current plugin runtime");
+      throw failure(
+        "stale",
+        "Source updated: install the current plugin runtime",
+      );
     if (fingerprint(runtimeRoot) !== hash)
-      throw new Error("Runtime content missing or modified: rerun setup");
+      throw failure(
+        "modified",
+        "Runtime content missing or modified: rerun setup",
+      );
     result.runtimeRoot = runtimeRoot;
     result.fingerprint = hash;
     result.ok = true;
   } catch (e) {
+    result.reason = e.code === "ENOENT" ? "missing" : (e.reason ?? "other");
     result.errors.push(
       e.code === "ENOENT" ? "Runtime is not installed; run setup" : e.message,
     );
   }
   return result;
 }
+// An installed plugin copy has no .git; a checkout under development does, and
+// its fingerprint changes on every edit, so only an installed copy may heal.
+export function isInstalledPlugin(source) {
+  return (
+    resolve(source).split(sep).join("/").includes("/plugins/cache/") &&
+    !existsSync(join(source, ".git"))
+  );
+}
+function processAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (e) {
+    return e.code === "EPERM";
+  }
+}
+function takeLock(lock) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      writeFileSync(lock, JSON.stringify({ pid: process.pid }), { flag: "wx" });
+      return;
+    } catch (e) {
+      if (e.code !== "EEXIST") throw e;
+      let pid;
+      try {
+        pid = JSON.parse(readFileSync(lock, "utf8")).pid;
+      } catch {}
+      // Only a lock whose recorded process is provably gone is cleared.
+      if (attempt === 0 && Number.isInteger(pid) && !processAlive(pid)) {
+        unlinkSync(lock);
+        continue;
+      }
+      throw Object.assign(
+        new Error(
+          "Setup locked; inspect the recorded process before removing a stopped-process lock",
+        ),
+        { code: "ELOCKED" },
+      );
+    }
+  }
+}
 export function installRuntime(source, home = runtimeHome()) {
   home = resolve(home);
   mkdirSync(home, { recursive: true });
   const lock = join(home, "setup.lock");
-  try {
-    writeFileSync(lock, JSON.stringify({ pid: process.pid }), { flag: "wx" });
-  } catch (e) {
-    if (e.code === "EEXIST")
-      throw new Error(
-        "Setup locked; inspect the recorded process before removing a stopped-process lock",
-      );
-    throw e;
-  }
+  takeLock(lock);
   try {
     const installed = inspectInstallation(source, home);
     if (installed.ok) return installed;
@@ -157,5 +200,30 @@ export function installRuntime(source, home = runtimeHome()) {
     return inspectInstallation(source, home);
   } finally {
     unlinkSync(lock);
+  }
+}
+// Heals only the normal after-update cases (nothing installed, or the plugin
+// changed). A modified release, old Node or unwritable home is reported as is.
+export async function healRuntime(
+  source,
+  home = runtimeHome(),
+  { timeoutMs = 15000, log = () => {} } = {},
+) {
+  const report = inspectInstallation(source, home);
+  if (report.ok || !["missing", "stale"].includes(report.reason))
+    return report;
+  log(`Updating managed runtime to ${report.version}...`);
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    try {
+      return installRuntime(source, home);
+    } catch (e) {
+      if (e.code !== "ELOCKED") return { ...report, errors: [e.message] };
+      // Another launcher is installing: wait for it, then re-check.
+      const now = inspectInstallation(source, home);
+      if (now.ok) return now;
+      if (Date.now() >= deadline) return { ...report, errors: [e.message] };
+      await new Promise((r) => setTimeout(r, 200));
+    }
   }
 }
