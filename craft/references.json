@@ -367,5 +367,113 @@
     "checkedAt": "2026-10-08",
     "supports": "$100 non-refundable fee per product, recoupable after $1,000 adjusted gross revenue; bank, tax and identity verification; 1-5 day review; 30 days after paying before the first release; a public coming-soon page for at least two weeks before release",
     "limit": "Page gives no calendar dates; fee and waiting periods can change, so confirm them in Steamworks before paying"
+  },
+  {
+    "id": "itch-creator-faq",
+    "title": "itch.io Creator FAQ",
+    "url": "https://itch.io/docs/creators/faq",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Usage information is collected and displayed to creators, such as how many times pages are viewed, downloaded and purchased; download keys can be tracked by use count; do not automatically sign people up for mailing lists; the buyer email tool is for news specifically related to the transaction",
+    "limit": "Page is undated and does not define views, downloads or purchases precisely, and says nothing about promotion or discovery rules; check the live dashboard for current metric names"
+  },
+  {
+    "id": "itch-getting-started",
+    "title": "itch.io: Your first itch.io page",
+    "url": "https://itch.io/docs/creators/getting-started",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "The creator dashboard offers overview and in-depth analytics on views, downloads and purchases; itch.io supports HTML5, Flash, Java and Unity embeds alongside downloads",
+    "limit": "Page is undated; it does not describe referrers, playtime or completion, and lists embed types that may be out of date"
+  },
+  {
+    "id": "itch-referrers",
+    "title": "itch.io update: Referrers and share buttons (2013)",
+    "url": "https://itch.io/updates/referrers-and-share-buttons",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Game analytics pages show where visitors are coming from",
+    "limit": "Post dated July 25, 2013, so the interface has likely changed; it does not say how long referrer data is kept or how referrers are grouped"
+  },
+  {
+    "id": "itch-purchase-source",
+    "title": "itch.io update: View where purchases come from (2014)",
+    "url": "https://itch.io/updates/view-where-purchases-come-from",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "The purchases overview has a Buy location column and the purchases list has a Referrer column",
+    "limit": "Post dated July 31, 2014; applies only to paid purchases, not free downloads or plays"
+  },
+  {
+    "id": "discord-guidelines",
+    "title": "Discord Community Guidelines",
+    "url": "https://discord.com/guidelines",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Do not send unsolicited bulk messages (or spam) to others; do not use self-bots or user-bots; do not engage with the service in an inauthentic way, which covers artificially inflating server membership and manipulating engagement metrics",
+    "limit": "Page shows last updated August 29, 2025; it sets platform-wide rules only, and each server sets its own rules on self-promotion"
+  },
+  {
+    "id": "discord-platform-manipulation",
+    "title": "Discord Platform Manipulation Policy Explainer",
+    "url": "https://discord.com/safety/platform-manipulation-policy-explainer",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Sending unsolicited bulk messages or interactions is a named disruption; do not send multiple unsolicited messages to other users; join-for-join and invite-reward schemes and trading invite links are prohibited; purchasing or inducing engagement, or using fake accounts to boost metrics, is prohibited",
+    "limit": "Page does not address ordinary self-promotion in a community and shows no date I could read; server rules and moderators decide what promotion is acceptable"
+  },
+  {
+    "id": "discord-server-insights",
+    "title": "Discord Help: Server Insights FAQ",
+    "url": "https://support.discord.com/hc/en-us/articles/360032807371-Server-Insights-FAQ",
+    "quality": "medium",
+    "checkedAt": "2026-10-08",
+    "supports": "Server Insights is for Community Servers over 500 members, gated by a View Server Insights permission, and groups metrics into Growth and Activation, Engagement and Audience, with data one day behind and up to 120 days back for ordinary servers",
+    "limit": "The page returned HTTP 403 to direct fetches; wording is from search extracts, which called it an alpha feature, so confirm the live page; insights are available only to the server owner, not to a guest promoting in someone else's server"
+  },
+  {
+    "id": "email-google-senders",
+    "title": "Google: Email sender guidelines",
+    "url": "https://support.google.com/a/answer/81126?hl=en",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Senders to Gmail need SPF or DKIM; senders of more than 5,000 messages a day to Gmail accounts need SPF, DKIM and DMARC, must support one-click unsubscribe for marketing and subscribed messages with List-Unsubscribe and List-Unsubscribe-Post headers, and must keep the Postmaster Tools spam rate below 0.10% and avoid ever reaching 0.30%",
+    "limit": "Page mentions Feb 1, 2024 and Dec 2023 start dates and no later revision date; thresholds and enforcement have changed before, so read the live page; it does not state an unsubscribe deadline, and a small sender below 5,000 a day is not held to the bulk rules but should still follow them"
+  },
+  {
+    "id": "email-yahoo-senders",
+    "title": "Yahoo Sender Hub: sender requirements and best practices",
+    "url": "https://senders.yahooinc.com/best-practices/",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Bulk senders implement SPF and DKIM and publish a DMARC policy of at least p=none that passes, keep spam rate below 0.3%, implement a list-unsubscribe header with one-click unsubscribe for marketing and subscribed messages (RFC 8058 POST highly recommended), and honour unsubscribes within 2 days",
+    "limit": "Page says enforcement began in February 2024 and was rolled out gradually; it carries no revision date; the definition of a bulk sender and spam-rate basis sit elsewhere on Yahoo's site and were not read"
+  },
+  {
+    "id": "email-ftc-canspam",
+    "title": "FTC: CAN-SPAM Act compliance guide for business",
+    "url": "https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Commercial email needs accurate header information, a subject line that reflects the content, a clear disclosure that it is an advertisement, a valid physical postal address, a clear explanation of how to opt out, opt-outs honoured within 10 business days, and you cannot contract away responsibility for compliance; each violating email can bring penalties of up to $53,088",
+    "limit": "United States law only and the penalty figure is inflation-adjusted, so confirm the current amount; it does not require prior consent, unlike the UK and EU rules"
+  },
+  {
+    "id": "email-ico-pecr",
+    "title": "ICO: How do we comply with the PECR electronic mail marketing rules?",
+    "url": "https://ico.org.uk/for-organisations/direct-marketing-and-privacy-and-electronic-communications/guidance-on-direct-marketing-using-electronic-mail/how-do-we-comply-with-the-pecr-electronic-mail-marketing-rules/",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "UK rules for marketing email to individuals: consent must be freely given, specific, informed and unambiguous, with no pre-ticked boxes, silence or inactivity; consent is not transferable and must be easy to withdraw; the products and services soft opt-in has five listed conditions; every message must offer a simple, free opt-out",
+    "limit": "UK law (PECR with UK GDPR), not EU member-state law or other regimes, though EU GDPR is similar in its consent definition; the page shows a 5 February 2026 date for the new charity rule and no other revision date; this is regulator guidance, not legal advice"
+  },
+  {
+    "id": "email-apple-mpp",
+    "title": "Apple Support: Use Mail Privacy Protection on Mac",
+    "url": "https://support.apple.com/guide/mail/use-mail-privacy-protection-mlhl03be2866/16.0/mac/14.0",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "With Protect Mail Activity on, remote content is privately downloaded in the background when you receive a message instead of when you view it, and the user's IP address is hidden from senders",
+    "limit": "Apple's page does not mention open rates or marketing tools; that a tracking image loaded on delivery can register an open without reading is my inference from this mechanism; it is a user setting, so its share of your list is unknown, and the guide is for Mail on Mac version 16.0 while Apple's iPhone and iPad guides were not read"
   }
 ]
