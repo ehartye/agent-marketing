@@ -1,0 +1,5 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+steam-adds,orbit,orbit-video,steam,wishlists,64,2026-10-01,2026-10-07,period,"Steam wishlist additions from Wishlist Reporting; deletions are recorded separately",https://example.com/steam-evidence,2026-10-08T12:00:00Z
+steam-deletes,orbit,orbit-video,steam,wishlists,9,2026-10-01,2026-10-07,period,"Steam wishlist deletions from Wishlist Reporting",https://example.com/steam-evidence,2026-10-08T12:00:00Z
+steam-purchases,orbit,orbit-video,steam,purchases,3,2026-10-01,2026-10-07,period,"Steam purchases made from the wishlist, from Wishlist Reporting",https://example.com/steam-evidence,2026-10-08T12:00:00Z
+steam-tracked,orbit,orbit-video,steam,views,310,2026-10-01,2026-10-07,period,"Steam UTM tracked visits: store page visits by users logged in to Steam; a lower bound",https://example.com/steam-evidence,2026-10-08T12:00:00Z
