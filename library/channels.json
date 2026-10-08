@@ -34,12 +34,12 @@
     "audiences": ["player", "artist", "learner", "parent"],
     "hours": 3,
     "cost": "0 plus production effort",
-    "approach": "Show the payoff or a useful tutorial with a directly tryable next step",
-    "measure": "Engaged viewing, tagged visits, successful first use and return",
-    "risk": "Public playback starts can look impressive without product interest",
-    "complexity": "Moderate production; definitions and reporting delay matter",
-    "maintainability": "Batch footage; keep one reusable demonstration format",
-    "referenceIds": ["youtube", "measurement"]
+    "approach": "Show the payoff or a useful tutorial with a directly tryable next step, with the audience setting decided before upload",
+    "measure": "Views and impressions click-through rate as exposure, then tagged visits, successful first use and return",
+    "risk": "Public playback starts can look impressive without product interest; mislabelling the audience setting or misleading titles and thumbnails can bring restrictions or strikes",
+    "complexity": "Moderate production; metric definitions, reporting delay and the made-for-kids decision all matter",
+    "maintainability": "Batch footage; keep one reusable demonstration format; re-check YouTube's metric definitions, which have changed",
+    "referenceIds": ["youtube", "youtube-view-definition", "youtube-impressions-ctr", "youtube-made-for-kids", "youtube-spam-policy", "measurement"]
   },
   {
     "id": "tiktok",
@@ -104,12 +104,12 @@
     "audiences": ["community"],
     "hours": 2,
     "cost": "0",
-    "approach": "Inspect community rules; contribute a useful native explanation where promotion is welcome",
-    "measure": "Objections, tagged use and return from the specific community",
-    "risk": "Repetitive promotion can be spam; no blanket posting allowance",
+    "approach": "Inspect community rules; contribute a useful native explanation where promotion is welcome, and ask for objections before asking for visits",
+    "measure": "Objections, tagged use and return from the specific community, with votes and comments read by hand",
+    "risk": "Repetitive promotion can be spam; no blanket posting allowance; some communities ban self-promotion outright; accounts can be banned",
     "complexity": "Community-by-community judgment and participation",
-    "maintainability": "Build relationships; do not run a promotional bot",
-    "referenceIds": ["reddit"]
+    "maintainability": "Build relationships; do not run a promotional bot; re-read each community's rules before each post",
+    "referenceIds": ["reddit", "reddit-reddiquette", "reddit-minimum-age", "measurement"]
   },
   {
     "id": "itch",
@@ -132,12 +132,12 @@
     "audiences": ["learner", "developer", "user"],
     "hours": 3,
     "cost": "0 plus sustained writing",
-    "approach": "Answer a real recurring question with a useful page and a working example",
-    "measure": "Qualified search visits and successful use",
-    "risk": "Slow feedback; ranking is not guaranteed",
-    "complexity": "Instrumentation, indexable pages and topic judgment",
-    "maintainability": "Update examples and monitor query intent",
-    "referenceIds": ["discovery", "measurement"]
+    "approach": "Answer a real recurring question with a useful page and a working example, then read Search Console for the queries that show it",
+    "measure": "Search Console clicks and impressions by query and page, then qualified visits and successful use from your own analytics",
+    "risk": "Slow feedback, from hours to several months; ranking is not guaranteed; mass-produced or manipulative pages can be demoted or removed",
+    "complexity": "Instrumentation, indexable pages, Search Console setup and topic judgment",
+    "maintainability": "Update examples and monitor query intent; avoid scaled or doorway pages",
+    "referenceIds": ["search-console-metrics", "search-console-data", "search-spam-policies", "search-seo-starter-guide", "discovery", "measurement"]
   },
   {
     "id": "email",

@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+se-impr,orbit,orbit-video,search,impressions,4300,2026-10-01,2026-10-07,period,"Search Console impressions: a link to the site was shown in Google Search results, counted when it appears on the current results page",https://example.com/search-evidence,2026-10-08T12:00:00Z
+se-clicks,orbit,orbit-video,search,clicks,96,2026-10-01,2026-10-07,period,"Search Console clicks: user went from a Google result to a page outside Google; CTR is clicks divided by impressions",https://example.com/search-evidence,2026-10-08T12:00:00Z
+se-visits,orbit,orbit-video,search,visitors,88,2026-10-01,2026-10-07,period,"Tagged organic landing sessions counted by the site's own analytics, which differ from Search Console clicks",https://example.com/search-evidence,2026-10-08T12:00:00Z

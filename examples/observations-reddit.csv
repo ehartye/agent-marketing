@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+rd-votes,orbit,orbit-video,reddit,votes,57,2026-10-01,2026-10-07,period,"Net score shown on the post, read by hand from Reddit on 2026-10-07",https://example.com/reddit-evidence,2026-10-08T12:00:00Z
+rd-comments,orbit,orbit-video,reddit,comments,14,2026-10-01,2026-10-07,period,"Comments on the post read and logged by hand, including objections and moderator replies",https://example.com/reddit-evidence,2026-10-08T12:00:00Z
+rd-clicks,orbit,orbit-video,reddit,clicks,33,2026-10-01,2026-10-07,period,"Tagged visits from the post link (utm_source=reddit), counted by the site's own analytics",https://example.com/reddit-evidence,2026-10-08T12:00:00Z

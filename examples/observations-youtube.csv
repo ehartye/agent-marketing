@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+yt-views,orbit,orbit-video,youtube,views,1240,2026-10-01,2026-10-07,period,"YouTube views: counted the moment a video starts to play across all formats; validated and subject to adjustment",https://example.com/youtube-evidence,2026-10-08T12:00:00Z
+yt-impr,orbit,orbit-video,youtube,impressions,9800,2026-10-01,2026-10-07,period,"YouTube thumbnail impressions: times thumbnails were shown on YouTube, on screen over one second with at least half visible",https://example.com/youtube-evidence,2026-10-08T12:00:00Z
+yt-clicks,orbit,orbit-video,youtube,clicks,41,2026-10-01,2026-10-07,period,"Tagged visits from the description link (utm_source=youtube), counted by the site's own analytics",https://example.com/youtube-evidence,2026-10-08T12:00:00Z

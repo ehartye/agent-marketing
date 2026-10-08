@@ -556,5 +556,95 @@
     "checkedAt": "2026-10-08",
     "supports": "The API needs an access token and apps are read-only by default; it states the API must not be used for commercial purposes and asks businesses to contact Product Hunt; fair-use rate limiting; attribution requested",
     "limit": "The GraphQL field reference returned 404, so vote and comment field names are unverified; the plugin has no Product Hunt adapter"
+  },
+  {
+    "id": "youtube-view-definition",
+    "title": "YouTube Help: how views are counted",
+    "url": "https://support.google.com/youtube/answer/2991785?hl=en",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "From August 24, 2026 a view is counted the moment a video starts to play, across Shorts, long-form videos and live streams; YouTube checks that views come from real people, which takes time, and counts can change after publication or be slowed, frozen or adjusted; Realtime shows only estimates",
+    "limit": "Page describes counting and validation in general terms and gives no delay in hours or days for final numbers; older data may use a different view definition, so compare periods carefully"
+  },
+  {
+    "id": "youtube-impressions-ctr",
+    "title": "YouTube Help: check your impressions and watch time",
+    "url": "https://support.google.com/youtube/answer/9314486?hl=en",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Thumbnail impressions are how many times thumbnails were shown to viewers on YouTube; an impression counts when the thumbnail is on screen for more than one second with at least half visible; impressions click-through rate is how often viewers watched a video after seeing the thumbnail",
+    "limit": "A separate YouTube FAQ page, fetched, adds that impressions on external websites and end screens are not counted and views from other sources can make CTR differ from views divided by impressions; neither page gives a target CTR for a new channel"
+  },
+  {
+    "id": "youtube-made-for-kids",
+    "title": "YouTube Help: determining if your content is made for kids",
+    "url": "https://support.google.com/youtube/answer/9528076?hl=en",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Creators must designate whether content is made for kids and it is their legal responsibility to comply with COPPA and other laws; factors include whether children are the intended or actual audience, child actors or characters, and early-education or game content; mixed-audience content that targets children as one audience counts; general audience content (teens or older) should be set as not made for kids; made-for-kids videos are more likely to be recommended alongside other kids' videos",
+    "limit": "Page is guidance, not legal advice, and no single factor decides; it does not itself list the feature restrictions, which sit on other YouTube Help pages not fetched here, so check them before relying on comments or other features for study-app audiences"
+  },
+  {
+    "id": "youtube-spam-policy",
+    "title": "YouTube Help: spam, deceptive practices and scams policy",
+    "url": "https://support.google.com/youtube/answer/2801973?hl=en",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Titles, thumbnails and descriptions that trick users into clicking are prohibited; repetitive or deceptive comments and messages meant to drive traffic are spam; bots, coercion or rewards for likes, views or subscribers are prohibited while asking viewers to like, comment or subscribe is allowed; violations can bring removal, strikes or termination",
+    "limit": "Fetched summary does not reproduce every example; enforcement judgments are YouTube's, and the page does not give thresholds"
+  },
+  {
+    "id": "reddit-reddiquette",
+    "title": "Reddit Help: Reddiquette",
+    "url": "https://support.reddithelp.com/hc/en-us/articles/205926439-Reddiquette",
+    "quality": "medium",
+    "checkedAt": "2026-10-08",
+    "supports": "Search extracts say Reddiquette is an informal expression of the values of many Reddit users, suggests a 9:1 ratio so only 1 in 10 submissions is your own content, and warns that posts that are only self-promotion or consistently downvoted may mark you as a spammer",
+    "limit": "The page returned 403 to the fetch, so this rests on search-result extracts only and is not verified against the page body; Reddiquette is informal guidance, not an enforced rule"
+  },
+  {
+    "id": "reddit-minimum-age",
+    "title": "Reddit Help: how old do I need to be to use Reddit",
+    "url": "https://support.reddithelp.com/hc/en-us/articles/360043066492-How-old-do-I-need-to-be-to-use-Reddit",
+    "quality": "medium",
+    "checkedAt": "2026-10-08",
+    "supports": "Search extracts say a Reddit account requires age 13 or over, some countries set higher limits (16 in Australia, 16 in Brazil with parental approval for 13 to 15), and mature communities require users to be 18 or over, with younger users gated by default",
+    "limit": "The page returned 403 to the fetch, so this rests on search-result extracts only; country rules change, so check the help page before targeting any region"
+  },
+  {
+    "id": "search-console-metrics",
+    "title": "Search Console Help: what are impressions, position, and clicks",
+    "url": "https://support.google.com/webmasters/answer/7042828?hl=en",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Impressions are counted when a link to your site appears, including below the fold when no click on see more is needed; clicks are counted when a user goes from Google to a page outside Google; CTR is clicks divided by impressions; position uses the topmost position per query then averages across queries, and is recorded only when the link got an impression",
+    "limit": "Page explains the metrics but not how well they predict real use; average position is an average over queries and not a live rank"
+  },
+  {
+    "id": "search-console-data",
+    "title": "Search Console Help: Performance report (Search results), about the data",
+    "url": "https://support.google.com/webmasters/answer/17011364?hl=en",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "The newest data is sometimes preliminary and may change within hours; by default only complete days are shown; chart totals are aggregated by property while tables aggregate by page, so impressions, CTR and average position differ between them; exports show dashes and tildes as zeros",
+    "limit": "Fetched text did not cover data retention or anonymized queries; a search extract mentions an impressions logging error from May 2025 to April 2026 on a data-anomalies page that was not fetched"
+  },
+  {
+    "id": "search-spam-policies",
+    "title": "Google Search Central: spam policies for Google web search",
+    "url": "https://developers.google.com/search/docs/essentials/spam-policies",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Lists spam categories including cloaking, doorway abuse, keyword stuffing, link spam, scaled content abuse, site reputation abuse and thin affiliation; scaled content abuse is generating many pages mainly to manipulate rankings rather than help users; violating sites may rank lower or not appear, via automated systems or manual action",
+    "limit": "Page states it was last updated 2026-08-28; spam policy is one part of Search Essentials, and this page does not cover technical requirements or helpful-content guidance"
+  },
+  {
+    "id": "search-seo-starter-guide",
+    "title": "Google Search Central: SEO starter guide",
+    "url": "https://developers.google.com/search/docs/fundamentals/seo-starter-guide",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Every change takes time to be reflected; some changes take effect in a few hours, others could take several months; the guide suggests waiting a few weeks to assess whether work had beneficial effects; Search Console helps monitor how a site performs on Google Search",
+    "limit": "Gives no typical timeline for a new site; the guide does not describe specific reports or metrics"
   }
 ]
