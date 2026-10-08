@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+github-stars,orbit,orbit-video,github,stars,41,2026-10-01,2026-10-07,period,"GitHub stargazers gained over the period: count on 2026-10-07 minus count on 2026-10-01; removed stars are netted out",https://example.com/github-evidence,2026-10-08T12:00:00Z
+github-views,orbit,orbit-video,github,views,620,2026-10-01,2026-10-07,period,"GitHub traffic API page views, the sum of daily count values for the period; uniques are not summed",https://example.com/github-evidence,2026-10-08T12:00:00Z
+github-clones,orbit,orbit-video,github,clones,58,2026-10-01,2026-10-07,period,"GitHub traffic API full clones (not fetches), the sum of daily count values for the period",https://example.com/github-evidence,2026-10-08T12:00:00Z

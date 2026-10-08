@@ -475,5 +475,86 @@
     "checkedAt": "2026-10-08",
     "supports": "With Protect Mail Activity on, remote content is privately downloaded in the background when you receive a message instead of when you view it, and the user's IP address is hidden from senders",
     "limit": "Apple's page does not mention open rates or marketing tools; that a tracking image loaded on delivery can register an open without reading is my inference from this mechanism; it is a user setting, so its share of your list is unknown, and the guide is for Mail on Mac version 16.0 while Apple's iPhone and iPad guides were not read"
+  },
+  {
+    "id": "github-traffic-guide",
+    "title": "GitHub Docs: viewing traffic to a repository",
+    "url": "https://docs.github.com/en/repositories/viewing-activity-and-data-for-your-repository/viewing-traffic-to-a-repository",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "The traffic page shows visitors from the past 14 days; referring sites exclude search engines and GitHub itself; popular content links to the specific content that drew traffic; full clones are counted, not fetches; anyone with push access can view traffic",
+    "limit": "The page does not define views or unique visitors; the REST API page says write access where this page says push access, so check which applies to your token"
+  },
+  {
+    "id": "github-acceptable-use",
+    "title": "GitHub Acceptable Use Policies",
+    "url": "https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Automated excessive bulk activity and coordinated inauthentic activity are banned; inauthentic interactions and rank abuse such as automated starring or following are prohibited; incentivised fake engagement is barred; promotional text in a README or description must relate to the hosted project; excessive promotional content in other users' issues is not allowed",
+    "limit": "Page gives no effective date in the text read; section numbers may change; it does not say how enforcement is decided"
+  },
+  {
+    "id": "github-stars",
+    "title": "GitHub Docs: saving repositories with stars",
+    "url": "https://docs.github.com/en/get-started/exploring-projects-on-github/saving-repositories-with-stars",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Starring saves a repository for later and shows appreciation to the maintainer; many GitHub repository rankings and Explore depend on star counts; clicking Starred again removes the repository from the list",
+    "limit": "The page defines a star only as appreciation and says nothing about endorsement, quality or use; it gives no star-count accuracy or history"
+  },
+  {
+    "id": "hn-guidelines",
+    "title": "Hacker News Guidelines",
+    "url": "https://news.ycombinator.com/newsguidelines.html",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Please do not use HN primarily for promotion; posting your own work part of the time is fine, but the primary use should be curiosity; do not solicit upvotes, comments or submissions; vote and comment for what you find interesting, not for promotion",
+    "limit": "Page states no date; the text read has no rule on voting rings by that name; the guidelines are judgement-based and moderators decide"
+  },
+  {
+    "id": "hn-faq",
+    "title": "Hacker News FAQ",
+    "url": "https://news.ycombinator.com/newsfaq.html",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Ranking divides points by a power of the time since submission, with user flags, anti-abuse software and moderator action also acting; some votes are dropped by anti-abuse software; a small number of reposts is ok if a story had no significant attention in the last year or so; do not delete and resubmit",
+    "limit": "Ranking formula is described in general terms only; the text read does not mention a second-chance pool"
+  },
+  {
+    "id": "product-hunt-how-it-works",
+    "title": "Product Hunt Launch Guide: how Product Hunt works",
+    "url": "https://www.producthunt.com/launch/how-product-hunt-works",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "The leaderboard changes through the day based on upvotes, comments, time since submission and other undisclosed factors; a launch must be new, a product and usable (closed betas usually do not qualify); no company or brand accounts; do not pay anyone to hunt or send traffic; paying for upvotes or spamming can get the product removed",
+    "limit": "The page describes no maker metrics and does not address asking for upvotes; it is promotional guidance, not performance evidence"
+  },
+  {
+    "id": "product-hunt-preparing",
+    "title": "Product Hunt Launch Guide: preparing for launch",
+    "url": "https://www.producthunt.com/launch/preparing-for-launch",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Tagline under 60 characters; description up to 500 characters; at least two gallery images; a first comment is not required, 70 percent of products reaching Product of the Day, Week or Month had one, and it should ask for feedback, not upvotes; the submission link must be the primary product page, and shortened or tracking links are not accepted",
+    "limit": "The 70 percent figure is Product Hunt's own claim with no stated method or base rate, so it is not causal evidence; rules in this guide can change"
+  },
+  {
+    "id": "product-hunt-sharing",
+    "title": "Product Hunt Launch Guide: sharing your launch",
+    "url": "https://www.producthunt.com/launch/sharing-your-launch",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Ask for feedback, comments and opinions, not upvotes; asking specifically for upvotes is against policy and posts may be removed; contests that reward upvotes are not allowed and can lead to the product being unfeatured; do not spam or send scraped unsolicited emails",
+    "limit": "The page does not discuss tracking parameters or analytics"
+  },
+  {
+    "id": "product-hunt-api",
+    "title": "Product Hunt API documentation",
+    "url": "https://api.producthunt.com/v2/docs",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "The API needs an access token and apps are read-only by default; it states the API must not be used for commercial purposes and asks businesses to contact Product Hunt; fair-use rate limiting; attribution requested",
+    "limit": "The GraphQL field reference returned 404, so vote and comment field names are unverified; the plugin has no Product Hunt adapter"
   }
 ]

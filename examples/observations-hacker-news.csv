@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+hn-votes,orbit,orbit-video,hacker-news,votes,57,2026-10-01,2026-10-07,period,"Hacker News item score from the official API: the story's score",https://example.com/hacker-news-evidence,2026-10-08T12:00:00Z
+hn-comments,orbit,orbit-video,hacker-news,comments,23,2026-10-01,2026-10-07,period,"Hacker News item descendants from the official API: total comment count for the story",https://example.com/hacker-news-evidence,2026-10-08T12:00:00Z
+hn-visits,orbit,orbit-video,hacker-news,clicks,310,2026-10-01,2026-10-07,period,"Tagged visits from the Show HN link (utm_source=hacker-news), counted by the site's own analytics",https://example.com/hacker-news-evidence,2026-10-08T12:00:00Z
