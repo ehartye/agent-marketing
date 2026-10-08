@@ -22,7 +22,7 @@ marketing channels [project-id] --workspace <file>
 marketing experiment <experiment-id> --workspace <file>
 marketing utm <url> --source youtube --medium organic-video --campaign launch --content clip-a
 marketing monitor --workspace <file> [--source id]
-marketing serve --workspace <file> [--port 4318]
+marketing serve --workspace <file> [--port 4318] [--idle-minutes 30]
 marketing export --workspace <file> [--format json|csv] [--out path]
 marketing rules [topic]
 marketing help
@@ -48,6 +48,10 @@ Use the revision returned by the latest successful write or validation; every sa
 The authoritative document is stored as optional `projects[].strategy` or `initiatives[].brief`, each `{ "markdown": "# Full brief…", "updatedAt": "2026-10-08T12:00:00.000Z" }`. Markdown is nonempty and limited to 100,000 characters. Existing workspaces require no migration. Imports of older project/initiative records that omit these fields preserve saved documents; explicitly supplied documents replace them and must validate. `null` is not a deletion request. Other record fields retain full-record upsert semantics. Use the updated runtime for writes: older binaries do not implement document validation or preservation. Markdown and workspace exports reject the active workspace, including filesystem aliases, as their output file.
 
 In the desk, choose the project under **Decide & plan** to read/download its strategy, then the initiative for its campaign brief. The workspace JSON export includes document text and can be imported into a fresh workspace; CSV only carries observations. Downloaded `.md` files are editable copies: saving them back is explicit, with no automatic file synchronization. External images and linked assets are not bundled. The ledger stores the latest document, not document history; keep workspace backups for earlier versions. The HTTP importer remains limited to 2 MB, so larger complete backups can be restored with the CLI.
+
+## Desk lifetime
+
+`serve` is a one-shot local process, not a service. It stops itself after `--idle-minutes` (default 30) with no requests; `--idle-minutes 0` keeps it running. A desk page that is open and visible sends a quiet heartbeat (`/api/ping`, no data) once a minute, so a desk you are reading stays up and a forgotten one does not linger. If the desk stops while a page is still open, the page says so; run `serve` again and refresh. The process exits normally and prints why on stderr.
 
 ## The studio workspace
 

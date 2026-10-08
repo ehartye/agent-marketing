@@ -45,7 +45,7 @@ const help = {
     "experiment <experiment-id>",
     "utm <url> --source x --medium y --campaign z [--content c]",
     "monitor [--source id]",
-    "serve [--port 4318]",
+    "serve [--port 4318] [--idle-minutes 30]",
     "export [--format json|csv] [--out file]",
     "rules [topic]",
     "help",
@@ -76,6 +76,7 @@ try {
         "title",
         "kind",
         "vault-url",
+        "idle-minutes",
       ].map((k) => [k, { type: "string" }]),
       ),
     },
@@ -199,10 +200,16 @@ try {
     if (result.sources.some((s) => s.errors.length)) process.exitCode = 1;
   } else if (command === "serve") {
     const { startServer } = await import("../src/server.mjs");
+    const minutes = v["idle-minutes"] === undefined ? 30 : Number(v["idle-minutes"]);
+    if (!Number.isFinite(minutes) || minutes < 0)
+      throw new Error("--idle-minutes must be 0 (never) or a positive number");
     const running = await startServer(file, {
       port: v.port === undefined ? 4318 : Number(v.port),
+      idleMs: minutes * 60 * 1000,
     });
-    result = { url: running.url, workspace: file };
+    running.closed.then(() =>
+      console.error(`Desk stopped after ${minutes} idle minutes (no requests and no open page). Run serve again to reopen it.`));
+    result = { url: running.url, workspace: file, idleMinutes: minutes };
   } else if (command === "export") {
     const w = readWorkspace(file);
     const format = v.format || "json";
