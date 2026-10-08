@@ -56,6 +56,20 @@
     "referenceIds": ["tiktok-disclosure", "tiktok-video-metrics", "tiktok-integrity", "measurement"]
   },
   {
+    "id": "facebook",
+    "name": "Facebook Groups and Pages",
+    "categories": ["game", "creative", "app", "education"],
+    "audiences": ["parent", "family", "community", "local"],
+    "hours": 2,
+    "cost": "0 for organic posts; ads are separate spend",
+    "approach": "Share one tryable link in a relevant Group under its rules, or on your own Page, and disclose any commercial relationship",
+    "measure": "Tagged link visits, replies and objections, first use and return, with Page impressions or Views kept as exposure only",
+    "risk": "Exposure counts overstate interest; Group promotion rules vary; very high-frequency posting, bought engagement and misleading links break the spam rules",
+    "complexity": "Moderate: Group-by-Group judgment, and Meta renames and redefines its metrics",
+    "maintainability": "Show up as a participant, not a poster; re-check metric names when exporting",
+    "referenceIds": ["facebook-insights", "meta-spam", "facebook-branded-content", "measurement"]
+  },
+  {
     "id": "reddit",
     "name": "Relevant Reddit communities",
     "categories": ["tool", "app", "game", "education", "creative"],
