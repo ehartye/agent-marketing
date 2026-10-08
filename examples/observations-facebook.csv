@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+fb-impr,orbit,orbit-video,facebook,impressions,2400,2026-10-01,2026-10-07,period,"Facebook Page impressions: times any content from or about the Page entered a person's screen",https://example.com/facebook-evidence,2026-10-08T12:00:00Z
+fb-clicks,orbit,orbit-video,facebook,clicks,41,2026-10-01,2026-10-07,period,"Tagged visits from the post link (utm_source=facebook), counted by the site's own analytics",https://example.com/facebook-evidence,2026-10-08T12:00:00Z
+fb-comments,orbit,orbit-video,facebook,comments,9,2026-10-01,2026-10-07,period,"Group comments read and logged by hand, including objections",https://example.com/facebook-evidence,2026-10-08T12:00:00Z

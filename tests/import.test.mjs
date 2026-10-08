@@ -38,19 +38,19 @@ test("campaign tagging preserves existing query/fragment and canonicalizes label
   assert.equal(u.searchParams.get("utm_content"), "clip-a");
   assert.throws(() => taggedUrl("https://example.com", { source: "x" }));
 });
-test("TikTok example import validates and keeps view definitions distinct", () => {
-  const base = JSON.parse(readFileSync("examples/studio.json", "utf8")),
-    patch = parseImport(
-      readFileSync("examples/observations-tiktok.csv", "utf8"),
-      "csv",
-    ),
-    next = {
+for (const channel of ["tiktok", "facebook"]) {
+  test(`${channel} example import validates and keeps definitions distinct`, () => {
+    const base = JSON.parse(readFileSync("examples/studio.json", "utf8")),
+      patch = parseImport(
+        readFileSync(`examples/observations-${channel}.csv`, "utf8"),
+        "csv",
+      );
+    validateWorkspace({
       ...base,
       observations: [...base.observations, ...patch.observations],
-    };
-  validateWorkspace(next);
-  const views = patch.observations.filter((o) => o.metric === "views");
-  assert.equal(views.length, 2);
-  assert.notEqual(views[0].definition, views[1].definition);
-  assert.ok(patch.observations.every((o) => o.channel === "tiktok"));
-});
+    });
+    assert.ok(patch.observations.every((o) => o.channel === channel));
+    const defs = patch.observations.map((o) => o.definition);
+    assert.equal(new Set(defs).size, defs.length);
+  });
+}

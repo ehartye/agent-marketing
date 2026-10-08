@@ -11,6 +11,7 @@ export const collections = [
 export const channels = [
   "youtube",
   "tiktok",
+  "facebook",
   "reddit",
   "hacker-news",
   "github",
