@@ -223,5 +223,32 @@
     "checkedAt": "2026-10-08",
     "supports": "Discovery/information friction as an alternative explanation for unmet gamer desire",
     "limit": "2021 selected enthusiast usage, modeled welfare, working version; FTC hosting is not endorsement; captured tables degraded"
+  },
+  {
+    "id": "tiktok-disclosure",
+    "title": "TikTok Ads Help: content disclosure setting for creators",
+    "url": "https://ads.tiktok.com/help/article/about-the-content-disclosure-setting-for-creators",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Posts promoting a brand, product or service must have the content disclosure setting on; legal requirements vary by country and the US FTC Endorsement Guides apply",
+    "limit": "Page shows Last updated April 2026; its wording on how the setting is labelled differs from third-party guides; third-party guides describe separate 'Your brand' and 'Branded content' choices that this page does not mention, so confirm the labels in the app before posting"
+  },
+  {
+    "id": "tiktok-video-metrics",
+    "title": "TikTok Ads Help: video play metrics",
+    "url": "https://ads.tiktok.com/help/article/video-play?lang=en",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Video views count playback starts with replays excluded; average play time includes replays; 'video views at 100%' counts full-length plays",
+    "limit": "Ads-side definitions, last updated November 2025; creator-account analytics screens use different terms and may not match; no metric named total play time or completion rate on this page"
+  },
+  {
+    "id": "tiktok-integrity",
+    "title": "TikTok Integrity and Authenticity policy",
+    "url": "https://www.tiktok.com/safety/en/policies-and-engagement/integrity-authenticity",
+    "quality": "medium",
+    "checkedAt": "2026-10-08",
+    "supports": "Bulk or automated engagement, bots and trading in artificial engagement are prohibited; manipulative engagement bait can lose For You eligibility",
+    "limit": "Page body could not be fetched directly; wording is from search extracts of this page, which was labelled as the May 2024 version; a newer guideline set may exist, so read the live page before relying on exact text"
   }
 ]

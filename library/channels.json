@@ -42,6 +42,20 @@
     "referenceIds": ["youtube", "measurement"]
   },
   {
+    "id": "tiktok",
+    "name": "TikTok",
+    "categories": ["game", "creative", "app", "education"],
+    "audiences": ["player", "artist", "learner", "parent", "viewer"],
+    "hours": 3,
+    "cost": "0 plus production effort",
+    "approach": "Show the real payoff in the first seconds as a short vertical video, with one tryable next step in the profile link or caption",
+    "measure": "Video views at 100% and average play time by video length, tagged profile-link visits, first use and return",
+    "risk": "Views measure attention, not first use or payment; promotional posts need the content disclosure setting; engagement tricks and bulk automation break integrity rules",
+    "complexity": "Moderate: vertical production and in-app analytics that differ from the ads-side definitions",
+    "maintainability": "Batch clips from real play or use; no automation, bought engagement or reposting bots",
+    "referenceIds": ["tiktok-disclosure", "tiktok-video-metrics", "tiktok-integrity", "measurement"]
+  },
+  {
     "id": "reddit",
     "name": "Relevant Reddit communities",
     "categories": ["tool", "app", "game", "education", "creative"],

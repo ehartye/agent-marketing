@@ -2,6 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parseImport, taggedUrl } from "../src/import.mjs";
 import { ledger } from "./fixtures.mjs";
+import { readFileSync } from "node:fs";
+import { validateWorkspace } from "../src/schema.mjs";
 test("quoted CSV handles multiline definitions and converts numeric values", () => {
   const x = parseImport(
     'id,value,definition\r\na,12,"views, public\nplay starts"\r\n',
@@ -35,4 +37,20 @@ test("campaign tagging preserves existing query/fragment and canonicalizes label
   assert.equal(u.searchParams.get("utm_source"), "youtube");
   assert.equal(u.searchParams.get("utm_content"), "clip-a");
   assert.throws(() => taggedUrl("https://example.com", { source: "x" }));
+});
+test("TikTok example import validates and keeps view definitions distinct", () => {
+  const base = JSON.parse(readFileSync("examples/studio.json", "utf8")),
+    patch = parseImport(
+      readFileSync("examples/observations-tiktok.csv", "utf8"),
+      "csv",
+    ),
+    next = {
+      ...base,
+      observations: [...base.observations, ...patch.observations],
+    };
+  validateWorkspace(next);
+  const views = patch.observations.filter((o) => o.metric === "views");
+  assert.equal(views.length, 2);
+  assert.notEqual(views[0].definition, views[1].definition);
+  assert.ok(patch.observations.every((o) => o.channel === "tiktok"));
 });
