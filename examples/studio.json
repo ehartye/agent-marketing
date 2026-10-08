@@ -5,10 +5,7 @@
     {
       "id": "orbit",
       "name": "Orbit Garden · demo",
-      "audience": [
-        "indie players",
-        "relaxing-game fans"
-      ],
+      "audience": ["indie players", "relaxing-game fans"],
       "category": "game",
       "problem": "A relaxing five-minute break",
       "promise": "Grow a little world in five minutes",
@@ -21,10 +18,7 @@
     {
       "id": "sketch",
       "name": "Sketch Relay · demo",
-      "audience": [
-        "developers",
-        "creative makers"
-      ],
+      "audience": ["developers", "creative makers"],
       "category": "tool",
       "problem": "Sharing a quick UI idea takes too long",
       "promise": "Turn a rough sketch into a runnable interaction",

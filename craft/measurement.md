@@ -1,0 +1,13 @@
+# Measurement and monitoring
+
+Define the unit and window before using a number. [GA4's schema](https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema) distinguishes sessions, users, engagement and key-event rates. [YouTube's changelog](https://developers.google.com/youtube/analytics/revision_history) records changing view definitions and reporting delays. A playback start, engaged view, visitor and successful first session are different outcomes.
+
+The observation contract preserves metric, exact definition, value, channel, initiative, start/end, source URL, collection timestamp, kind, optional cohort and currency. `period` means activity inside that window; `snapshot` means a cumulative state of a stable `series`. Same IDs replace; they do not append another increment. The report selects the latest snapshot for totals, preserves history for charts, and flags overlapping period totals rather than adding them. Do not import a rolling 14-day total as a daily increment.
+
+Counts with matching attributed channel/initiative and identical windows can produce an observed starts/visitors ratio. Without a verified cohort it is not a person-level conversion probability. Returned users need a defined starting cohort and follow-up window. Do not sum daily distinct visitors into monthly distinct people, or platform reach into total unique humans. Costs and revenue require a currency; no silent currency conversion occurs.
+
+[UTM tagging](https://support.google.com/analytics/answer/10917952?hl=en) identifies attributed traffic. [Gordon's original working paper](https://www.kellogg.northwestern.edu/faculty/gordon_b/files/fb_comparison.pdf) shows why observational ad estimates can diverge from randomized effects. Do not describe tagged purchases as purchases caused by a post.
+
+GitHub monitoring reads public stars and optional repository traffic; the latter needs appropriate `GITHUB_TOKEN` access and retains [14 days](https://docs.github.com/en/rest/metrics/traffic?apiVersion=2026-03-10). Collect daily counts weekly to preserve history; unique counts remain per-day definitions. HN monitoring uses the [official API](https://github.com/HackerNews/API) for scores, comment counts and a bounded comment sample. Other platforms use authorized exports normalized to the ledger's CSV/JSON contract. No scraping or account connection is implied.
+
+At every review, record unavailable sources, last successful checks, sampling limits and late/incomplete periods. A missing metric is unknown, not zero. Compare spend and time with useful outcomes; acquisition-cost and ROI calculations require matching attribution scope and an economically appropriate outcome.

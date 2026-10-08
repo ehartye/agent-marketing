@@ -1,0 +1,17 @@
+{
+  "name": "agent-marketing",
+  "version": "0.1.0",
+  "description": "Evidence-led marketing of family-made tools, apps, games and projects: audience discovery, channel strategy, competitive research, campaigns, collateral, monitoring, reception and experiment decisions. Includes a portable CLI and local campaign desk.",
+  "author": { "name": "ehartye" },
+  "license": "MIT",
+  "keywords": [
+    "marketing",
+    "campaigns",
+    "analytics",
+    "research",
+    "sentiment",
+    "experiments",
+    "indie",
+    "family"
+  ]
+}
