@@ -59,6 +59,12 @@ test("UI shares ledger, detects stale edits, rejects foreign origins, and export
     ).json();
     assert.equal(exported.initiatives[0].status, "paused");
     assert.match(await (await fetch(base)).text(), /Campaign desk/);
+    for (const asset of ["/state.js", "/shared.js", "/chart.js", "/views/campaign.js", "/views/reception.js", "/views/research.js", "/views/experiments.js", "/views/results.js"]) {
+      const assetResponse = await fetch(base + asset);
+      assert.equal(assetResponse.status, 200, asset);
+      assert.match(assetResponse.headers.get("content-type"), /javascript/);
+    }
+    assert.equal((await fetch(base + "/views/not-an-asset.js")).status, 404);
   } finally {
     if (running) await new Promise((resolve) => running.server.close(resolve));
     rmSync(dir, { recursive: true, force: true });

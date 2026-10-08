@@ -1,402 +1,190 @@
-import { chartKey, chartLabel } from "/analysis.js";
-const $ = (id) => document.getElementById(id),
-  esc = (v) =>
-    String(v ?? "").replace(
-      /[&<>"']/g,
-      (c) =>
-        ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;",
-        })[c],
-    );
-let workspace,
-  data,
-  actions,
-  channels,
-  refs = [],
-  metricKey = "",
-  generation = 0;
-const num = (v) =>
-  v === null || v === undefined
-    ? "—"
-    : Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 });
-const pct = (v) =>
-  v === null || v === undefined ? "—" : (v * 100).toFixed(1) + "%";
-const empty = (text) => `<div class="empty">${esc(text)}</div>`;
-const link = (url, label) =>
-  `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)}</a>`;
-const refLinks = (ids) =>
-  (ids || [])
-    .map((id) => refs.find((r) => r.id === id))
-    .filter(Boolean)
-    .map((r) => link(r.url, r.title))
-    .join(" · ");
-function message(text, isError = false) {
+import { $, esc, num, restoreFocus } from "./shared.js";
+import { api, createDeskClient, reviewDrafts } from "./state.js";
+import { renderActivity, drawChart } from "./chart.js";
+import { renderCampaign } from "./views/campaign.js";
+import { renderReception } from "./views/reception.js";
+import { renderResearch } from "./views/research.js";
+import { renderExperiments } from "./views/experiments.js";
+import { renderResults } from "./views/results.js";
+
+const client = createDeskClient(), drafts = reviewDrafts();
+let metricKey = "", loading = true, writing = false, failed = false, generation = 0;
+const filterIds = { projectId: "project", initiativeId: "initiative", from: "from", to: "to" };
+const selection = () => Object.fromEntries(Object.entries(filterIds).map(([key, id]) => [key, $(id).value]));
+const tabs = [...document.querySelectorAll("[role=tab]")];
+
+function message(text, error = false, retry = false) {
   $("status").textContent = text;
-  $("status").classList.toggle("error", isError);
+  $("notice").hidden = !text;
+  $("notice").classList.toggle("error", error);
+  $("retry").hidden = !retry;
 }
-async function api(path, body) {
-  const response = await fetch(
-    path,
-    body
-      ? {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        }
-      : {},
-  );
-  const value = await response.json();
-  if (!response.ok) throw new Error(value.error || "Request failed");
-  return value;
+function syncControls() {
+  $("desk").setAttribute("aria-busy", String(loading || writing));
+  $("refresh").disabled = writing || loading;
+  $("import").disabled = writing || loading || failed;
+  $("collect").title = client.snapshot?.workspace.sources.length ? "Collect every registered source in this workspace" : "Register a source with market-monitor to enable collection";
+  $("filters").querySelectorAll("input, select, button").forEach(el => { el.disabled = writing; });
+  $("views").querySelectorAll("button, input, select").forEach(el => { el.disabled = writing || loading || failed; });
+  $("collect").disabled = writing || loading || failed || !client.snapshot?.workspace.sources.length;
 }
-function query() {
-  const q = new URLSearchParams();
-  for (const [key, id] of [
-    ["projectId", "project"],
-    ["initiativeId", "initiative"],
-    ["from", "from"],
-    ["to", "to"],
-  ])
-    if ($(id).value) q.set(key, $(id).value);
-  return "?" + q;
+function setView(id, focus = false) {
+  const active = tabs.find(tab => tab.dataset.tab === id) || tabs[0];
+  for (const tab of tabs) {
+    const selected = tab === active;
+    tab.setAttribute("aria-selected", String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+    $(tab.dataset.tab).hidden = !selected;
+  }
+  history.replaceState(null, "", location.pathname + location.search + "#" + active.dataset.tab);
+  if (focus) active.focus();
 }
-function project() {
-  return workspace.projects.find((p) => p.id === $("project").value);
-}
-function initiatives() {
-  return workspace.initiatives.filter(
-    (i) =>
-      (!$("project").value || i.projectId === $("project").value) &&
-      (!$("initiative").value || i.id === $("initiative").value),
-  );
+function render(snapshot) {
+  const { workspace, selection: scope, data } = snapshot;
+  for (const [id, rows, chosen, all] of [
+    ["project", workspace.projects, scope.projectId, "All projects"],
+    ["initiative", workspace.initiatives.filter(i => !scope.projectId || i.projectId === scope.projectId), scope.initiativeId, "All initiatives"],
+  ]) {
+    $(id).innerHTML = `<option value="">${all}</option>` + rows.map(row => `<option value="${esc(row.id)}">${esc(row.name)}</option>`).join("");
+    $(id).value = chosen;
+  }
+  const project = workspace.projects.find(p => p.id === scope.projectId);
+  $("project-summary").textContent = project ? project.promise : "Choose a project, inspect its evidence, and plan the next small test.";
+  $("project-objective").textContent = project?.objective || "Select a project for a recommendation tied to its goal.";
+  $("project-resources").textContent = project ? `${project.weeklyHours} hours/week · ${num(project.budget)} ${project.currency} test budget` : `${workspace.projects.length} projects in this workspace`;
+  $("revision").textContent = `Saved revision ${workspace.revision}`;
+  $("scope-summary").textContent = `${project?.name || "All projects"} · ${scope.initiativeId ? workspace.initiatives.find(i => i.id === scope.initiativeId)?.name : "All initiatives"} · ${scope.from || "Beginning"} → ${scope.to || "Latest"}. Dates limit readings and feedback; plans and research stay visible.`;
+  $("welcome").hidden = workspace.projects.length > 0;
+  $("data-scope").textContent = `${workspace.sources.length} registered sources across the workspace. Collection and downloads include every project; filters only change this view.`;
+  renderCampaign(snapshot);
+  metricKey = renderActivity(workspace, data, metricKey);
+  renderReception(snapshot, drafts);
+  renderResearch(snapshot);
+  renderExperiments(snapshot);
+  renderResults(snapshot);
+  $("warnings").innerHTML = data.warnings.map(w => `<li>${esc(w)}</li>`).join("");
+  $("updated").textContent = "Refreshed " + new Date().toLocaleTimeString();
+  const params = new URLSearchParams(Object.entries(scope));
+  history.replaceState(null, "", "?" + params + location.hash);
 }
 async function load(initial = false) {
   const current = ++generation;
-  const next = await api("/api/workspace");
-  if (current !== generation) return;
-  workspace = next;
-  if (initial) refs = await api("/api/references");
-  const selected = $("project").value;
-  $("project").innerHTML =
-    '<option value="">All projects</option>' +
-    workspace.projects
-      .map((p) => `<option value="${esc(p.id)}">${esc(p.name)}</option>`)
-      .join("");
-  $("project").value =
-    selected ||
-    (initial && workspace.projects.length ? workspace.projects[0].id : "");
-  const selectedInitiative = $("initiative").value;
-  $("initiative").innerHTML =
-    '<option value="">All initiatives</option>' +
-    workspace.initiatives
-      .filter((i) => !$("project").value || i.projectId === $("project").value)
-      .map((i) => `<option value="${esc(i.id)}">${esc(i.name)}</option>`)
-      .join("");
-  $("initiative").value = selectedInitiative;
-  if (!$("initiative").value) $("initiative").value = "";
-  const selection = query();
-  const results = await Promise.all([
-    api("/api/report" + selection),
-    api("/api/advise" + selection),
-    api("/api/channels" + selection),
-  ]);
-  if (current !== generation) return;
-  [data, actions, channels] = results;
-  render();
-  $("updated").textContent = "Refreshed " + new Date().toLocaleTimeString();
-}
-function render() {
-  const p = project();
-  $("project-summary").textContent = p
-    ? `${p.promise} · ${p.audience.join(", ")} · ${p.weeklyHours} hours/week · ${num(p.budget)} ${p.currency} test budget`
-    : "Your portfolio, with a trail from each result to its source.";
-  $("revision").textContent = `Ledger revision ${workspace.revision}`;
-  const a = actions[0];
-  $("decision").innerHTML = a
-    ? `<div class="decision"><div><span class="label">EVIDENCE</span><h2>${esc(a.title)}</h2><p>${esc(a.reason)}</p>${a.evidence
-        .map((id) => {
-          const o =
-            workspace.observations.find((x) => x.id === id) ||
-            workspace.reactions.find((x) => x.id === id) ||
-            workspace.evidence.find((x) => x.id === id);
-          return o ? link(o.url, id) : esc(id);
-        })
-        .join(
-          " · ",
-        )}</div><div><span class="label">NEXT TEST</span><p>${esc(a.next)}</p><p>${refLinks(a.referenceIds)}</p></div><div class="next"><span class="label">STOP &amp; DECIDE</span><p>${esc(a.stop)}</p><strong>Keep the test small enough to learn.</strong></div></div>`
-    : empty(
-        p
-          ? "Record some results or evidence to guide the next decision."
-          : "Choose a project to see its next decision.",
-      );
-  $("initiatives").innerHTML = initiatives().length
-    ? initiatives()
-        .map(
-          (i) =>
-            `<article class="initiative"><div class="row"><div><span class="pill">${esc(i.channel)}</span><h3>${esc(i.name)}</h3></div><label>Status<select data-initiative="${esc(i.id)}">${["planned", "running", "paused", "complete"].map((s) => `<option ${i.status === s ? "selected" : ""}>${s}</option>`).join("")}</select></label></div><p>${esc(i.hypothesis)}</p><p class="caption">${esc(i.cta)} · ${esc(i.start)} → ${esc(i.end)} · ${esc(i.owner)}</p></article>`,
-        )
-        .join("")
-    : empty(
-        "No initiatives yet. Import a campaign plan or use the market-campaign skill to create one.",
-      );
-  $("funnels").innerHTML = data.funnels.length
-    ? data.funnels
-        .map(
-          (f) =>
-            `<article class="funnel"><span class="pill">${esc(f.channel)}</span><div class="funnel-step"><span>Visitors</span><strong>${num(f.visitors)}</strong></div><div class="bar"><svg aria-hidden="true"><rect width="100%" height="12"/></svg></div><div class="funnel-step"><span>First use</span><strong>${num(f.starts)}</strong></div><div class="bar"><svg aria-hidden="true"><rect class="starts" width="${f.rate === null ? 0 : Math.max(1, f.rate * 100)}%" height="12"/></svg></div><p><strong>${pct(f.rate)}</strong> <small>${esc(f.interpretation)}</small></p></article>`,
-        )
-        .join("")
-    : empty(
-        "Import attributed visitors and starts with matching windows and definitions to see the first-use path.",
-      );
-  const projectNames = new Map(workspace.projects.map((p) => [p.id, p.name]));
-  const initiativeNames = new Map(
-    workspace.initiatives.map((i) => [i.id, i.name]),
-  );
-  const grouped = new Map();
-  for (const o of data.observations) {
-    const key = chartKey(o);
-    if (!grouped.has(key)) {
-      const context = [
-        projectNames.get(o.projectId) || o.projectId,
-        initiativeNames.get(o.initiativeId),
-      ]
-        .filter(Boolean)
-        .join(" · ");
-      grouped.set(key, {
-        key,
-        name: context + " · " + chartLabel(o),
-        count: 0,
-      });
-    }
-    grouped.get(key).count++;
-  }
-  const groups = [...grouped.values()];
-  if (!grouped.has(metricKey))
-    metricKey =
-      groups.reduce(
-        (best, group) => (!best || group.count > best.count ? group : best),
-        null,
-      )?.key || "";
-  $("metric").innerHTML = groups
-    .map((g) => `<option value="${esc(g.key)}">${esc(g.name)}</option>`)
-    .join("");
-  $("metric").value = metricKey;
-  drawChart();
-  $("channels").innerHTML = channels
-    .slice(0, 4)
-    .map(
-      (c, i) =>
-        `<details class="channel"><summary>${esc(c.name)}<span class="meta">${esc(c.hours)} h / test</span></summary><p>${esc(c.approach)}</p><p>${esc((c.rationale || []).join(" · "))}</p><dl><dt>Measure</dt><dd>${esc(c.measure)}</dd><dt>Time &amp; cost</dt><dd>${esc(c.hours)} hours for a test; ${esc(c.cost)}. Launch response may arrive quickly; durable demand takes follow-up.</dd><dt>Risk</dt><dd>${esc(c.risk)}</dd><dt>Complexity</dt><dd>${esc(c.complexity)}</dd><dt>Maintenance</dt><dd>${esc(c.maintainability)}</dd></dl><p>${refLinks(c.referenceIds)}</p></details>`,
-    )
-    .join("");
-  $("readings").innerHTML = data.totals.length
-    ? `<div class="table-scroll"><table><thead><tr><th>Channel</th><th>Definition</th><th>Total / latest snapshot</th><th>Source records</th></tr></thead><tbody>${data.totals
-        .map(
-          (t) =>
-            `<tr><td>${esc(t.channel)}</td><td>${esc(t.definition)}</td><td>${t.ambiguous ? "Needs reconciliation" : num(t.value)} ${esc(t.currency || "")}</td><td>${t.evidence
-              .map((id) => {
-                const o = workspace.observations.find((x) => x.id === id);
-                return o ? link(o.url, id) : esc(id);
-              })
-              .join(", ")}</td></tr>`,
-        )
-        .join("")}</tbody></table></div>`
-    : empty(
-        "No readings in this selection. Import normalized JSON/CSV results or register a monitoring source.",
-      );
-  $("sources").innerHTML = data.sources.length
-    ? data.sources
-        .map(
-          (s) =>
-            `<article class="source"><div class="row"><h3>${esc(s.name)}</h3><span class="pill">${esc(s.adapter)}</span></div><p>${esc(s.target)} · ${s.lastCheckedAt ? "Checked " + esc(s.lastCheckedAt) : "Not collected yet"}</p><p class="${s.lastError ? "error" : "muted"}">${esc(s.lastError || "Ready for collection")}</p></article>`,
-        )
-        .join("")
-    : empty(
-        "Register your own repository or HN thread with the market-monitor skill. Analytics from other channels can be imported.",
-      );
-  $("sentiment").innerHTML =
-    '<div class="summary-grid">' +
-    Object.entries(data.sentiment)
-      .map(([s, n]) => `<div><strong>${n}</strong>${esc(s)}</div>`)
-      .join("") +
-    "</div>";
-  renderReactions();
-  $("viability").innerHTML = ["problem", "activation", "retention", "payment"]
-    .map((d) => {
-      const evidence = data.evidence.filter((e) => e.dimension === d);
-      return `<article class="evidence"><h3>${d}</h3>${evidence.length ? evidence.map((e) => `<p><span class="pill">${esc(e.result)} · ${esc(e.strength)}</span>${esc(e.claim)}<br>${link(e.url, "Evidence source")} · <span class="meta">Checked ${esc(e.checkedAt)}</span></p>`).join("") : '<p class="caption">No evidence recorded. This remains an open question.</p>'}</article>`;
-    })
-    .join("");
-  $("competitors").innerHTML = data.competitors.length
-    ? data.competitors
-        .map(
-          (c) =>
-            `<article class="evidence"><span class="pill">${esc(c.kind)}</span><h3>${esc(c.name)}</h3><p>${esc(c.positioning)}</p><p>${link(c.url, "Open alternative")} · <span class="meta">Checked ${esc(c.checkedAt)}</span></p><div class="table-scroll"><table><thead><tr><th>Dimension</th><th>Observed claim</th></tr></thead><tbody>${c.claims.map((x) => `<tr><td>${esc(x.dimension)}</td><td>${esc(x.value)} · ${link(x.url, "Source")}</td></tr>`).join("")}</tbody></table></div></article>`,
-        )
-        .join("")
-    : empty(
-        "Research direct alternatives, substitutes and doing nothing. Record dated evidence rather than filling a guessed feature matrix.",
-      );
-  $("experiments-list").innerHTML = data.experiments.length
-    ? data.experiments
-        .map(
-          (e) =>
-            `<article class="panel experiment"><span class="pill">${esc(e.decision)}</span><h2>${esc(e.name)}</h2>${e.arms.map((a) => `<div class="interval"><div>${esc(a.name)} · ${a.interval ? `${a.interval.successes} / ${a.interval.trials} · ${pct(a.interval.rate)} observed` : "No observations"}</div>${a.interval ? `<div class="track"><svg role="img" aria-label="${esc(a.name)} Wilson interval ${pct(a.interval.low)} to ${pct(a.interval.high)}"><rect class="range" x="${a.interval.low * 100}%" width="${(a.interval.high - a.interval.low) * 100}%" height="24"/><rect class="point" x="${a.interval.rate * 100}%" width="3" height="24"/></svg></div><span class="caption">95% Wilson interval: ${pct(a.interval.low)}–${pct(a.interval.high)}</span>` : ""}</div>`).join("")}<p>Difference B − A: ${e.difference ? `${pct(e.difference.estimate)} · conservative bounds ${pct(e.difference.low)} to ${pct(e.difference.high)}` : "Unknown"}</p><p><strong>Stopping rule:</strong> ${esc(e.stoppingRule)}</p><p class="caption">${esc(e.caveat)}</p></article>`,
-        )
-        .join("")
-    : empty(
-        "No experiments recorded. Define two arms, one primary outcome, a sample target and a stopping rule before gathering results.",
-      );
-  $("warnings").innerHTML = data.warnings
-    .map((w) => `<li>${esc(w)}</li>`)
-    .join("");
-}
-function drawChart() {
-  const all = data.observations
-    .filter((o) => chartKey(o) === metricKey)
-    .toSorted((a, b) => a.end.localeCompare(b.end));
-  if (!all.length) {
-    $("chart").innerHTML = empty("Choose a metric after collecting readings.");
-    return;
-  }
-  const max = Math.max(1, ...all.map((o) => o.value)),
-    x = (i) => 45 + (i * 650) / Math.max(1, all.length - 1),
-    y = (v) => 160 - (v / max) * 125;
-  $("chart").innerHTML =
-    `<svg class="plot" viewBox="0 0 740 195" role="img" aria-label="${esc(all[0].definition)} over reported dates; exact values in the table below"><line x1="45" y1="160" x2="700" y2="160"/><line x1="45" y1="35" x2="700" y2="35"/><text x="5" y="39">${num(max)}</text><text x="5" y="164">0</text>${all.length > 1 ? `<polyline points="${all.map((o, i) => `${x(i)},${y(o.value)}`).join(" ")}"/>` : ""}${all.map((o, i) => `<circle cx="${x(i)}" cy="${y(o.value)}" r="4"><title>${esc(o.end)}: ${num(o.value)}</title></circle>`).join("")}<text x="45" y="184">${esc(all[0].end)}</text><text x="625" y="184">${esc(all.at(-1).end)}</text></svg><details><summary class="caption">Read chart values &amp; sources</summary><table><thead><tr><th>Reported period</th><th>Value</th><th>Source</th></tr></thead><tbody>${all.map((o) => `<tr><td>${esc(o.start)} → ${esc(o.end)}</td><td>${num(o.value)}</td><td>${link(o.url, o.id)}</td></tr>`).join("")}</tbody></table></details>`;
-}
-function renderReactions() {
-  const filter = $("sentiment-filter").value,
-    rows = data.reactions.filter(
-      (r) =>
-        !filter ||
-        (filter === "unreviewed" && !r.reviewed) ||
-        (r.reviewed && r.sentiment === filter),
-    );
-  $("reactions").className = "reactions-grid";
-  $("reactions").innerHTML = rows.length
-    ? rows
-        .map(
-          (r) =>
-            `<article class="panel reaction"><span class="pill ${esc(r.sentiment)}">${r.reviewed ? esc(r.sentiment) : "Needs review · suggestion " + esc(r.sentiment)}</span><span class="pill">${esc(r.channel || "direct")}</span><blockquote>${esc(r.text)}</blockquote><p>${link(r.url, "Read source context")}</p><form data-reaction="${esc(r.id)}"><label>Sentiment<select name="sentiment">${["positive", "negative", "neutral", "mixed", "unknown"].map((s) => `<option ${r.sentiment === s ? "selected" : ""}>${s}</option>`).join("")}</select></label><label>Theme<input name="theme" value="${esc(r.theme)}" required maxlength="150"></label><button>Save review</button></form></article>`,
-        )
-        .join("")
-    : empty(
-        "No reactions in this selection. Import source-linked comments or collect an HN thread.",
-      );
-}
-async function perform(action) {
+  loading = true;
+  failed = false;
+  $("load-note").textContent = "Loading the selected evidence…";
+  $("load-note").hidden = false;
+  $("views").hidden = true;
+  syncControls();
   try {
-    await action();
-  } catch (e) {
-    message(e.message + " Reload if another editor changed the ledger.", true);
+    const snapshot = await client.load(selection(), initial);
+    if (current !== generation || !snapshot) return;
+    render(snapshot);
+    $("views").hidden = false;
+    $("load-note").hidden = true;
+  } catch (error) {
+    if (current !== generation) return;
+    failed = true;
+    $("load-note").textContent = "This selection could not be loaded. Correct the dates or refresh to try again.";
+    throw error;
+  } finally {
+    if (current === generation) { loading = false; syncControls(); }
   }
 }
-$("refresh").onclick = () => perform(() => load());
-$("clear").onclick = () => {
-  $("from").value = "";
-  $("to").value = "";
-  perform(() => load());
-};
-$("filters").onsubmit = (e) => e.preventDefault();
-for (const id of ["project", "initiative", "from", "to"])
-  $(id).onchange = () => perform(() => load());
-$("metric").onchange = () => {
-  metricKey = $("metric").value;
-  drawChart();
-};
-$("sentiment-filter").onchange = renderReactions;
-document.querySelectorAll("[data-tab]").forEach(
-  (b) =>
-    (b.onclick = () => {
-      document
-        .querySelectorAll("[data-tab]")
-        .forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
-      document
-        .querySelectorAll(".view")
-        .forEach((v) => (v.hidden = v.id !== b.dataset.tab));
-    }),
-);
-$("initiatives").onchange = (e) => {
-  const id = e.target.dataset.initiative;
-  if (!id) return;
-  const record = {
-    ...workspace.initiatives.find((i) => i.id === id),
-    status: e.target.value,
+async function reload(initial = false) {
+  try { await load(initial); if (!loading) message(initial ? "" : "Selection updated."); }
+  catch (error) { message(error.message, true, true); }
+}
+async function save(action, success, focusKey) {
+  if (writing || loading || failed || !client.snapshot) return;
+  writing = true;
+  syncControls();
+  let committed = false;
+  message("Saving changes…");
+  try {
+    const result = await action();
+    committed = true;
+    await load();
+    message(typeof success === "function" ? success(result) : success);
+  } catch (error) {
+    message((committed ? "Saved, but the display could not refresh. " : "") + error.message, true, committed || error.status === 409);
+    if (!committed) document.querySelectorAll("[data-initiative]").forEach(el => {
+      el.value = client.snapshot.workspace.initiatives.find(i => i.id === el.dataset.initiative).status;
+    });
+  } finally {
+    writing = false;
+    syncControls();
+    if (!loading && !failed) restoreFocus(document.querySelector(focusKey) ? focusKey : "#sentiment-filter");
+  }
+}
+
+tabs.forEach((tab, index) => {
+  tab.onclick = () => setView(tab.dataset.tab);
+  tab.onkeydown = event => {
+    const next = { ArrowRight: (index + 1) % tabs.length, ArrowLeft: (index + tabs.length - 1) % tabs.length, Home: 0, End: tabs.length - 1 }[event.key];
+    if (next !== undefined) { event.preventDefault(); setView(tabs[next].dataset.tab, true); }
   };
-  perform(async () => {
-    await api("/api/record", {
-      collection: "initiatives",
-      record,
-      revision: workspace.revision,
-    });
-    await load();
-    message("Initiative status saved.");
-  });
-};
-$("reactions").onsubmit = (e) => {
-  e.preventDefault();
-  const id = e.target.dataset.reaction;
+});
+document.addEventListener("click", event => {
+  const open = event.target.closest("[data-open-view]");
+  if (open) setView(open.dataset.openView, true);
+  if (event.target.closest("[data-show-reactions]")) {
+    $("sentiment-filter").value = "";
+    renderReception(client.snapshot, drafts);
+    $("sentiment-filter").focus();
+  }
+});
+$("dismiss").onclick = () => { $("notice").hidden = true; };
+$("refresh").onclick = $("retry").onclick = () => reload();
+$("clear").onclick = () => { $("from").value = $("to").value = ""; reload(); };
+$("filters").onsubmit = event => event.preventDefault();
+for (const id of Object.values(filterIds)) $(id).onchange = () => reload();
+$("metric").onchange = () => { metricKey = $("metric").value; drawChart(client.snapshot.data, metricKey); };
+$("sentiment-filter").onchange = () => { if (client.snapshot) renderReception(client.snapshot, drafts); };
+$("initiatives").onchange = event => {
+  const id = event.target.dataset.initiative;
   if (!id) return;
-  const form = new FormData(e.target),
-    record = {
-      ...workspace.reactions.find((r) => r.id === id),
-      sentiment: form.get("sentiment"),
-      theme: form.get("theme"),
-      reviewed: true,
-    };
-  perform(async () => {
-    await api("/api/record", {
-      collection: "reactions",
-      record,
-      revision: workspace.revision,
-    });
-    await load();
-    message("Reaction review saved.");
-  });
+  const record = { ...client.snapshot.workspace.initiatives.find(i => i.id === id), status: event.target.value };
+  save(() => api("/api/record", { collection: "initiatives", record, revision: client.snapshot.workspace.revision }), "Initiative status saved.", `[data-initiative="${CSS.escape(id)}"]`);
 };
-$("upload").onchange = (e) => {
-  const file = e.target.files[0];
+$("reactions").oninput = event => {
+  const form = event.target.closest("form[data-reaction]");
+  if (!form) return;
+  const record = client.snapshot.workspace.reactions.find(r => r.id === form.dataset.reaction);
+  const fields = Object.fromEntries(new FormData(form));
+  if (fields.theme === record.theme && fields.sentiment === record.sentiment) drafts.delete(record.id);
+  else drafts.set(record, fields);
+  form.querySelector(".draft-note").textContent = drafts.get(record) ? "Unsaved changes in this tab" : "";
+};
+$("reactions").onsubmit = event => {
+  event.preventDefault();
+  const id = event.target.dataset.reaction;
+  if (!id) return;
+  const record = { ...client.snapshot.workspace.reactions.find(r => r.id === id), ...Object.fromEntries(new FormData(event.target)), reviewed: true };
+  save(async () => {
+    await api("/api/record", { collection: "reactions", record, revision: client.snapshot.workspace.revision });
+    drafts.delete(id);
+  }, "Reaction review saved.", `[data-reaction="${CSS.escape(id)}"] button`);
+};
+$("import").onclick = () => $("upload").click();
+$("upload").onchange = event => {
+  const file = event.target.files[0];
+  event.target.value = "";
   if (!file) return;
-  perform(async () => {
-    if (file.size > 2 * 1024 * 1024)
-      throw new Error("Import exceeds 2 MB; split into smaller files");
-    await api("/api/import", {
-      text: await file.text(),
-      format: file.name.toLowerCase().endsWith(".csv") ? "csv" : "json",
-      revision: workspace.revision,
-    });
-    await load();
-    message("Results imported. Matching IDs were updated.");
-    e.target.value = "";
-  });
+  if (file.size > 2 * 1024 * 1024) return message("Import exceeds 2 MB. Split it into smaller files and choose the file again.", true);
+  save(async () => api("/api/import", {
+    text: await file.text(), format: file.name.toLowerCase().endsWith(".csv") ? "csv" : "json", revision: client.snapshot.workspace.revision,
+  }), "Results imported. Records with matching IDs were updated.", "#import");
 };
-$("collect").onclick = () =>
-  perform(async () => {
-    const b = $("collect");
-    b.disabled = true;
-    message("Collecting registered sources…");
-    try {
-      const result = await api("/api/monitor", {
-        revision: workspace.revision,
-      });
-      await load();
-      const errors = result.sources.flatMap((s) => s.errors);
-      message(
-        errors.length
-          ? errors.join("; ")
-          : result.sources.length
-            ? "Sources collected."
-            : "No monitoring sources registered.",
-        !!errors.length,
-      );
-    } finally {
-      b.disabled = false;
-    }
-  });
-perform(() => load(true));
+$("collect").onclick = () => save(() => api("/api/monitor", { revision: client.snapshot.workspace.revision }), result => {
+  const errors = result.sources.flatMap(s => s.errors);
+  return errors.length ? "Collection finished with unavailable readings: " + errors.join("; ") : "All registered sources collected.";
+}, "#collect");
+window.addEventListener("beforeunload", event => { if (drafts.size) { event.preventDefault(); event.returnValue = ""; } });
+const params = new URLSearchParams(location.search);
+for (const [key, id] of Object.entries(filterIds)) {
+  if (!params.get(key)) continue;
+  if ($(id).tagName === "SELECT") $(id).add(new Option(params.get(key), params.get(key)));
+  $(id).value = params.get(key);
+}
+setView(location.hash.slice(1));
+reload(!params.has("projectId"));
