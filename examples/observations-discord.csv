@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+discord-comments,orbit,orbit-video,discord,comments,14,2026-10-01,2026-10-07,period,"Replies to the playtest request read and logged by hand, including objections",https://example.com/discord-evidence,2026-10-08T12:00:00Z
+discord-signups,orbit,orbit-video,discord,signups,9,2026-10-01,2026-10-07,period,"Playtest sign-ups from the tagged link (utm_source=discord), counted by the site's own analytics, not by Discord",https://example.com/discord-evidence,2026-10-08T12:00:00Z
+discord-returns,orbit,orbit-video,discord,returns,4,2026-10-01,2026-10-07,period,"Testers who came back for a second session, from the game's own telemetry; Discord's own retention (how many new members retain) is a separate Server Insights figure",https://example.com/discord-evidence,2026-10-08T12:00:00Z

@@ -118,12 +118,12 @@
     "audiences": ["player", "indie"],
     "hours": 2,
     "cost": "0 to start; verify current terms",
-    "approach": "Playable demo, genre-readable screenshots and a brief development log",
-    "measure": "Qualified plays, completion and returning players",
-    "risk": "Audience and device fit may differ from your intended players",
+    "approach": "Playable demo, genre-readable screenshots and a brief development log, with each outside link tagged so itch.io referrers and your own analytics can be compared",
+    "measure": "Page views, downloads or browser plays, purchases and the referrer for each; qualified plays, completion and returning players only from the game's own telemetry",
+    "risk": "Audience and device fit may differ from your intended players; itch.io reports file delivery and referrals, not how the game is played; a download counts as started, not finished",
     "complexity": "Moderate asset preparation and distribution setup",
-    "maintainability": "Maintain the playable build and respond to bug reports",
-    "referenceIds": ["player-discovery", "campaign"]
+    "maintainability": "Maintain the playable build and respond to bug reports; never sign people up to a mailing list automatically",
+    "referenceIds": ["itch-creator-faq", "itch-getting-started", "itch-referrers", "itch-purchase-source", "player-discovery", "campaign"]
   },
   {
     "id": "search",
@@ -146,12 +146,12 @@
     "audiences": ["existing"],
     "hours": 1,
     "cost": "Provider costs vary",
-    "approach": "Useful update to people who opted in; one clear next action",
-    "measure": "Tagged successful use and unsubscribes; treat opens cautiously",
-    "risk": "A small list limits discovery; unwanted mail harms trust",
-    "complexity": "Consent, list care and deliverability",
-    "maintainability": "Keep the cadence sustainable and honor unsubscribes",
-    "referenceIds": ["measurement"]
+    "approach": "Useful update to people who opted in, with accurate sender details, a working unsubscribe and one clear next action",
+    "measure": "Tagged successful use and unsubscribes; treat opens cautiously because mail privacy features can load tracking images without a person reading",
+    "risk": "A small list limits discovery; unwanted mail harms trust and, at volume, spam complaints above provider thresholds cause blocked delivery; breaking consent or opt-out rules brings legal penalties",
+    "complexity": "Consent, list care, sender authentication and deliverability",
+    "maintainability": "Keep the cadence sustainable; honour unsubscribes quickly and keep a suppression list; recheck provider and legal rules, which change",
+    "referenceIds": ["email-google-senders", "email-yahoo-senders", "email-ftc-canspam", "email-ico-pecr", "email-apple-mpp", "measurement"]
   },
   {
     "id": "discord",
@@ -160,12 +160,12 @@
     "audiences": ["existing", "community"],
     "hours": 2,
     "cost": "0 plus ongoing care",
-    "approach": "Share useful progress and invite focused feedback in a relevant existing community",
-    "measure": "Playtest participation, recurring use and qualitative themes",
-    "risk": "Starting a new empty server creates moderation work before demand",
+    "approach": "Share useful progress and invite focused feedback in a relevant existing community, as a person and with the server's permission",
+    "measure": "Playtest participation, recurring use and qualitative themes, counted from your own tagged links and notes; Server Insights only where your own server qualifies",
+    "risk": "Starting a new empty server creates moderation work before demand; unsolicited bulk messages, self-bots and bought or inflated engagement break Discord's rules and can end the account",
     "complexity": "Moderation and community rules",
-    "maintainability": "Only open your own community when you can sustain it",
-    "referenceIds": ["player-discovery"]
+    "maintainability": "Only open your own community when you can sustain it; follow each server's rules on self-promotion",
+    "referenceIds": ["discord-guidelines", "discord-platform-manipulation", "discord-server-insights", "player-discovery"]
   },
   {
     "id": "linkedin",

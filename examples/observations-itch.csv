@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+itch-views,orbit,orbit-video,itch,views,420,2026-10-01,2026-10-07,period,"itch.io dashboard views: how many times your pages are being viewed",https://example.com/itch-evidence,2026-10-08T12:00:00Z
+itch-downloads,orbit,orbit-video,itch,starts,37,2026-10-01,2026-10-07,period,"itch.io dashboard downloads: how many times your pages are being downloaded; a started download, not a completed play",https://example.com/itch-evidence,2026-10-08T12:00:00Z
+itch-purchases,orbit,orbit-video,itch,purchases,2,2026-10-01,2026-10-07,period,"itch.io purchases list: paid purchases, with Buy location and Referrer kept in notes",https://example.com/itch-evidence,2026-10-08T12:00:00Z
