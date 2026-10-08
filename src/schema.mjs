@@ -10,6 +10,7 @@ export const collections = [
 ];
 export const channels = [
   "youtube",
+  "tiktok",
   "reddit",
   "hacker-news",
   "github",

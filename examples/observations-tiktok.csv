@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+tt-views,orbit,orbit-video,tiktok,views,1840,2026-10-01,2026-10-07,period,"TikTok video views: times the video started to play, replays excluded",https://example.com/tiktok-evidence,2026-10-08T12:00:00Z
+tt-full,orbit,orbit-video,tiktok,views,212,2026-10-01,2026-10-07,period,"TikTok video views at 100%: times the video was played to its full length",https://example.com/tiktok-evidence,2026-10-08T12:00:00Z
+tt-clicks,orbit,orbit-video,tiktok,clicks,37,2026-10-01,2026-10-07,period,"Tagged visits from the profile link (utm_source=tiktok), counted by the site's own analytics",https://example.com/tiktok-evidence,2026-10-08T12:00:00Z
