@@ -60,4 +60,4 @@ Hypothesis, eligible audience, deliverable, source of traffic, primary outcome, 
 
 ## Evidence retention
 
-Save the report so the owner can read it in the campaign desk: `marketing document save report <id> <file.md> --title ... --kind market-landscape`. It appears in the Research fit tab and is included in workspace backups. Keep the Markdown source in the owner's wiki: a synthesis page for reusable outside knowledge, and project notes or decisions for the owner's own choices. Do not put an owner's analysis in the plugin's own `docs/research`, which ships to every install.
+Save the report so the owner can read it in the campaign desk: `marketing document save report <id> <file.md> --title ... --kind market-landscape`, with `--studio` when it has no project home (a market-wide analysis usually does). It appears in the Research fit tab and is included in workspace backups. Keep the Markdown source in the owner's wiki: a synthesis page for reusable outside knowledge, and project notes or decisions for the owner's own choices. Do not put an owner's analysis in the plugin's own `docs/research`, which ships to every install.

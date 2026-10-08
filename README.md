@@ -20,7 +20,7 @@ Node 24+ is required. `market-setup` installs a verified runtime outside the plu
 
 ## Use it
 
-Ask Claude for the work, and the skills run the CLI for you: `market-discover` and `market-strategy` to choose an audience and channels, `market-campaign` to plan a test, `market-research` to save a sourced report you can read in the desk (Research fit), `market-monitor` to collect or import results and open the local campaign desk, `market-insights` and `market-experiment` to decide what to do next. The skills use a real workspace file you name, and keep synthetic demo data in a separate one. The desk opens at `http://127.0.0.1:4318`.
+Ask Claude for the work, and the skills run the CLI for you: `market-discover` and `market-strategy` to choose an audience and channels, `market-campaign` to plan a test, `market-research` to save a sourced report you can read in the desk (Research fit), `market-monitor` to collect or import results and open the local campaign desk, `market-insights` and `market-experiment` to decide what to do next. The skills use a real workspace file you name, and keep synthetic demo data in a separate one. Research that belongs to no project, such as a market analysis, goes in the studio workspace (`--studio`), a fixed place under `~/.agent-marketing/studio/` that updates never touch. The desk opens at `http://127.0.0.1:4318`.
 
 ## From a source checkout
 

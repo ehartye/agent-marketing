@@ -49,6 +49,16 @@ The authoritative document is stored as optional `projects[].strategy` or `initi
 
 In the desk, choose the project under **Decide & plan** to read/download its strategy, then the initiative for its campaign brief. The workspace JSON export includes document text and can be imported into a fresh workspace; CSV only carries observations. Downloaded `.md` files are editable copies: saving them back is explicit, with no automatic file synchronization. External images and linked assets are not bundled. The ledger stores the latest document, not document history; keep workspace backups for earlier versions. The HTTP importer remains limited to 2 MB, so larger complete backups can be restored with the CLI.
 
+## The studio workspace
+
+Records that belong to no project, such as a market analysis, have an official home: the studio workspace at `<plugin home>/studio/workspace.json` (by default `~/.agent-marketing/studio/workspace.json`; `AGENT_MARKETING_HOME` relocates it). Pass `--studio` instead of `--workspace` to any command. `marketing init --studio` creates it once and is safe to repeat; it reports the existing file and revision. Setup and updates manage only `releases/` and the receipt next to it and never read or write the studio, so a plugin update cannot touch your data. Back it up like any ledger with `export`. `--studio` and `--workspace` cannot be combined. Project work still belongs in its own workspace file.
+
+```powershell
+marketing init --studio
+marketing document save report game-market-2026 report.md --title "Game market landscape" --kind market-landscape --studio --revision 0
+marketing serve --studio
+```
+
 ## Saved research reports
 
 A research report is workspace-level Markdown that you read in the desk: it appears under **Research fit → Research reports**, with tables, links and a download. It needs no project, so a market analysis that spans projects is a valid report; `--project` scopes one to a project. The record is `reports[]`: `{ id, title, markdown, updatedAt, kind?, projectId?, vaultUrl? }`. `kind` is `market-landscape`, `demand`, `competition`, `positioning` or `other`. `vaultUrl` is an optional `obsidian://`, `http` or `https` link to the source note in the owner's wiki; the desk shows it as **Open in vault**. Saving with an existing ID replaces that report and requires the current revision, like a brief. Markdown is limited to 100,000 characters and is rendered with every character escaped; only `http(s)` links become anchors; a leading YAML frontmatter block is not shown. Workspaces saved before reports existed gain an empty collection and need no migration. Reports are included in JSON backups.

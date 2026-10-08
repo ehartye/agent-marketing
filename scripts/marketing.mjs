@@ -13,6 +13,7 @@ import { parseImport, taggedUrl, observationsCsv } from "../src/import.mjs";
 import { monitor } from "../src/collectors.mjs";
 import { recommendChannels, channelLibrary } from "../src/channels.mjs";
 import { readDocument, saveDocument, saveReport } from "../src/documents.mjs";
+import { studioWorkspace } from "./runtime.mjs";
 function writeExport(workspace, output, text) {
   if (existsSync(output)) {
     const source = statSync(workspace, { bigint: true }), destination = statSync(output, { bigint: true });
@@ -27,7 +28,7 @@ function writeExport(workspace, output, text) {
 const help = {
   name: "marketing",
   version: "0.6.0",
-  workspace: "--workspace <file> (default .agent-marketing/workspace.json)",
+  workspace: "--workspace <file> (default .agent-marketing/workspace.json) or --studio for the studio workspace, the home for records with no project such as research reports",
   commands: [
     "init",
     "demo",
@@ -54,7 +55,9 @@ let command;
 try {
   const { values: v, positionals: p } = parseArgs({
     allowPositionals: true,
-    options: Object.fromEntries(
+    options: {
+      studio: { type: "boolean" },
+      ...Object.fromEntries(
       [
         "workspace",
         "project",
@@ -74,10 +77,12 @@ try {
         "kind",
         "vault-url",
       ].map((k) => [k, { type: "string" }]),
-    ),
+      ),
+    },
   });
   command = p.shift() || "help";
-  const file = resolve(v.workspace || ".agent-marketing/workspace.json");
+  if (v.studio && v.workspace) throw new Error("Use either --studio or --workspace, not both");
+  const file = v.studio ? studioWorkspace() : resolve(v.workspace || ".agent-marketing/workspace.json");
   const required = (x, name) => {
     if (!x) throw new Error(`Required: ${name}`);
     return x;
@@ -90,7 +95,12 @@ try {
   };
   let result;
   if (command === "help") result = help;
-  else if (command === "init") result = createWorkspace(file);
+  else if (command === "init") {
+    // The studio is shared, so creating it twice is not an error.
+    result = v.studio && existsSync(file)
+      ? { workspace: file, exists: true, revision: readWorkspace(file).revision }
+      : createWorkspace(file);
+  }
   else if (command === "demo")
     result = createWorkspace(
       file,
