@@ -12,6 +12,7 @@ export const channels = [
   "youtube",
   "tiktok",
   "facebook",
+  "x",
   "reddit",
   "hacker-news",
   "github",

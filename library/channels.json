@@ -70,6 +70,20 @@
     "referenceIds": ["facebook-insights", "meta-spam", "facebook-branded-content", "measurement"]
   },
   {
+    "id": "x",
+    "name": "X",
+    "categories": ["tool", "app", "game", "creative"],
+    "audiences": ["maker", "developer", "indie", "builder", "community"],
+    "hours": 2,
+    "cost": "0 for organic posts; API access and ads are separate spend",
+    "approach": "Post a short demonstration with one tryable link, reply by hand to people who respond, and join an existing builder or genre conversation",
+    "measure": "Replies and objections, tagged link visits, first use and return, with post impressions kept as exposure only",
+    "risk": "Impressions are not unique people and say nothing about use; bulk or unsolicited replies, engagement schemes and unlabelled bots break the rules; API terms and pricing change",
+    "complexity": "Low to post by hand; high if automated, because automation needs labels, consent and prior approval for some uses",
+    "maintainability": "Do it by hand; no reply, like or follow automation; re-read the rules before any API use",
+    "referenceIds": ["x-developer-policy", "x-metrics", "x-authenticity", "measurement"]
+  },
+  {
     "id": "reddit",
     "name": "Relevant Reddit communities",
     "categories": ["tool", "app", "game", "education", "creative"],

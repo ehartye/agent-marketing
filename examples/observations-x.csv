@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+x-impr,orbit,orbit-video,x,impressions,5200,2026-10-01,2026-10-07,period,"X API impressions: times the post appeared on a user's screen, not unique",https://example.com/x-evidence,2026-10-08T12:00:00Z
+x-clicks,orbit,orbit-video,x,clicks,58,2026-10-01,2026-10-07,period,"Tagged visits from the post link (utm_source=x), counted by the site's own analytics",https://example.com/x-evidence,2026-10-08T12:00:00Z
+x-replies,orbit,orbit-video,x,comments,14,2026-10-01,2026-10-07,period,"Replies read and logged by hand, including objections",https://example.com/x-evidence,2026-10-08T12:00:00Z
