@@ -48,6 +48,9 @@ export const metrics = [
   "clones",
   "uniqueVisitors",
   "wishlists",
+  "installs",
+  "unsubscribes",
+  "follows",
 ];
 export const sentiments = [
   "positive",

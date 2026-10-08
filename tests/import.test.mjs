@@ -54,3 +54,27 @@ for (const channel of ["tiktok", "facebook", "x", "linkedin", "steam", "itch", "
     assert.equal(new Set(defs).size, defs.length);
   });
 }
+test("installs, unsubscribes and follows are ledger metrics used by the store, email and Twitch examples", () => {
+  const used = (channel) =>
+    new Set(
+      parseImport(
+        readFileSync(`examples/observations-${channel}.csv`, "utf8"),
+        "csv",
+      ).observations.map((o) => o.metric),
+    );
+  assert.ok(used("apple-app-store").has("installs"));
+  assert.ok(used("google-play").has("installs"));
+  assert.ok(used("email").has("unsubscribes"));
+  assert.ok(used("twitch").has("follows"));
+  for (const channel of ["apple-app-store", "google-play", "email", "twitch"]) {
+    const base = JSON.parse(readFileSync("examples/studio.json", "utf8")),
+      patch = parseImport(
+        readFileSync(`examples/observations-${channel}.csv`, "utf8"),
+        "csv",
+      );
+    validateWorkspace({
+      ...base,
+      observations: [...base.observations, ...patch.observations],
+    });
+  }
+});
