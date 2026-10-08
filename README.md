@@ -32,7 +32,7 @@ Setup installs a content-verified runtime under `~/.agent-marketing/releases/` a
 | market-setup | Install/check the managed runtime |
 | market-discover | Audience, value, readiness and evidence brief |
 | market-strategy | Channel choice with effort, risk and maintenance tradeoffs |
-| market-research | Prior art, alternatives, sourced comparison and positioning |
+| market-research | Paying demand, underserved/language markets, alternatives and a sourced decision report |
 | market-campaign | Testable campaign, CTA, tagged links and review plan |
 | market-collateral | Actual reviewable copy, demo/asset brief or creator kit |
 | market-monitor | Supported API collection, export imports and local desk |
@@ -50,6 +50,8 @@ Monitoring reads public GitHub stars, optional repository traffic with an approp
 ## Marketing craft
 
 [Craft guides](craft/GUIDE.md), [queryable rules](craft/rules.json), [channel cards](library/channels.json) and [dated research references](craft/REFERENCES.md) cover discovery, positioning, competition, campaigns, collateral, measurement, reception and experiments. They separate research findings from planning heuristics and explain transfer limits.
+
+Ask market-research “Which gamer population is underserved, including non-English markets?” for a saved [demand report](library/demand-report.md): purchasing evidence, supply gaps, sources and their limits, delivery tradeoffs, and one validation test. The [worked gamer example](docs/research/gamer-demand-2026-10-08.md) treats regional opportunities as hypotheses until genre-specific supply and paid conversion are checked. Research runs through the agent skill; the CLI's numeric `report` command summarizes ledger observations.
 
 Views, likes and comments describe attention or a captured feedback sample. They do not establish market viability, unique cross-platform reach or causal ad lift. The desk keeps those meanings separate. The English lexical sentiment helper is an unvalidated suggestion; review labels in source context. Experiment intervals display uncertainty; free-text duration/stopping rules require operator review.
 

@@ -1,6 +1,6 @@
 # Release verification — 0.1.0
 
-Verified on 2026-10-08 on Windows with Node v24.18.0. This is a local plugin release on `feat/initial-plugin`; marketplace publication is a separate distribution step. The example portfolio and screenshots contain synthetic evidence.
+Verified on 2026-10-08 on Windows with Node v24.18.0. The initial source release is public in [ehartye/agent-marketing](https://github.com/ehartye/agent-marketing); the demand-research increment was reviewed on `feat/demand-research`. Marketplace publication is a separate distribution step. The example portfolio and screenshots contain synthetic evidence.
 
 ## Coverage of the requested workflows
 
@@ -9,12 +9,13 @@ Verified on 2026-10-08 on Windows with Node v24.18.0. This is a local plugin rel
 | Audience and useful promise | [market-discover](../skills/market-discover/SKILL.md), [discovery craft](../craft/discovery.md), validated project brief |
 | Channels and approach | [market-strategy](../skills/market-strategy/SKILL.md), ten [channel cards](../library/channels.json), explicit planning scores and tradeoffs |
 | Prior art and competitive analysis | [market-research](../skills/market-research/SKILL.md), [competition craft](../craft/competition.md), dated direct/substitute/do-nothing claims |
+| Paying demand and non-English markets | [Demand methodology](../craft/demand.md), [report format](../library/demand-report.md), [worked gamer report](research/gamer-demand-2026-10-08.md), purchasing/substitute/economics evidence and one falsifiable probe |
 | Campaign advice and collateral | [market-campaign](../skills/market-campaign/SKILL.md), [market-collateral](../skills/market-collateral/SKILL.md), tagged URLs and concrete draft/asset contracts |
 | Monitoring and reach | [market-monitor](../skills/market-monitor/SKILL.md), official GitHub/HN collectors, JSON/CSV import, definition-specific activity history |
 | Sentiment, reaction and reception | Captured source text, human review and themes, separate unreviewed suggestions, selected-sample counts |
 | Viability, insights and next steps | [market-insights](../skills/market-insights/SKILL.md), separate evidence dimensions, source-linked next action and stop/review rule |
 | Experiment decisions | [market-experiment](../skills/market-experiment/SKILL.md), Wilson arm intervals, conservative difference bounds, sample-target and randomization checks |
-| Research-backed craft | Eight subject guides, sixteen [dated references](../craft/REFERENCES.md), thirteen [rules](../craft/rules.json) labeled external/derived/heuristic |
+| Research-backed craft | Nine subject guides, twenty-five [dated references](../craft/REFERENCES.md), sixteen [rules](../craft/rules.json) labeled external/derived/heuristic |
 | CLI, visualization and runtime | Shared portable ledger, fifteen documented commands, local campaign desk, managed install/check/launch |
 | Wiki knowledge and project documentation | Seventeen captures, sixteen hash-joined summaries, synthesis/task map, overview/architecture/roadmap, catalog and semantic refresh, main synchronized upstream |
 
@@ -38,9 +39,21 @@ Independent code review found eight integrity defects: full-ledger JSON import, 
 
 Two independent agents received the same synthetic Orbit decision: 2,400 views, 90 visits, eight starts, one return, a USD 300 budget and three hours/week; decide whether to buy promotion, assess positive reactions and existing A/B evidence, and save the next initiative. One used CLI documentation without plugin skills/craft; the other read market-insights and market-strategy. Both kept paid spend at zero, prioritized direct observation, rejected market-wide sentiment inference and a premature Orbit A/B winner, and added one planned initiative. Both preserved all 34 existing records. The assisted run made research provenance and design checks more explicit, but the baseline was already sound. One paired comparison does not establish a general skill advantage or marketing effectiveness.
 
-Metadata inspection distinguished setup, discovery, strategy, external research, campaign planning, asset drafting, collection, evidence review and experiment design. These positive/near-miss boundaries are inspection evidence, not measured automatic selection in every plugin host. Only the combined insights/strategy workflow received the paired behavioral evaluation.
+Metadata inspection distinguished setup, discovery, strategy, external research, campaign planning, asset drafting, collection, evidence review and experiment design. These positive/near-miss boundaries are inspection evidence, not measured automatic selection in every plugin host. The initial combined insights/strategy evaluation and the later demand-research comparison below exercise separate workflows.
 
 Local raw verification artifacts are retained under `.agent-marketing/`: `CLI-smoke.json`, `live-collection.json`, `evals/with/`, `evals/without/`, `code-review-final.md` and `wiki-retrieval.json`. They are excluded from the distributable runtime.
+
+## Demand-research increment
+
+The revised market-research skill handles paying demand, underserved buyers, what to build and non-English opportunities. It loads the methodology and standard saved-report format; market-discover routes these questions there. The report separates source credibility from relevance, publication/data/access dates, scope and denominators, observational outcomes and hypotheses, counterevidence, delivery tradeoffs, incremental economics and a bounded test. Exploratory research does not invent project budgets or observations. The numeric CLI report remains a ledger summary.
+
+Nine primary sources were checked and captured for the gamer example, spanning official Valve mechanics, original market studies, firsthand developer outcomes and an academic working paper. The GCC figure pages 12 and 15 were visually checked. One author worksheet HTML capture was thin and queued for wiki triage; no absolute cells were quoted. The FTC working paper's tables were flattened/degraded, so only inspected prose and sample context were used. Current native-language review samples, genre supply audits, interviews and paid conversion remain unrun; no candidate is claimed to be an established underserved market.
+
+Independent review checked the report's material claims against all nine captures and both GCC figures, found no material release blocker, and reran all 27 tests and the checker. A fresh managed install preserved the methodology, report format, worked report and both revised skills byte-for-byte. All 70 internal links across its 25 Markdown files resolved; managed `rules demand` returned the three new rules. Packaging now includes `docs/research`, and the resource checker includes library Markdown. Both revised skills separately passed the skill-creator metadata validator.
+
+Two independent agents answered the same two fixed-evidence tasks: finding a paying non-English gamer cohort, and evaluating Japanese localization for an English strategy game. One used only the evidence packet; the other read the revised research skill and required craft/report resources. Neither could browse or use the worked example. Both preserved source limits, rejected a proven regional opportunity/ROI claim, distinguished purchasing and language preference, and proposed staged validation. The assisted reports used explicit claim-audit and delivery-comparison tables; the baseline reasoning was already sound. Both excluded demand research from a GitHub-stars monitoring near-miss. This unblinded two-task comparison verifies exercised behavior, not a general skill advantage, measured automatic triggering or commercial effectiveness. No market observations or ledger changes were fabricated.
+
+Artifacts: `.agent-marketing/demand-evaluation-input.json`, `demand-evals/with/`, `demand-evals/without/`, `demand-review.md`, `demand-capture-results.json` and the named-set wiki provenance paths. These evaluation and capture receipts remain outside the distributable runtime.
 
 ## Material limits
 
