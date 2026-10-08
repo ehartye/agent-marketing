@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+bs-clicks,orbit,orbit-video,bluesky,clicks,18,2026-10-01,2026-10-07,period,"Tagged visits from the post link (utm_source=bluesky), counted by the site's own analytics",https://example.com/bluesky-evidence,2026-10-08T12:00:00Z
+bs-comments,orbit,orbit-video,bluesky,comments,6,2026-10-01,2026-10-07,period,"Replies to the post read and logged by hand, including objections",https://example.com/bluesky-evidence,2026-10-08T12:00:00Z
+bs-signups,orbit,orbit-video,bluesky,signups,3,2026-10-01,2026-10-07,period,"Sign-ups attributed to utm_source=bluesky by the site's own analytics",https://example.com/bluesky-evidence,2026-10-08T12:00:00Z

@@ -646,5 +646,95 @@
     "checkedAt": "2026-10-08",
     "supports": "Every change takes time to be reflected; some changes take effect in a few hours, others could take several months; the guide suggests waiting a few weeks to assess whether work had beneficial effects; Search Console helps monitor how a site performs on Google Search",
     "limit": "Gives no typical timeline for a new site; the guide does not describe specific reports or metrics"
+  },
+  {
+    "id": "instagram-meta-standards",
+    "title": "Meta Transparency Center: Community Standards",
+    "url": "https://transparency.meta.com/policies/community-standards/",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "The Community Standards cover Facebook, Instagram, Messenger and Threads, apply to all content types including AI-generated content, list Spam as a policy section, state Authenticity as a value (people should not misrepresent who they are or what they are doing), and mark some content as limited to adults 18 and older",
+    "limit": "The landing page only lists policies; it gives no detail on Spam or fake engagement (the Spam standard is cited separately as meta-spam), and I could not fetch Instagram's own Community Guidelines or Terms of Use pages, so rules specific to Instagram are not verified here"
+  },
+  {
+    "id": "instagram-insights",
+    "title": "Instagram Help Center: Insights",
+    "url": "https://help.instagram.com/788388387972460",
+    "quality": "medium",
+    "checkedAt": "2026-10-08",
+    "supports": "Per search extracts of the page: the profile Insights overview shows Accounts reached, Accounts engaged and Total followers for a preset or custom window up to the past 90 days; per-post insights include Accounts reached, Accounts engaged, Content interactions and Plays; an (i) icon on each screen gives metric definitions",
+    "limit": "The page body did not load when fetched (only the title Help Center came back), so this is from search extracts, not the page text; metric names move between Accounts reached, Views and Viewers over time, so copy the in-app (i) wording into the definition"
+  },
+  {
+    "id": "instagram-branded-content",
+    "title": "Instagram Help Center: Branded Content Policies",
+    "url": "https://help.instagram.com/1695974997209192",
+    "quality": "medium",
+    "checkedAt": "2026-10-08",
+    "supports": "Per search extracts of Instagram's Help Center branded-content pages: branded content is content that features or is influenced by a business partner in exchange for something of value, must be posted with the branded content tool tagging the partner with prior permission, and some business categories need written pre-authorization from Meta",
+    "limit": "The page body did not load when fetched, so it is from search extracts; extracts of related pages were marked old and Meta renames products (branded content ads are now partnership ads), so confirm current terms in the app; no link-in-bio rules were found, so none are stated"
+  },
+  {
+    "id": "twitch-channel-analytics",
+    "title": "Twitch Help: Analytics Overview",
+    "url": "https://help.twitch.tv/s/article/channel-analytics?language=en_US",
+    "quality": "medium",
+    "checkedAt": "2026-10-08",
+    "supports": "Per search extracts of the page: average viewers is the mean of concurrent viewer counts taken at each point while live across the selected range; unique viewers counts a person once even if they watched several streams; follows is the follows received in the range; minutes watched is the total time the stream was watched across all viewers; the old Stream Manager Views count was removed because it covered only desktop web channel page loads",
+    "limit": "The page did not load when fetched (a loading and CSS error shell), so it is from search extracts, and extracts suggested it is old; verify against the dashboard tooltips"
+  },
+  {
+    "id": "twitch-developer-insights",
+    "title": "Twitch Developers: Insights and Analytics",
+    "url": "https://dev.twitch.tv/docs/insights/",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Game developer analytics needs a registered organization and a claimed game, is a daily CSV for the past 365 days, is generated only if the game was broadcast at least 300 minutes in the period, and includes unique viewers, average and peak concurrent viewers, hours watched and hours broadcast; extension analytics include clicks and note that click counts include false positives; unique counts are based on device IDs and cookies reset",
+    "limit": "It covers game and extension developers, not a streamer's own channel dashboard; unique figures are device based, so 30-day uniques overstate people"
+  },
+  {
+    "id": "twitch-viewbot-blog",
+    "title": "Twitch Blog: On Artificial Viewers, Followers, and Chat Activity",
+    "url": "https://blog.twitch.tv/en/2016/06/17/on-artificial-viewers-followers-and-chat-activity-317906f1c7ea/",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Twitch describes bots used to artificially inflate view count, follower count and chat activity, says it uses technology to detect and remove false viewers, took public legal action against seven viewbot sellers, and advises not buying such services",
+    "limit": "A 2016 post; it does not list prohibited conduct and current rules sit in the Community Guidelines and help pages, which I could not read"
+  },
+  {
+    "id": "twitch-rules-age",
+    "title": "Twitch Safety and Legal: Community Guidelines and Terms of Service",
+    "url": "https://safety.twitch.tv/s/article/Community-Guidelines",
+    "quality": "medium",
+    "checkedAt": "2026-10-08",
+    "supports": "Per search extracts: the Community Guidelines list viewership tampering such as artificially inflating follow or live viewer stats as prohibited; the Terms of Service say the service is not available to people under 13 and that users from 13 to the age of majority need a parent or guardian who agrees to the Terms, with higher minimum ages in some jurisdictions",
+    "limit": "Neither the Guidelines nor the Terms page body loaded (JS shell or navigation only), so this is from search extracts; I could not verify any rule on spam or self-promotion in other channels, so none is stated"
+  },
+  {
+    "id": "bluesky-community-guidelines",
+    "title": "Bluesky: Community Guidelines",
+    "url": "https://bsky.social/about/support/community-guidelines",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Last updated September 19, 2025 per the page: users must not send spam or repeatedly post content in ways that disrupt normal conversations or service use, must not artificially manipulate features or social signals to gain unearned reach or mislead users, and must not attempt to bypass age requirements and age assurance processes where applicable in certain regions; deceptive account practices and fake accounts are prohibited",
+    "limit": "The page states no minimum age and no automation or bot rule (it does not mention bots); it is a summary of rules, not evidence of reach"
+  },
+  {
+    "id": "bluesky-rate-limits",
+    "title": "Bluesky Docs: Rate Limits",
+    "url": "https://bsky.network/docs/rate-limits/",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Per account writes are limited to 5,000 points per hour and 35,000 per day (CREATE 3, UPDATE 2, DELETE 1), at most 1,666 record creates per hour and 11,666 per day; createSession is 30 per 5 minutes and 300 per day; per IP, API requests are 3,000 per 5 minutes; excess requests usually receive HTTP 429",
+    "limit": "Fetched from the bsky.network mirror, which docs.bsky.app redirects to; other AT Protocol providers may set different limits; limits can change"
+  },
+  {
+    "id": "bluesky-bots",
+    "title": "Bluesky Docs: Bots",
+    "url": "https://docs.bsky.app/docs/starter-templates/bots",
+    "quality": "medium",
+    "checkedAt": "2026-10-08",
+    "supports": "Per search extracts: bot accounts should identify themselves with a bot self-label on their profile, a bot that acts on other users' content should do so only on an opt-in basis (for example when tagged) or it may be seen as spam, and login rate limits are much lower than write limits",
+    "limit": "The page body did not load when fetched (empty), so this is from search extracts; I could not verify custom feeds discovery from page text, and no first-party analytics were found in the pages read"
   }
 ]
