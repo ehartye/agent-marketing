@@ -12,6 +12,7 @@ export const channels = [
   "youtube",
   "tiktok",
   "facebook",
+  "steam",
   "x",
   "reddit",
   "hacker-news",
@@ -41,6 +42,7 @@ export const metrics = [
   "comments",
   "clones",
   "uniqueVisitors",
+  "wishlists",
 ];
 export const sentiments = [
   "positive",

@@ -331,5 +331,41 @@
     "checkedAt": "2026-10-08",
     "supports": "Impressions count times a post was shown, with 300 milliseconds and half the post on screen, as an estimate; members reached counts distinct members without repeat displays; clicks exclude reactions, comments and reposts; click-through rate is clicks divided by impressions",
     "limit": "Page shows Last updated 1 year ago; it counts clicks inside engagements, while LinkedIn's separate post analytics page leaves clicks out of engagements, and Campaign Manager defines engagement rate again, so state which page and period you used"
+  },
+  {
+    "id": "steam-wishlist-reporting",
+    "title": "Steamworks Documentation: wishlist reporting",
+    "url": "https://partner.steamgames.com/doc/marketing/wishlist/reporting",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "The reports portal tracks wishlist additions, purchases and deletions; data is refreshed daily for the previous date; the CSV has DateLocal and MonthCohort columns; platform breakdowns reflect only players who set a platform preference",
+    "limit": "The page does not define additions or deletions precisely or state accuracy; the latest day is always excluded; a web API with wishlist_adds, wishlist_deletes and wishlist_purchases fields is known only from search extracts"
+  },
+  {
+    "id": "steam-utm-analytics",
+    "title": "Steamworks Documentation: UTM analytics",
+    "url": "https://partner.steamgames.com/doc/marketing/utm_analytics",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Tracked visits are visits to the product page by users logged in to Steam; wishlist, purchase and activation conversions count only within 72 hours of the UTM click; links must point to an app or sale page and include utm_source or utm_campaign",
+    "limit": "Only signed-in visitors are counted, so tracked visits and conversions are a lower bound on real traffic; abnormal-behaviour visits are excluded without detail"
+  },
+  {
+    "id": "steam-advertising",
+    "title": "Steamworks Documentation: advertising on Steam",
+    "url": "https://partner.steamgames.com/doc/marketing/advertising",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "Steam contains no paid advertising; developers may run paid campaigns outside Steam to drive traffic to their product pages, and Valve suggests Store Widgets and UTM Analytics for them",
+    "limit": "Page is undated and says nothing about the effectiveness or cost of any off-Steam channel"
+  },
+  {
+    "id": "steam-direct",
+    "title": "Steamworks: Steam Direct onboarding",
+    "url": "https://partner.steamgames.com/steamdirect",
+    "quality": "high",
+    "checkedAt": "2026-10-08",
+    "supports": "$100 non-refundable fee per product, recoupable after $1,000 adjusted gross revenue; bank, tax and identity verification; 1-5 day review; 30 days after paying before the first release; a public coming-soon page for at least two weeks before release",
+    "limit": "Page gives no calendar dates; fee and waiting periods can change, so confirm them in Steamworks before paying"
   }
 ]

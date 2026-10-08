@@ -84,6 +84,20 @@
     "referenceIds": ["x-developer-policy", "x-metrics", "x-authenticity", "measurement"]
   },
   {
+    "id": "steam",
+    "name": "Steam store page and wishlists",
+    "categories": ["game"],
+    "audiences": ["player", "indie", "gamer"],
+    "hours": 3,
+    "cost": "$100 per app, recoupable after $1,000 adjusted gross revenue, plus production effort; verify current terms",
+    "approach": "Publish a coming-soon page early, send tagged traffic from your other channels to it, and read wishlist additions and tracked visits per source",
+    "measure": "Wishlist additions net of deletions, UTM tracked visits and wishlist conversions by source, later wishlist purchases",
+    "risk": "A wishlist is intent, not payment; tracked visits only count signed-in users so they are a lower bound; there is a 30-day wait after paying the fee and a two-week minimum coming-soon period",
+    "complexity": "Moderate to high: store page assets, Steamworks setup, bank and tax verification, and a review before the page goes live",
+    "maintainability": "Check reports daily around launches; tag every outbound link; Valve's rules and fees change, so re-read them before committing",
+    "referenceIds": ["steam-wishlist-reporting", "steam-utm-analytics", "steam-advertising", "steam-direct", "player-discovery"]
+  },
+  {
     "id": "reddit",
     "name": "Relevant Reddit communities",
     "categories": ["tool", "app", "game", "education", "creative"],
