@@ -82,7 +82,7 @@ export async function collectSource(s, options = {}) {
       headers = {
         Accept: "application/vnd.github+json",
         "X-GitHub-Api-Version": "2026-03-10",
-        "User-Agent": "agent-marketing/0.8.0",
+        "User-Agent": "agent-marketing/0.9.0",
       };
     if (process.env.GITHUB_TOKEN)
       headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
