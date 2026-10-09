@@ -848,3 +848,6 @@ label { font-family: var(--utility-font); text-transform: uppercase; letter-spac
   .telemetry .ws b, .telemetry .cursor, .mark { color: #ffc46b; }
   .mark { border-color: #ffc46b; }
 }
+/* The global select margin pushed the workspace selector below its neighbours. */
+.workspace-switch select { margin-top: 0; }
+.workspace-switch { margin: 0; }
