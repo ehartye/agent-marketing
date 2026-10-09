@@ -27,7 +27,7 @@ function writeExport(workspace, output, text) {
 }
 const help = {
   name: "marketing",
-  version: "0.7.0",
+  version: "0.8.0",
   workspace: "--workspace <file> (default .agent-marketing/workspace.json) or --studio for the studio workspace, the home for records with no project such as research reports",
   commands: [
     "init",
