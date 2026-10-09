@@ -9,7 +9,7 @@ import { renderExperiments } from "./views/experiments.js";
 import { renderResults } from "./views/results.js";
 
 const client = createDeskClient(), drafts = reviewDrafts();
-let metricKey = "", loading = true, writing = false, failed = false, generation = 0;
+let metricKey = "", loading = true, writing = false, failed = false, generation = 0, workspaceId = "", workspaceLabel = "";
 const filterIds = { projectId: "project", initiativeId: "initiative", from: "from", to: "to" };
 const selection = () => Object.fromEntries(Object.entries(filterIds).map(([key, id]) => [key, $(id).value]));
 const tabs = [...document.querySelectorAll("[role=tab]")];
@@ -53,7 +53,7 @@ function render(snapshot) {
   $("project-summary").textContent = project ? project.promise : "Choose a project, inspect its evidence, and plan the next small test.";
   $("project-objective").textContent = project?.objective || "Select a project for a recommendation tied to its goal.";
   $("project-resources").textContent = project ? `${project.weeklyHours} hours/week · ${num(project.budget)} ${project.currency} test budget` : `${workspace.projects.length} projects in this workspace`;
-  $("revision").textContent = `Saved revision ${workspace.revision}`;
+  $("revision").textContent = `${workspaceLabel ? workspaceLabel + " · " : ""}Saved revision ${workspace.revision}`;
   $("scope-summary").textContent = `${project?.name || "All projects"} · ${scope.initiativeId ? workspace.initiatives.find(i => i.id === scope.initiativeId)?.name : "All initiatives"} · ${scope.from || "Beginning"} → ${scope.to || "Latest"}. Dates limit readings and feedback; plans and research stay visible.`;
   $("welcome").hidden = workspace.projects.length > 0;
   $("data-scope").textContent = `${workspace.sources.length} registered sources across the workspace. Collection and downloads include every project; filters only change this view.`;
@@ -92,8 +92,17 @@ async function load(initial = false) {
     if (current === generation) { loading = false; syncControls(); }
   }
 }
+// The workspaces this desk can show. The selector appears only when there is a choice.
+async function loadWorkspaces() {
+  const list = await api("/api/workspaces");
+  workspaceId = list.current;
+  workspaceLabel = list.workspaces.find(w => w.id === list.current)?.label || "";
+  $("workspace").innerHTML = list.workspaces.map(w => `<option value="${esc(w.id)}"${w.available ? "" : " disabled"}>${esc(w.label)}${w.available ? ` (${w.projects} projects, ${w.records} records)` : " (unavailable)"}</option>`).join("");
+  $("workspace").value = list.current;
+  $("workspace-switch").hidden = list.workspaces.length < 2;
+}
 async function reload(initial = false) {
-  try { await load(initial); if (!loading) message(initial ? "" : "Selection updated."); }
+  try { await loadWorkspaces(); await load(initial); if (!loading) message(initial ? "" : "Selection updated."); }
   catch (error) { message(error.message, true, true); }
 }
 async function save(action, success, focusKey) {
@@ -135,6 +144,20 @@ document.addEventListener("click", event => {
     $("sentiment-filter").focus();
   }
 });
+$("workspace").onchange = async () => {
+  const chosen = $("workspace").value;
+  if (drafts.size && !confirm("Unsaved review edits in this tab will be discarded. Switch workspace?")) { $("workspace").value = workspaceId; return; }
+  try {
+    await api("/api/workspace/select", { id: chosen });
+    drafts.clear();
+    for (const id of Object.values(filterIds)) $(id).value = "";
+    history.replaceState(null, "", location.pathname + "#" + (location.hash.slice(1) || "campaign"));
+    await reload(true);
+  } catch (error) {
+    $("workspace").value = workspaceId;
+    message(error.message, true);
+  }
+};
 $("dismiss").onclick = () => { $("notice").hidden = true; };
 $("refresh").onclick = $("retry").onclick = () => reload();
 $("clear").onclick = () => { $("from").value = $("to").value = ""; reload(); };
@@ -146,7 +169,7 @@ $("initiatives").onchange = event => {
   const id = event.target.dataset.initiative;
   if (!id) return;
   const record = { ...client.snapshot.workspace.initiatives.find(i => i.id === id), status: event.target.value };
-  save(() => api("/api/record", { collection: "initiatives", record, revision: client.snapshot.workspace.revision }), "Initiative status saved.", `[data-initiative="${CSS.escape(id)}"]`);
+  save(() => api("/api/record", { workspaceId, collection: "initiatives", record, revision: client.snapshot.workspace.revision }), "Initiative status saved.", `[data-initiative="${CSS.escape(id)}"]`);
 };
 $("reactions").oninput = event => {
   const form = event.target.closest("form[data-reaction]");
@@ -163,7 +186,7 @@ $("reactions").onsubmit = event => {
   if (!id) return;
   const record = { ...client.snapshot.workspace.reactions.find(r => r.id === id), ...Object.fromEntries(new FormData(event.target)), reviewed: true };
   save(async () => {
-    await api("/api/record", { collection: "reactions", record, revision: client.snapshot.workspace.revision });
+    await api("/api/record", { workspaceId, collection: "reactions", record, revision: client.snapshot.workspace.revision });
     drafts.delete(id);
   }, "Reaction review saved.", `[data-reaction="${CSS.escape(id)}"] button`);
 };
@@ -173,11 +196,11 @@ $("upload").onchange = event => {
   event.target.value = "";
   if (!file) return;
   if (file.size > 2 * 1024 * 1024) return message("Import exceeds 2 MB. Split it into smaller files and choose the file again.", true);
-  save(async () => api("/api/import", {
+  save(async () => api("/api/import", { workspaceId,
     text: await file.text(), format: file.name.toLowerCase().endsWith(".csv") ? "csv" : "json", revision: client.snapshot.workspace.revision,
   }), "Results imported. Records with matching IDs were updated.", "#import");
 };
-$("collect").onclick = () => save(() => api("/api/monitor", { revision: client.snapshot.workspace.revision }), result => {
+$("collect").onclick = () => save(() => api("/api/monitor", { workspaceId, revision: client.snapshot.workspace.revision }), result => {
   const errors = result.sources.flatMap(s => s.errors);
   return errors.length ? "Collection finished with unavailable readings: " + errors.join("; ") : "All registered sources collected.";
 }, "#collect");

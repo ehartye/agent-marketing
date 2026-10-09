@@ -1,11 +1,13 @@
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { readWorkspace, importRecords } from "./store.mjs";
 import { report, advise } from "./analysis.mjs";
 import { recommendChannels, channelLibrary } from "./channels.mjs";
 import { parseImport, observationsCsv } from "./import.mjs";
 import { monitor } from "./collectors.mjs";
 import { readDocument } from "./documents.mjs";
+import { workspaceCatalog, describeWorkspaces } from "./catalog.mjs";
 async function body(req) {
   let size = 0,
     chunks = [];
@@ -17,8 +19,14 @@ async function body(req) {
   }
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
-export async function startServer(file, { port = 4318, idleMs = 30 * 60 * 1000 } = {}) {
+export async function startServer(
+  launchFile,
+  { port = 4318, idleMs = 30 * 60 * 1000, catalog } = {},
+) {
+  let file = launchFile;
   readWorkspace(file);
+  const entries = () => workspaceCatalog(launchFile, catalog);
+  const currentId = () => entries().find((e) => e.path === resolve(file))?.id;
   if (!Number.isInteger(port) || port < 0 || port > 65535)
     throw new Error("Invalid port");
   if (!Number.isFinite(idleMs) || idleMs < 0) throw new Error("Invalid idle period");
@@ -82,6 +90,8 @@ export async function startServer(file, { port = 4318, idleMs = 30 * 60 * 1000 }
         }
         if (u.pathname === "/api/ping") return send({ ok: true });
         if (u.pathname === "/api/workspace") return send(readWorkspace(file));
+        if (u.pathname === "/api/workspaces")
+          return send(describeWorkspaces(entries(), currentId()));
         if (u.pathname === "/api/document") {
           const saved = readDocument(readWorkspace(file), u.searchParams.get("kind"), u.searchParams.get("id"));
           res.writeHead(200, {
@@ -148,6 +158,17 @@ export async function startServer(file, { port = 4318, idleMs = 30 * 60 * 1000 }
         if (req.headers["content-type"]?.split(";")[0] !== "application/json")
           return send({ error: "Use application/json" }, 415);
         const data = await body(req);
+        if (u.pathname === "/api/workspace/select") {
+          const chosen = entries().find((e) => e.id === data.id);
+          if (!chosen) return send({ error: "Unknown workspace" }, 404);
+          readWorkspace(chosen.path);
+          file = chosen.path;
+          return send(describeWorkspaces(entries(), chosen.id));
+        }
+        // A page names the workspace it is showing, so a tab left open on one
+        // workspace cannot write into another after a switch.
+        if (data.workspaceId !== undefined && data.workspaceId !== currentId())
+          return send({ error: "Revision conflict: the desk switched workspace; reload" }, 409);
         if (!Number.isSafeInteger(data.revision))
           throw new Error("Current revision required; reload the workspace");
         if (u.pathname === "/api/record")
