@@ -56,6 +56,9 @@ function render(snapshot) {
   $("revision").textContent = `${workspaceLabel ? workspaceLabel + " · " : ""}Saved revision ${workspace.revision}`;
   $("scope-summary").textContent = `${project?.name || "All projects"} · ${scope.initiativeId ? workspace.initiatives.find(i => i.id === scope.initiativeId)?.name : "All initiatives"} · ${scope.from || "Beginning"} → ${scope.to || "Latest"}. Dates limit readings and feedback; plans and research stay visible.`;
   $("welcome").hidden = workspace.projects.length > 0;
+  const vitals = [["rev", workspace.revision], ["projects", workspace.projects.length], ["initiatives", workspace.initiatives.length], ["evidence", workspace.evidence.length], ["reports", workspace.reports.length], ["sources", workspace.sources.length], ["sync", new Date().toLocaleTimeString([], { hour12: false })]];
+  $("telemetry").innerHTML = `<span class="ws">ws<b>${esc(workspaceLabel || "workspace")}</b></span>` + vitals.map(([k, v]) => `<span>${k}<b>${esc(v)}</b></span>`).join("") + `<span class="cursor" aria-hidden="true">▮</span>`;
+  $("telemetry").hidden = false;
   $("data-scope").textContent = `${workspace.sources.length} registered sources across the workspace. Collection and downloads include every project; filters only change this view.`;
   renderCampaign(snapshot);
   metricKey = renderActivity(workspace, data, metricKey);

@@ -1,20 +1,46 @@
 :root {
-  --ink: #172c46;
-  --paper: #edf3f7;
-  --blue: #2459a8;
-  --citrus: #f3ca52;
-  --teal: #147d78;
-  --alert: #ac4355;
-  --line: #cad6e2;
-  --muted: #50677f;
-  --white: #fff;
-  --tint: #e5edf8;
-  --range: #a9c5e7;
-  --display-font: "Trebuchet MS", sans-serif;
-  --body-font: Verdana, sans-serif;
-  --utility-font: Consolas, monospace;
-  --radius: 12px;
+  /* Command-center palette: blue-black glass, amber phosphor for action, cyan for data. */
+  color-scheme: dark;
+  --ink: #d5e3f0;
+  --paper: #070c12;
+  --white: #0e1621;
+  --tint: #15212f;
+  --line: #1e2f41;
+  --muted: #7f95ab;
+  --blue: #ffb454;
+  --citrus: #ffb454;
+  --teal: #4fd1e8;
+  --alert: #ff6b81;
+  --range: #1c4a66;
+  --chrome: #0a121b;
+  --on-chrome: #e6f0f8;
+  --on-accent: #1b1204;
+  --glow: rgba(255, 180, 84, 0.16);
+  --display-font: Bahnschrift, "DIN Alternate", "Arial Narrow", "Segoe UI", sans-serif;
+  --body-font: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --utility-font: "Cascadia Mono", "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  --radius: 4px;
   --control-height: 44px;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --ink: #172c46;
+    --paper: #edf3f7;
+    --white: #fff;
+    --tint: #e5edf8;
+    --line: #cad6e2;
+    --muted: #50677f;
+    --blue: #2459a8;
+    --citrus: #f3ca52;
+    --teal: #147d78;
+    --alert: #ac4355;
+    --range: #a9c5e7;
+    --chrome: #172c46;
+    --on-chrome: #fff;
+    --on-accent: #fff;
+    --glow: rgba(36, 89, 168, 0.1);
+  }
 }
 * {
   box-sizing: border-box;
@@ -727,4 +753,98 @@ details > summary {
 
 [hidden] {
   display: none !important;
+}
+
+/* ---- Command-center layer: structure above stays the same, the instrument panel is new. ---- */
+body {
+  background:
+    radial-gradient(1100px 380px at 12% -80px, var(--glow), transparent 70%),
+    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--line) 85%, transparent) 1px, transparent 1.4px) 0 0 / 22px 22px,
+    var(--paper);
+  background-attachment: fixed;
+}
+::selection { background: var(--blue); color: var(--on-accent); }
+header {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--chrome) 92%, var(--blue)) 0, var(--chrome) 100%);
+  color: var(--on-chrome);
+  border-bottom: 1px solid color-mix(in srgb, var(--blue) 45%, var(--line));
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--blue) 18%, transparent), 0 12px 40px -18px var(--glow);
+}
+.brand { font: 700 19px var(--display-font); letter-spacing: 3px; text-transform: uppercase; color: var(--on-chrome); }
+.mark { background: transparent; color: var(--blue); border: 1px solid var(--blue); border-radius: 2px; font-size: 20px; padding: 3px 7px; box-shadow: 0 0 14px var(--glow) inset; }
+.edition { font-family: var(--utility-font); color: var(--teal); opacity: 1; }
+.workspace-switch { color: var(--on-chrome); font: 11px var(--utility-font); letter-spacing: 1.5px; text-transform: uppercase; }
+header button, header select { background: color-mix(in srgb, var(--chrome) 70%, var(--tint)); color: var(--on-chrome); border-color: color-mix(in srgb, var(--on-chrome) 22%, transparent); }
+header button:hover { border-color: var(--blue); background: var(--tint); }
+button.primary, .tabs button[aria-selected="true"] { color: var(--on-accent); }
+button, .button, select, input { border-radius: 3px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline-color: var(--teal); }
+
+.telemetry {
+  display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: baseline;
+  padding: 8px 32px;
+  font: 11px/1.4 var(--utility-font); letter-spacing: 1px; text-transform: uppercase;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--chrome) 80%, transparent);
+  border-bottom: 1px solid var(--line);
+}
+.telemetry b { color: var(--teal); font-weight: 600; margin-left: 6px; }
+.telemetry .ws b { color: var(--blue); }
+.telemetry .cursor { margin-left: auto; color: var(--blue); animation: blink 1.1s steps(2, start) infinite; }
+.telemetry[hidden] { display: none; }
+@keyframes blink { to { visibility: hidden; } }
+
+h1 { font-family: var(--display-font); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+.dot { color: var(--blue); }
+h2, h3 { font-family: var(--display-font); letter-spacing: 0.4px; }
+h2 { text-transform: uppercase; font-size: 18px; }
+.eyebrow, .meta, .decision .label { font-family: var(--utility-font); text-transform: uppercase; }
+.eyebrow::before { content: "// "; color: var(--blue); }
+.project-goal { border-left: 2px solid var(--blue); background: linear-gradient(90deg, var(--glow), transparent 70%); }
+.filters { border-block-color: var(--line); }
+label { font-family: var(--utility-font); text-transform: uppercase; letter-spacing: 1px; font-size: 10.5px; }
+
+.tabs { border-bottom: 1px solid var(--line); gap: 2px; padding-bottom: 0; margin-bottom: 20px; }
+.tabs button { font: 600 12px var(--utility-font); text-transform: uppercase; letter-spacing: 1.2px; border-radius: 3px 3px 0 0; border-bottom: 2px solid transparent; color: var(--muted); min-height: 40px; }
+.tabs button:hover { color: var(--ink); background: var(--tint); }
+.tabs button[aria-selected="true"] { background: color-mix(in srgb, var(--blue) 14%, var(--white)); color: var(--blue); border-bottom-color: var(--blue); box-shadow: 0 10px 24px -14px var(--blue); }
+
+.panel, .summary-grid > div, .decision { position: relative; background: color-mix(in srgb, var(--white) 92%, transparent); }
+.panel::before, .panel::after {
+  content: ""; position: absolute; width: 12px; height: 12px; pointer-events: none;
+  border: 0 solid var(--blue); opacity: 0.55; transition: opacity 0.2s, width 0.2s, height 0.2s;
+}
+.panel::before { top: -1px; left: -1px; border-top-width: 2px; border-left-width: 2px; }
+.panel::after { bottom: -1px; right: -1px; border-bottom-width: 2px; border-right-width: 2px; }
+.panel:hover::before, .panel:hover::after, .panel:focus-within::before, .panel:focus-within::after { opacity: 1; width: 20px; height: 20px; }
+.summary-grid strong { font-family: var(--display-font); color: var(--teal); }
+
+.decision { background: var(--white); color: var(--ink); border: 1px solid color-mix(in srgb, var(--blue) 55%, var(--line)); box-shadow: 0 0 40px -16px var(--glow); }
+.decision > div { border-right-color: var(--line); }
+.decision .label { color: var(--teal); }
+.decision a { color: var(--blue); }
+.decision .next { background: var(--blue); color: var(--on-accent); }
+.decision .next .label, .decision .next a { color: var(--on-accent); }
+
+.report-body th { background: color-mix(in srgb, var(--teal) 14%, transparent); }
+.notice { box-shadow: 0 12px 40px -12px rgba(0, 0, 0, 0.6); }
+* { scrollbar-color: var(--line) var(--paper); }
+@media (max-width: 640px) {
+  .telemetry { padding: 8px 16px; gap: 4px 14px; }
+  .telemetry .cursor { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .telemetry .cursor { animation: none; }
+  .panel::before, .panel::after { transition: none; }
+}
+@media print {
+  body { background: #fff; }
+  .telemetry, .panel::before, .panel::after { display: none; }
+}
+/* Light scheme keeps the chrome dark, so chrome-side accents need light values. */
+@media (prefers-color-scheme: light) {
+  .telemetry { color: color-mix(in srgb, var(--on-chrome) 72%, transparent); background: var(--chrome); }
+  .telemetry b, .edition { color: #8be6f5; }
+  .telemetry .ws b, .telemetry .cursor, .mark { color: #ffc46b; }
+  .mark { border-color: #ffc46b; }
 }
