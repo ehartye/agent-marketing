@@ -142,6 +142,7 @@ export async function startServer(
           "/": ["index.html", "text/html"],
           "/app.js": ["app.js", "text/javascript"],
           "/style.css": ["style.css", "text/css"],
+          "/theme.js": ["theme.js", "text/javascript"],
           ...Object.fromEntries([
             "state.js", "shared.js", "chart.js", "documents.js", "markdown.js", "views/campaign.js",
             "views/reception.js", "views/research.js", "views/reports.js", "views/experiments.js", "views/results.js",
