@@ -55,6 +55,8 @@ In the desk, choose the project under **Decide & plan** to read/download its str
 
 The desk header offers a workspace selector when more than one workspace is available: the studio file, every `*.json` file under `~/.agent-marketing/workspaces/` (or `$AGENT_MARKETING_HOME/workspaces/`), and the file the desk was launched on. It lists them through `GET /api/workspaces`; files that cannot be read are shown as unavailable. `POST /api/workspace/select` takes only an id from that list, never a path. Writes from the page carry the id of the workspace they were showing, and the desk refuses with a conflict if it has switched since, so a tab left on one workspace cannot save into another. A workspace kept elsewhere is reachable only by launching the desk on that file.
 
+The gear in the desk header opens Settings. Its Theme setting is Match system (the default), Dark or Light; the choice is kept in that browser only (`localStorage`), so it never reaches the workspace file, and the desk still works if storage is blocked.
+
 ## The studio workspace
 
 Records that belong to no project, such as a market analysis, have an official home: the studio workspace at `<plugin home>/studio/workspace.json` (by default `~/.agent-marketing/studio/workspace.json`; `AGENT_MARKETING_HOME` relocates it). Pass `--studio` instead of `--workspace` to any command. `marketing init --studio` creates it once and is safe to repeat; it reports the existing file and revision. Setup and updates manage only `releases/` and the receipt next to it and never read or write the studio, so a plugin update cannot touch your data. Back it up like any ledger with `export`. `--studio` and `--workspace` cannot be combined. Project work still belongs in its own workspace file.

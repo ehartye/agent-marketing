@@ -161,6 +161,21 @@ $("workspace").onchange = async () => {
     message(error.message, true);
   }
 };
+// Settings menu: a gear in the header. Escape or a click elsewhere closes it and returns focus to the gear.
+const menu = $("settings-menu"), gear = $("settings");
+function setMenu(open, focus = false) {
+  menu.hidden = !open;
+  gear.setAttribute("aria-expanded", String(open));
+  if (open) {
+    const current = menu.querySelector(`input[value="${window.deskTheme?.get() || "auto"}"]`);
+    if (current) { current.checked = true; current.focus(); }
+  }
+  else if (focus) gear.focus();
+}
+gear.onclick = () => setMenu(menu.hidden);
+menu.onchange = event => { if (event.target.name === "theme") window.deskTheme?.set(event.target.value); };
+document.addEventListener("keydown", event => { if (event.key === "Escape" && !menu.hidden) setMenu(false, true); });
+document.addEventListener("click", event => { if (!menu.hidden && !event.target.closest(".settings")) setMenu(false); });
 $("dismiss").onclick = () => { $("notice").hidden = true; };
 $("refresh").onclick = $("retry").onclick = () => reload();
 $("clear").onclick = () => { $("from").value = $("to").value = ""; reload(); };

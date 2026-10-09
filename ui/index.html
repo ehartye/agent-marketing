@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Agent Marketing · Campaign desk</title>
     <link rel="icon" href="/favicon.ico" />
+    <script src="/theme.js"></script>
     <link rel="stylesheet" href="/style.css" />
     <script src="/app.js" type="module"></script>
   </head>
@@ -23,6 +24,19 @@
         >
         <button id="refresh" disabled>Refresh evidence</button>
         <button data-open-view="results">Results &amp; sources</button>
+        <div class="settings">
+          <button id="settings" class="icon-button" type="button" aria-label="Settings" aria-haspopup="true" aria-expanded="false" aria-controls="settings-menu">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.8 1.8M16.7 16.7l1.8 1.8M18.5 5.5l-1.8 1.8M7.3 16.7l-1.8 1.8"/></svg>
+          </button>
+          <div id="settings-menu" class="settings-menu" role="group" aria-label="Settings" hidden>
+            <fieldset>
+              <legend>Theme</legend>
+              <label><input type="radio" name="theme" value="auto" />Match system</label>
+              <label><input type="radio" name="theme" value="dark" />Dark</label>
+              <label><input type="radio" name="theme" value="light" />Light</label>
+            </fieldset>
+          </div>
+        </div>
       </div>
     </header>
     <div id="telemetry" class="telemetry" role="group" aria-label="Workspace vitals" hidden></div>
