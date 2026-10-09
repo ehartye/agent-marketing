@@ -188,5 +188,14 @@ for (const [key, id] of Object.entries(filterIds)) {
   if ($(id).tagName === "SELECT") $(id).add(new Option(params.get(key), params.get(key)));
   $(id).value = params.get(key);
 }
+// The desk stops itself after a period with no requests. While this page is visible it
+// pings so a desk you are reading stays up, and it says so if the desk has already stopped.
+async function heartbeat() {
+  if (document.visibilityState !== "visible") return;
+  try { await fetch("/api/ping"); }
+  catch { message("The desk has stopped; it closes itself after a period of inactivity. Run serve again, then refresh this page.", true); }
+}
+setInterval(heartbeat, 60000);
+document.addEventListener("visibilitychange", heartbeat);
 setView(location.hash.slice(1));
 reload(!params.has("projectId"));

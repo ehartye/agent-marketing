@@ -17,13 +17,26 @@ async function body(req) {
   }
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
 }
-export async function startServer(file, { port = 4318 } = {}) {
+export async function startServer(file, { port = 4318, idleMs = 30 * 60 * 1000 } = {}) {
   readWorkspace(file);
   if (!Number.isInteger(port) || port < 0 || port > 65535)
     throw new Error("Invalid port");
+  if (!Number.isFinite(idleMs) || idleMs < 0) throw new Error("Invalid idle period");
   let address,
-    collecting = false;
+    collecting = false,
+    idleTimer;
+  // A forgotten desk stops itself. Any request, including the open page's
+  // heartbeat, restarts the clock; an idle period of 0 disables it.
+  const touch = () => {
+    if (!idleMs) return;
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => {
+      server.close();
+      server.closeAllConnections?.();
+    }, idleMs);
+  };
   const server = createServer(async (req, res) => {
+    touch();
     res.setHeader("Cache-Control", "no-store");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader(
@@ -67,6 +80,7 @@ export async function startServer(file, { port = 4318 } = {}) {
             readFileSync(new URL("./analysis.mjs", import.meta.url)),
           );
         }
+        if (u.pathname === "/api/ping") return send({ ok: true });
         if (u.pathname === "/api/workspace") return send(readWorkspace(file));
         if (u.pathname === "/api/document") {
           const saved = readDocument(readWorkspace(file), u.searchParams.get("kind"), u.searchParams.get("id"));
@@ -178,5 +192,12 @@ export async function startServer(file, { port = 4318 } = {}) {
     server.listen(port, "127.0.0.1", resolve);
   });
   address = server.address();
-  return { server, url: `http://127.0.0.1:${address.port}` };
+  const closed = new Promise((done) =>
+    server.on("close", () => {
+      clearTimeout(idleTimer);
+      done();
+    }),
+  );
+  touch();
+  return { server, url: `http://127.0.0.1:${address.port}`, closed };
 }
