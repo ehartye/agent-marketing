@@ -851,3 +851,7 @@ label { font-family: var(--utility-font); text-transform: uppercase; letter-spac
 /* The global select margin pushed the workspace selector below its neighbours. */
 .workspace-switch select { margin-top: 0; }
 .workspace-switch { margin: 0; }
+/* A report's reader belongs to the title above it; only the line between reports divides them. */
+.report .report-reader { border-top: 0; padding-top: 0; margin-top: 0; }
+.report > .meta { margin-bottom: 6px; }
+.report { padding-bottom: 14px; }
