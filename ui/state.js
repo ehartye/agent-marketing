@@ -60,6 +60,7 @@ export function reviewDrafts() {
       return draft && { ...draft, sourceChanged: draft.text !== record.text || draft.url !== record.url };
     },
     delete(id) { values.delete(id); },
+    clear() { values.clear(); },
     get size() { return values.size; },
   };
 }

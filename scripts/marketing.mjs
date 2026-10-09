@@ -13,7 +13,7 @@ import { parseImport, taggedUrl, observationsCsv } from "../src/import.mjs";
 import { monitor } from "../src/collectors.mjs";
 import { recommendChannels, channelLibrary } from "../src/channels.mjs";
 import { readDocument, saveDocument, saveReport } from "../src/documents.mjs";
-import { studioWorkspace } from "./runtime.mjs";
+import { studioWorkspace, runtimeHome } from "./runtime.mjs";
 function writeExport(workspace, output, text) {
   if (existsSync(output)) {
     const source = statSync(workspace, { bigint: true }), destination = statSync(output, { bigint: true });
@@ -206,6 +206,7 @@ try {
     const running = await startServer(file, {
       port: v.port === undefined ? 4318 : Number(v.port),
       idleMs: minutes * 60 * 1000,
+      catalog: { studio: studioWorkspace(), folder: resolve(runtimeHome(), "workspaces") },
     });
     running.closed.then(() =>
       console.error(`Desk stopped after ${minutes} idle minutes (no requests and no open page). Run serve again to reopen it.`));

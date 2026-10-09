@@ -107,6 +107,18 @@ header {
   opacity: 0.75;
   margin-left: 16px;
 }
+.workspace-switch {
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+.workspace-switch[hidden] { display: none; }
+header .actions { max-width: 100%; }
+.workspace-switch { min-width: 0; }
+.workspace-switch select { min-width: 0; max-width: 100%; flex: 1 1 0; }
+@media (max-width: 640px) { .workspace-switch { flex: 1 1 100%; } }
 .actions {
   display: flex;
   gap: 8px;
