@@ -6,7 +6,7 @@
     {
       "name": "agent-marketing",
       "description": "Evidence-led project marketing, paying-demand research and sourced decision reports",
-      "version": "0.7.0",
+      "version": "0.8.0",
       "source": "./",
       "license": "MIT"
     }
