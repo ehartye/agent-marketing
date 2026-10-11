@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { clampMore, foldMain, setOpen, isOpen, resetHubState } from "../ui/hub-shared.js";
+import { readFileSync } from "node:fs";
+import { clampMore, foldMain, fullTitle, TITLE_LINE, setOpen, isOpen, resetHubState } from "../ui/hub-shared.js";
 import { needsBody, resetNeeds } from "../ui/views/needs.js";
 import { recommendedLabel, decisionItem, decisionRows, OPEN_ROWS } from "../ui/views/decisions.js";
 import { splitActions, actionRow, NOW_DAYS } from "../ui/views/actions.js";
@@ -31,6 +32,32 @@ test("a long text gets a Read-the-full expander built from a details element; a 
   // A threshold of its own for the longer promise line.
   assert.equal(clampMore("y".repeat(200), "Read more", { at: 240 }), "");
   assert.notEqual(clampMore("y".repeat(260), "Read more", { at: 240 }), "");
+});
+
+test("the page head holds the promise and the objective in clamped blocks with a place for the toggle, and the filters fold", () => {
+  const html = readFileSync("ui/index.html", "utf8");
+  for (const id of ["project-summary", "project-objective"]) {
+    assert.match(html, new RegExp(`id="${id}" class="clamp-text"`), id);
+    assert.match(html, new RegExp(`id="${id}-more"`), id);
+  }
+  assert.match(html, /<details class="filters-fold" id="filters-fold" open>\s*<summary>Filters <span id="filters-now"/);
+  assert.match(html, /<form class="filters" id="filters">/, "the form is still the form the desk reads");
+  const css = readFileSync("ui/style.css", "utf8");
+  assert.match(css, /\.clamp-text \{[^}]*-webkit-line-clamp: 3/);
+  assert.match(css, /\.clamp:has\(\.clamp-more\[open\]\) \.clamp-text/, "opening the toggle lifts the clamp");
+});
+
+test("a title longer than a row shows is given whole under Details, and a short one is not repeated", () => {
+  const long = "Get the written agreement from the game team: who runs the work, who approves a patch, and a delivery date for each ask";
+  assert.ok(long.length > TITLE_LINE);
+  assert.match(fullTitle(long), /Full title[^]*Get the written agreement/);
+  assert.equal(fullTitle("Short one"), "");
+  assert.doesNotMatch(fullTitle("<img src=x> " + "x".repeat(TITLE_LINE)), /<img/);
+  resetNeeds();
+  const a = att({ gates: [{ id: "g", name: long, criteria: "c", status: "open", due: "2026-10-12", daysLeft: 1, overdue: false, hours: null, blocks: [] }], summary: summary({ gates: 1, total: 1 }) });
+  const html = needsBody(a, { workspace: ws(), plan: null });
+  const detail = html.slice(html.indexOf("</summary>"));
+  assert.match(detail, /Full title/);
 });
 
 // ---- 2. the recommended label comes from the id the record names --------------------------------------

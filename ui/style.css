@@ -1297,8 +1297,8 @@ progress::-moz-progress-bar { background: var(--teal); }
 .clamp:has(.clamp-more[open]) .clamp-text { display: block; -webkit-line-clamp: unset; line-clamp: unset; overflow: visible; }
 .clamp-more > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; min-height: 32px; color: var(--blue); font: 600 12px var(--utility-font); letter-spacing: 0.5px; }
 .clamp-more > summary::-webkit-details-marker { display: none; }
-.clamp-more > summary::after { content: " \25BE"; margin-left: 4px; }
-.clamp-more[open] > summary::after { content: " \25B4"; }
+.clamp-more > summary::after { content: " \25BE"; content: " \25BE" / ""; margin-left: 4px; }
+.clamp-more[open] > summary::after { content: " \25B4"; content: " \25B4" / ""; }
 .clamp-shut, .clamp-more[open] .clamp-open { display: none; }
 .clamp-more[open] .clamp-shut { display: inline; }
 .filters { padding: 8px 0; }
@@ -1311,8 +1311,8 @@ progress::-moz-progress-bar { background: var(--teal); }
 .row-line { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; min-width: 0; }
 summary.row-line { list-style: none; cursor: pointer; min-height: 36px; padding: 2px 0; }
 summary.row-line::-webkit-details-marker { display: none; }
-summary.row-line::before { content: "\25B8"; flex: none; width: 0.9em; color: var(--muted); }
-details[open] > summary.row-line::before { content: "\25BE"; }
+summary.row-line::before { content: "\25B8"; content: "\25B8" / ""; flex: none; width: 0.9em; color: var(--muted); }
+details[open] > summary.row-line::before { content: "\25BE"; content: "\25BE" / ""; }
 .row-chips { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
 .row-chips .pill, .row-chips .meta { margin: 0; }
 .row-title { flex: 1 1 14rem; min-width: 0; font-size: 14px; overflow-wrap: anywhere; }
@@ -1340,8 +1340,8 @@ details[open] > summary.row-line::before { content: "\25BE"; }
 .dcard > summary { list-style: none; cursor: pointer; padding: 2px 12px; min-height: 40px; gap: 2px 12px; }
 .dcard > summary::-webkit-details-marker { display: none; }
 .dcard > summary .dtitle { flex: 1 1 16rem; flex-wrap: wrap; gap: 0 10px; }
-.dcard > summary .dtitle::before { content: "\25B8"; color: var(--muted); }
-.dcard[open] > summary .dtitle::before { content: "\25BE"; }
+.dcard > summary .dtitle::before { content: "\25B8"; content: "\25B8" / ""; color: var(--muted); }
+.dcard[open] > summary .dtitle::before { content: "\25BE"; content: "\25BE" / ""; }
 .dcard > summary .dtitle .row-sub { flex-basis: 100%; padding-left: 1.2em; }
 .dcard > summary .dmeta .pill { margin: 0; }
 .decision-more, .need-more { margin-top: 4px; }
@@ -1350,8 +1350,8 @@ details[open] > summary.row-line::before { content: "\25BE"; }
 .init-tree .init-node > .initiative { padding: 0 12px; margin-bottom: 4px; }
 .init-tree .init-node > .initiative > summary.init-line { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; min-height: 40px; padding: 4px 0; }
 .init-line::-webkit-details-marker { display: none; }
-.init-line::before { content: "\25B8"; flex: none; width: 0.9em; color: var(--muted); }
-.initiative[open] > .init-line::before { content: "\25BE"; }
+.init-line::before { content: "\25B8"; content: "\25B8" / ""; flex: none; width: 0.9em; color: var(--muted); }
+.initiative[open] > .init-line::before { content: "\25BE"; content: "\25BE" / ""; }
 .init-name { margin: 0; font-size: 15px; flex: 1 1 12rem; min-width: 0; overflow-wrap: anywhere; }
 .init-facts { white-space: nowrap; }
 .init-progress { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 9rem; }
@@ -1403,8 +1403,8 @@ details[open] > summary.row-line::before { content: "\25BE"; }
 .linked-records { margin: 2px 0 4px; }
 .linked-records > summary { list-style: none; cursor: pointer; min-height: 28px; display: flex; align-items: center; color: var(--blue); font-size: 12px; font-weight: 600; }
 .linked-records > summary::-webkit-details-marker { display: none; }
-.linked-records > summary::before { content: "\25B8"; width: 0.9em; margin-right: 4px; color: var(--muted); }
-.linked-records[open] > summary::before { content: "\25BE"; }
+.linked-records > summary::before { content: "\25B8"; content: "\25B8" / ""; width: 0.9em; margin-right: 4px; color: var(--muted); }
+.linked-records[open] > summary::before { content: "\25BE"; content: "\25BE" / ""; }
 .linked-records .links { margin: 2px 0 6px; }
 .options { margin: 8px 0; }
 .decide-form { margin-top: 8px; }
@@ -1416,8 +1416,8 @@ details[open] > summary.row-line::before { content: "\25BE"; }
 .init-own { margin: 6px 0 0; }
 .init-own > summary { list-style: none; cursor: pointer; min-height: 32px; display: flex; align-items: center; color: var(--blue); font-size: 13px; font-weight: 600; }
 .init-own > summary::-webkit-details-marker { display: none; }
-.init-own > summary::before { content: "\25B8"; width: 0.9em; margin-right: 4px; color: var(--muted); }
-.init-own[open] > summary::before { content: "\25BE"; }
+.init-own > summary::before { content: "\25B8"; content: "\25B8" / ""; width: 0.9em; margin-right: 4px; color: var(--muted); }
+.init-own[open] > summary::before { content: "\25BE"; content: "\25BE" / ""; }
 .init-own > .row, .init-own > p { margin-left: 0; }
 
 /* Filters: always on show on a wide screen, one folded line on a phone. */
@@ -1425,8 +1425,8 @@ details[open] > summary.row-line::before { content: "\25BE"; }
 @media (max-width: 850px) {
   .filters-fold > summary { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 10px; list-style: none; cursor: pointer; min-height: 40px; padding: 4px 10px; border: 1px solid var(--line); border-radius: var(--radius); font: 600 12px var(--utility-font); letter-spacing: 1px; text-transform: uppercase; color: var(--blue); }
   .filters-fold > summary::-webkit-details-marker { display: none; }
-  .filters-fold > summary::before { content: "\25B8"; color: var(--muted); }
-  .filters-fold[open] > summary::before { content: "\25BE"; }
+  .filters-fold > summary::before { content: "\25B8"; content: "\25B8" / ""; color: var(--muted); }
+  .filters-fold[open] > summary::before { content: "\25BE"; content: "\25BE" / ""; }
   .filters-fold > summary .meta { text-transform: none; letter-spacing: 0; font-size: 12px; overflow-wrap: anywhere; }
   .filters-fold[open] > summary { margin-bottom: 4px; }
 }
