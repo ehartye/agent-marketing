@@ -9,6 +9,9 @@ import { parseImport, observationsCsv } from "./import.mjs";
 import { monitor } from "./collectors.mjs";
 import { readDocument } from "./documents.mjs";
 import { workspaceCatalog, describeWorkspaces } from "./catalog.mjs";
+import { addSlot, addAsset, pickAsset, rejectAsset, restoreAsset, retireAsset, maxAssetBytes, maxAssetText } from "./assets.mjs";
+import { assetExtensions, assetKinds } from "./schema.mjs";
+import { serveAsset, receiveUpload, fileLabel } from "./asset-http.mjs";
 async function body(req) {
   let size = 0,
     chunks = [];
@@ -106,6 +109,28 @@ const progressRoutes = {
     return setInitiativeNote(file, text(d, "id", true), text(d, "note"), { revision: d.revision });
   },
 };
+// Collateral: the same shape as the progress routes. The module checks the ID, the link and the text,
+// and answers 404 for an ID it does not know.
+const assetRoutes = {
+  "/api/asset/pick": (file, d) => pickAsset(file, text(d, "assetId", true), { rationale: text(d, "rationale"), revision: d.revision }),
+  "/api/asset/reject": (file, d) => rejectAsset(file, text(d, "assetId", true), { rationale: text(d, "rationale", true), revision: d.revision }),
+  "/api/asset/restore": (file, d) => restoreAsset(file, text(d, "assetId", true), { revision: d.revision }),
+  "/api/asset/retire": (file, d) => retireAsset(file, text(d, "assetId", true), { rationale: text(d, "rationale"), revision: d.revision }),
+  "/api/asset/link": (file, d) =>
+    addAsset(file, { slotId: text(d, "slotId", true), label: text(d, "label", true), url: text(d, "url", true), source: text(d, "source"), revision: d.revision }),
+  "/api/asset/text": (file, d) =>
+    addAsset(file, { slotId: text(d, "slotId", true), label: text(d, "label", true), text: text(d, "text", true), source: text(d, "source"), revision: d.revision }),
+  "/api/asset/slot": (file, d) =>
+    addSlot(file, {
+      id: text(d, "id", true),
+      name: text(d, "name", true),
+      kind: text(d, "kind", true),
+      spec: text(d, "spec"),
+      projectId: text(d, "projectId"),
+      initiativeId: text(d, "initiativeId"),
+      revision: d.revision,
+    }),
+};
 export async function startServer(
   launchFile,
   { port = 4318, idleMs = 30 * 60 * 1000, catalog } = {},
@@ -130,13 +155,39 @@ export async function startServer(
       server.closeAllConnections?.();
     }, idleMs);
   };
+  // A file for a slot: the raw bytes are the body, and everything else is in the query. It has the
+  // same workspace and revision rules as a JSON write.
+  const uploadAsset = async (req, res, u) => {
+    const q = (name) => u.searchParams.get(name) ?? undefined;
+    if (req.headers["content-type"]?.split(";")[0] !== "application/octet-stream")
+      throw Object.assign(new Error("Send the file as application/octet-stream"), { status: 415 });
+    if (q("workspaceId") !== undefined && q("workspaceId") !== currentId())
+      throw Object.assign(new Error("Revision conflict: the desk switched workspace; reload"), { status: 409 });
+    const revision = q("revision") === undefined || q("revision") === "" ? NaN : Number(q("revision"));
+    if (!Number.isSafeInteger(revision)) throw new Error("Current revision required; reload the workspace");
+    const slotId = q("slotId"),
+      filename = q("filename");
+    if (!slotId) throw new Error("Required: slotId");
+    if (!filename || !filename.trim()) throw new Error("Required: filename");
+    const label = q("label")?.trim() || fileLabel(filename);
+    const received = await receiveUpload(req, res, filename);
+    try {
+      return addAsset(file, { slotId, label, from: received.path, source: q("source")?.trim() || undefined, revision });
+    } catch (e) {
+      // The module names the file it was given; the person gave it a different name.
+      e.message = e.message.split(received.path).join(filename);
+      throw e;
+    } finally {
+      received.cleanup();
+    }
+  };
   const server = createServer(async (req, res) => {
     touch();
     res.setHeader("Cache-Control", "no-store");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader(
       "Content-Security-Policy",
-      "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'",
+      "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'",
     );
     const send = (value, status = 200) => {
       res.writeHead(status, {
@@ -179,6 +230,19 @@ export async function startServer(
         }
         if (u.pathname === "/api/ping") return send({ ok: true });
         if (u.pathname === "/api/workspace") return send(readWorkspace(file));
+        if (u.pathname === "/api/asset-limits")
+          return send({ maxBytes: maxAssetBytes, maxText: maxAssetText, extensions: assetExtensions, kinds: assetKinds });
+        // A stored file, found by asset ID in the workspace being shown. The ID is only ever compared
+        // with the IDs of that workspace; the path comes from resolveAssetFile, never from the request.
+        if (u.pathname.startsWith("/assets/")) {
+          let id;
+          try {
+            id = decodeURIComponent(u.pathname.slice("/assets/".length));
+          } catch {}
+          const asset = id && readWorkspace(file).assets.find((a) => a.id === id);
+          if (asset && (await serveAsset(req, res, file, asset))) return;
+          return send({ error: "No such asset file" }, 404);
+        }
         if (u.pathname === "/api/workspaces")
           return send(describeWorkspaces(entries(), currentId()));
         if (u.pathname === "/api/document") {
@@ -241,7 +305,7 @@ export async function startServer(
           ...Object.fromEntries([
             "state.js", "shared.js", "hub-shared.js", "chart.js", "documents.js", "markdown.js", "views/campaign.js",
             "views/reception.js", "views/research.js", "views/reports.js", "views/experiments.js", "views/results.js", "views/plan.js",
-            "views/needs.js", "views/decisions.js", "views/actions.js", "views/timeline.js", "views/hierarchy.js", "views/hub.js",
+            "views/needs.js", "views/collateral.js", "views/collateral-viewer.js", "views/decisions.js", "views/actions.js", "views/timeline.js", "views/hierarchy.js", "views/hub.js",
           ].map(name => ["/" + name, [name, "text/javascript"]])),
         };
         if (assets[u.pathname]) {
@@ -251,6 +315,7 @@ export async function startServer(
           return res.end(content);
         }
       } else if (req.method === "POST") {
+        if (u.pathname === "/api/asset/upload") return send(await uploadAsset(req, res, u));
         if (req.headers["content-type"]?.split(";")[0] !== "application/json")
           return send({ error: "Use application/json" }, 415);
         const data = await body(req);
@@ -286,6 +351,7 @@ export async function startServer(
             ),
           );
         if (progressRoutes[u.pathname]) return send(progressRoutes[u.pathname](file, data));
+        if (assetRoutes[u.pathname]) return send(assetRoutes[u.pathname](file, data));
         if (u.pathname === "/api/monitor") {
           if (collecting)
             return send({ error: "Collection already running" }, 409);
