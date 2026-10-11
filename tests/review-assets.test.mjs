@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSyn
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createWorkspace, readWorkspace, mutateWorkspace } from "../src/store.mjs";
-import { addSlot, addAsset, pickAsset, rejectAsset, retireAsset, assetsDir, sniffMediaType } from "../src/assets.mjs";
+import { addSlot, setSlot, addAsset, pickAsset, rejectAsset, retireAsset, assetsDir, sniffMediaType } from "../src/assets.mjs";
 import { decide, defer } from "../src/progress.mjs";
 import { ledger } from "./fixtures.mjs";
 import { png, webm } from "./images.mjs";
@@ -219,4 +219,56 @@ test("a file named .webm whose content is something else is refused", () =>
     const matroska = Buffer.concat([Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x84, 0x42, 0x82, 0x88]), Buffer.from("matroska", "latin1"), Buffer.alloc(8)]);
     assert.throws(() => addAsset(file, { slotId: "clip", label: "Mkv", from: src("mkv.webm", matroska), now: NOW }), /says video\/webm by its extension/);
     assert.equal(readWorkspace(file).assets.length, 0);
+  }));
+
+// ---- A slot that is waiting on something -------------------------------------------------------
+
+test("a slot can be added already waiting, and picking an asset ends the wait", () =>
+  withFile((file) => {
+    const added = addSlot(file, { id: "capsule", name: "Capsule", kind: "image", waitingOn: "five-second tests, Nov 23-25", now: NOW });
+    assert.equal(added.record.waitingOn, "five-second tests, Nov 23-25");
+    link(file, "capsule", "a");
+    link(file, "capsule", "b");
+    const picked = pickAsset(file, "a", { now: LATER });
+    assert.equal(picked.slot.waitingOn, undefined);
+    assert.equal(readWorkspace(file).assetSlots[0].waitingOn, undefined);
+    assert.throws(() => addSlot(file, { id: "x", name: "X", kind: "image", waitingOn: " ", now: NOW }), /waitingOn/);
+    assert.throws(() => addSlot(file, { id: "y", name: "Y", kind: "image", waitingOn: "z".repeat(201), now: NOW }), /at most 200 characters/);
+  }));
+
+test("setSlot sets and clears what a slot waits on, its spec and its note, and logs it", () =>
+  withFile((file) => {
+    slot(file);
+    const set = setSlot(file, "capsule", { waitingOn: "the artist", now: NOW });
+    assert.equal(set.changed, true);
+    assert.equal(set.record.waitingOn, "the artist");
+    assert.equal(set.update.kind, "asset");
+    assert.equal(set.update.refId, "capsule");
+    assert.match(set.update.text, /"Slot capsule" is waiting on the artist/);
+    const before = readFileSync(file, "utf8");
+    assert.equal(setSlot(file, "capsule", { waitingOn: "the artist", now: LATER }).changed, false);
+    assert.equal(readFileSync(file, "utf8"), before, "the same wait writes nothing");
+    const spec = setSlot(file, "capsule", { spec: "1232x706 PNG", notes: "keep the logo clear", now: LATER });
+    assert.equal(spec.record.spec, "1232x706 PNG");
+    assert.equal(spec.record.notes, "keep the logo clear");
+    assert.equal(spec.record.waitingOn, "the artist", "what is not named is kept");
+    assert.match(spec.update.text, /Changed the spec and the note of "Slot capsule"/);
+    const cleared = setSlot(file, "capsule", { waitingOn: null, now: LATER });
+    assert.equal(cleared.record.waitingOn, undefined);
+    assert.match(cleared.update.text, /"Slot capsule" is no longer waiting/);
+    assert.equal(setSlot(file, "capsule", { waitingOn: null, now: LATER }).changed, false);
+    assert.equal(setSlot(file, "capsule", { spec: null, now: LATER }).record.spec, undefined);
+  }));
+
+test("setSlot refuses an unknown slot, nothing to change, a bad value and a wait on a picked slot", () =>
+  withFile((file) => {
+    slot(file);
+    link(file, "capsule", "a");
+    assert.throws(() => setSlot(file, "ghost", { waitingOn: "x", now: NOW }), (e) => e.status === 404 && /Asset slot "ghost" does not exist/.test(e.message));
+    assert.throws(() => setSlot(file, "capsule", { now: NOW }), /Nothing to change/);
+    assert.throws(() => setSlot(file, "capsule", { waitingOn: "  ", now: NOW }), /waitingOn/);
+    assert.throws(() => setSlot(file, "capsule", { spec: "", now: NOW }), /spec/);
+    pickAsset(file, "a", { now: NOW });
+    assert.throws(() => setSlot(file, "capsule", { waitingOn: "more tests", now: NOW }), /already has a pick/);
+    assert.equal(setSlot(file, "capsule", { spec: "now 1920x1080", now: LATER }).changed, true, "a picked slot can still change its spec");
   }));

@@ -192,10 +192,11 @@ const reason = (text) => (text ? ` (${text})` : "");
 
 // A new slot to fill. Its project is the one named, or the project of the initiative, or the
 // workspace's only project. An ID already in use is refused.
-export function addSlot(file, { id, projectId, initiativeId, name, kind, spec, notes, revision, ...time } = {}) {
+export function addSlot(file, { id, projectId, initiativeId, name, kind, spec, notes, waitingOn, revision, ...time } = {}) {
   const { at } = clock(time);
   if (!id) throw new Error("Required: id");
   if (!name) throw new Error("Required: name");
+  if (waitingOn !== undefined) waitingText(waitingOn);
   if (!assetKinds.includes(kind)) throw new Error(`Slot kind must be one of ${words(assetKinds)}`);
   const problem = assetPathProblem(id);
   if (problem) throw new Error(`Slot ID "${id}" becomes a folder name and ${problem}`);
@@ -209,6 +210,7 @@ export function addSlot(file, { id, projectId, initiativeId, name, kind, spec, n
     if (spec !== undefined) record.spec = spec;
     record.status = "open";
     if (notes !== undefined) record.notes = notes;
+    if (waitingOn !== undefined) record.waitingOn = waitingOn;
     w.assetSlots.push(record);
     const update = log(w, {
       projectId: record.projectId,
@@ -225,6 +227,42 @@ export function addSlot(file, { id, projectId, initiativeId, name, kind, spec, n
 // IDs are file names, and on Windows a file name ignores case, so two IDs are the same when they
 // differ only by case.
 const sameId = (a, b) => a.toLowerCase() === b.toLowerCase();
+
+const waitingText = (v) => {
+  if (typeof v !== "string" || !v.trim() || v.length > 200) throw new Error("waitingOn must be nonempty text of at most 200 characters (what the slot is waiting for)");
+};
+
+// Changes what a slot says about itself. For each of waitingOn (what the slot is waiting for before
+// anyone picks, such as tests that have not run), spec and notes: leave it out to keep it, give text
+// to set it, or null to clear it. A slot that has a pick is not waiting for anything. Logs one update.
+export function setSlot(file, slotId, { waitingOn, spec, notes, revision, ...time } = {}) {
+  const { at } = clock(time);
+  const wanted = { waitingOn, spec, notes };
+  if (Object.values(wanted).every((v) => v === undefined)) throw new Error("Nothing to change: give waitingOn, spec or notes");
+  if (typeof waitingOn === "string") waitingText(waitingOn);
+  for (const [key, v] of Object.entries({ spec, notes }))
+    if (v !== undefined && v !== null && (typeof v !== "string" || !v.trim())) throw new Error(`${key} must be nonempty text (or none to clear it)`);
+  if (waitingOn !== undefined && waitingOn !== null && typeof waitingOn !== "string") waitingText(waitingOn);
+  return write(file, revision, (w) => {
+    const slot = find(w, "assetSlots", "Asset slot", slotId);
+    if (typeof waitingOn === "string" && slot.status === "picked")
+      throw new Error(`Slot "${slot.id}" already has a pick; it is not waiting for anything`);
+    const changed = Object.entries(wanted).filter(([key, v]) => v !== undefined && (v ?? undefined) !== slot[key]);
+    if (!changed.length) return same(slot);
+    for (const [key, v] of changed) {
+      if (v === null) delete slot[key];
+      else slot[key] = v;
+    }
+    const keys = changed.map(([key]) => key),
+      others = keys.filter((key) => key !== "waitingOn").map((key) => (key === "spec" ? "the spec" : "the note")),
+      parts = [];
+    if (keys.includes("waitingOn"))
+      parts.push(slot.waitingOn ? `${quote(slot.name)} is waiting on ${slot.waitingOn}` : `${quote(slot.name)} is no longer waiting`);
+    if (others.length) parts.push(`Changed ${others.join(" and ")} of ${quote(slot.name)}`);
+    const update = log(w, { projectId: slot.projectId, initiativeId: slot.initiativeId, kind: "asset", refId: slot.id, text: parts.join("; "), at });
+    return { record: structuredClone(slot), update };
+  });
+}
 
 // The first free ID for a new asset of a slot: <slot>-1, <slot>-2 ... It skips the ID of any asset or
 // slot (they share one lookup), in any case, and any in `skip`, the IDs whose file turned out to exist.
@@ -414,6 +452,7 @@ export function pickAsset(file, target, { rationale, revision, ...time } = {}) {
     else delete asset.rationale;
     asset.decidedAt = at;
     slot.status = "picked";
+    delete slot.waitingOn;
     slot.selectedAssetId = asset.id;
     slot.decisionId = d.id;
     // Every asset of the slot was in the running, so the decision lists them all.

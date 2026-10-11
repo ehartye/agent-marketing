@@ -7,10 +7,10 @@ import {
   readWorkspace,
   importRecords,
 } from "../src/store.mjs";
-import { collections, validateWorkspace, workspaceWarnings, failOnWarnings } from "../src/schema.mjs";
+import { collections, validateWorkspace, workspaceWarnings, failOnWarnings, assetStatuses } from "../src/schema.mjs";
 import { report, advise, plan, analyzeExperiment, attention, localDate } from "../src/analysis.mjs";
 import { decide, defer, addAction, setActionStatus, setGate, addUpdate } from "../src/progress.mjs";
-import { addSlot, addAsset, pickAsset, rejectAsset, restoreAsset, retireAsset, listAssets, listSlots } from "../src/assets.mjs";
+import { addSlot, setSlot, addAsset, pickAsset, rejectAsset, restoreAsset, retireAsset, listAssets, listSlots } from "../src/assets.mjs";
 import { parseImport, taggedUrl, observationsCsv } from "../src/import.mjs";
 import { monitor } from "../src/collectors.mjs";
 import { recommendChannels, channelLibrary } from "../src/channels.mjs";
@@ -47,11 +47,12 @@ const help = {
     "next [project-id] [--today YYYY-MM-DD]",
     "decide <decision-id> --option <option-id> [--rationale text] [--change] [--revision n]",
     "defer <decision-id> [--until YYYY-MM-DD] [--note text] [--revision n]",
-    "action add --id id --title text [--owner owner|agent] [--due YYYY-MM-DD] [--hours n] [--initiative id] [--gate id] [--decision id] [--note text] [--project id] [--revision n]",
+    "action add --id id --title text [--owner owner|agent] [--status todo|doing|done|blocked|dropped] [--due YYYY-MM-DD] [--hours n] [--initiative id] [--gate id] [--decision id] [--note text] [--project id] [--revision n]",
     "action status <action-id> <todo|doing|done|blocked|dropped> [--note text] [--revision n]",
-    "gate set <gate-id> --status <open|passed|failed|waived> [--note text] [--evidence id,id] [--due YYYY-MM-DD] [--hours n] [--revision n]",
+    "gate set <gate-id> --status <open|passed|failed|waived> [--note text] [--evidence id,id] [--due YYYY-MM-DD|none] [--hours n|none] [--revision n]",
     "update add --text text [--kind note|decision|gate|initiative|action|asset|document] [--initiative id] [--ref id] [--project id] [--revision n]",
-    "asset slot add --id id --name text --kind image|video|document|text|link [--spec text] [--initiative id] [--project id] [--note text] [--revision n]",
+    "asset slot add --id id --name text --kind image|video|document|text|link [--spec text] [--initiative id] [--project id] [--note text] [--waiting-on text] [--revision n]",
+    "asset slot set <slot-id> [--waiting-on text|none] [--spec text] [--note text] [--revision n]",
     "asset add --slot id --label text (--file path | --url https-url | --text copy) [--source text] [--id id] [--supersedes asset-id] [--revision n]",
     "asset pick <asset-or-slot-id> [--rationale text] [--revision n]",
     "asset reject <asset-id> --rationale text [--revision n]",
@@ -118,6 +119,7 @@ try {
         "url",
         "spec",
         "supersedes",
+        "waiting-on",
       ].map((k) => [k, { type: "string" }]),
       ),
     },
@@ -129,6 +131,18 @@ try {
     if (!x) throw new Error(`Required: ${name}`);
     return x;
   };
+  // A number given on the command line: absent is undefined, and anything that is not a finite
+  // number, including an empty value, is refused here instead of becoming 0 or NaN downstream.
+  const numeric = (x, name) => {
+    if (x === undefined) return undefined;
+    const n = x.trim() === "" ? NaN : Number(x);
+    if (!Number.isFinite(n)) throw new Error(`${name} must be a number, not "${x}"`);
+    return n;
+  };
+  // `none` clears a field that can be cleared: undefined keeps it, null clears it.
+  const clearable = (x, name, parse = (y) => y) => (x === undefined ? undefined : x.trim().toLowerCase() === "none" ? null : parse(x, name));
+  const revisionNumber = v.revision === undefined ? undefined : /^\d+$/.test(v.revision.trim()) ? Number(v.revision) : NaN;
+  if (Number.isNaN(revisionNumber)) throw new Error(`--revision must be a whole number of 0 or more, not "${v.revision}"; it is the revision an earlier command printed`);
   const filter = {
     projectId: v.project,
     initiativeId: v.initiative,
@@ -168,7 +182,7 @@ try {
         readFileSync(input, "utf8"),
         extname(input).toLowerCase() === ".csv" ? "csv" : "json",
       ),
-      v.revision === undefined ? undefined : Number(v.revision),
+      revisionNumber,
       { strict: v.strict },
     );
   } else if (command === "put") {
@@ -182,7 +196,7 @@ try {
           JSON.parse(readFileSync(required(p[1], "record.json"), "utf8")),
         ],
       },
-      v.revision === undefined ? undefined : Number(v.revision),
+      revisionNumber,
       { strict: v.strict },
     );
   } else if (command === "document") {
@@ -196,10 +210,10 @@ try {
         id, title: v.title, markdown: readFileSync(required(input, "report.md"), "utf8"),
         projectId: v.project, kind: v.kind, vaultUrl: v["vault-url"],
         initiativeId: v.initiative, gateId: v.gate, decisionId: v.decision,
-      }, Number(v.revision)) };
+      }, (revisionNumber ?? NaN)) };
     } else if (action === "save") {
       result = { workspace: file, ...saveDocument(file, kind, id,
-        readFileSync(required(input, "brief.md"), "utf8"), Number(v.revision)) };
+        readFileSync(required(input, "brief.md"), "utf8"), (revisionNumber ?? NaN)) };
     } else {
       result = { workspace: file, ...readDocument(readWorkspace(file), kind, id) };
       if (action === "export") {
@@ -234,6 +248,8 @@ try {
     }
     result = attention(w, id, v.today ?? localDate());
   } else if (command === "asset" && p[0] === "list") {
+    if (v.status !== undefined && !assetStatuses.includes(v.status))
+      throw new Error(`--status must be one of ${assetStatuses.join(", ")}, not "${v.status}"`);
     const w = readWorkspace(file);
     result = {
       workspace: file,
@@ -242,7 +258,7 @@ try {
     };
   } else if (["decide", "defer", "action", "gate", "update", "asset"].includes(command)) {
     // Progress commands print the changed record and the log entry they wrote with it.
-    const revision = v.revision === undefined ? undefined : Number(v.revision),
+    const revision = revisionNumber,
       note = v.note;
     let done;
     if (command === "decide")
@@ -256,8 +272,9 @@ try {
         id: required(v.id, "--id"),
         title: required(v.title, "--title"),
         owner: v.owner,
+        status: v.status,
         due: v.due,
-        hours: v.hours === undefined ? undefined : Number(v.hours),
+        hours: numeric(v.hours, "--hours"),
         initiativeId: v.initiative,
         gateId: v.gate,
         decisionId: v.decision,
@@ -272,8 +289,8 @@ try {
         status: required(v.status, "--status"),
         note,
         evidenceIds: v.evidence === undefined ? undefined : v.evidence.split(",").map((x) => x.trim()).filter(Boolean),
-        due: v.due,
-        hours: v.hours === undefined ? undefined : Number(v.hours),
+        due: clearable(v.due, "--due"),
+        hours: clearable(v.hours, "--hours", numeric),
         revision,
       });
     else if (command === "update" && p[0] === "add")
@@ -288,6 +305,14 @@ try {
         spec: v.spec,
         initiativeId: v.initiative,
         projectId: v.project,
+        notes: note,
+        waitingOn: v["waiting-on"],
+        revision,
+      });
+    else if (command === "asset" && p[0] === "slot" && p[1] === "set")
+      done = setSlot(file, required(p[2], "slot ID"), {
+        waitingOn: clearable(v["waiting-on"], "--waiting-on"),
+        spec: v.spec,
         notes: note,
         revision,
       });

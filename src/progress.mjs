@@ -233,6 +233,7 @@ export function addAction(
   { id, title, owner = "owner", status = "todo", due, hours, notes, initiativeId, gateId, decisionId, projectId, revision, ...time } = {},
 ) {
   const { at } = clock(time);
+  if (!actionStatuses.includes(status)) throw new Error(`Action status must be one of ${words(actionStatuses)}`);
   return write(file, revision, (w) => {
     if (!id) throw new Error("Required: id");
     if (w.actions.some((a) => a.id === id)) throw new Error(`Action "${id}" already exists; change it with action status`);
@@ -250,6 +251,7 @@ export function addAction(
     const record = { id, projectId, title, owner, status };
     for (const [key, value] of Object.entries({ initiativeId, gateId, decisionId, due, hours, notes }))
       if (value !== undefined) record[key] = value;
+    if (status === "done") record.doneAt = at;
     w.actions.push(record);
     const update = log(w, {
       projectId,

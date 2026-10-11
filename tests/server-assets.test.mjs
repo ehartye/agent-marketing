@@ -622,3 +622,23 @@ test("receiveUpload keeps a body up to the limit, drains one over it into a 413,
   await assert.rejects(receiveUpload(declared.stream, { setHeader: (k, v) => (closed = [k, v]) }, "a.png", limit), (e) => e.status === 413);
   assert.deepEqual(closed, ["Connection", "close"], "a declared size past four times the limit is refused unread");
 });
+
+test("POST /api/asset/slot/set sets and clears what a slot waits on, and a slot can be added waiting", () =>
+  desk(async ({ post, read }) => {
+    const added = await post("/api/asset/slot", { id: "trailer", name: "Trailer", kind: "video", projectId: "game", waitingOn: "the voice-over" });
+    assert.equal(added.status, 200);
+    assert.equal(added.body.record.waitingOn, "the voice-over");
+    const set = await post("/api/asset/slot/set", { slotId: "capsule", waitingOn: "five-second tests, Nov 23-25" });
+    assert.equal(set.status, 200, JSON.stringify(set.body));
+    assert.equal(set.body.record.waitingOn, "five-second tests, Nov 23-25");
+    assert.equal(read().assetSlots.find((s) => s.id === "capsule").waitingOn, "five-second tests, Nov 23-25");
+    const spec = await post("/api/asset/slot/set", { slotId: "capsule", spec: "1920x1080" });
+    assert.equal(spec.body.record.waitingOn, "five-second tests, Nov 23-25", "a field left out is kept");
+    const cleared = await post("/api/asset/slot/set", { slotId: "capsule", waitingOn: null });
+    assert.equal(cleared.status, 200);
+    assert.equal(read().assetSlots.find((s) => s.id === "capsule").waitingOn, undefined);
+    assert.equal((await post("/api/asset/slot/set", { slotId: "nope", waitingOn: "x" })).status, 404);
+    assert.equal((await post("/api/asset/slot/set", { slotId: "capsule" })).status, 400);
+    assert.equal((await post("/api/asset/slot/set", { slotId: "capsule", waitingOn: 4 })).status, 400);
+    assert.equal((await post("/api/asset/slot/set", { slotId: "capsule", waitingOn: "x" }, { revision: 1 })).status, 409);
+  }));

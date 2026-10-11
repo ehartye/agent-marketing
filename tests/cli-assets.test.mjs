@@ -148,5 +148,5 @@ test("a duplicate file and a stale revision are refused through the CLI too", ()
 test("help lists the asset commands", () => {
   const r = spawnSync(process.execPath, [resolve("scripts/marketing.mjs"), "help"], { encoding: "utf8" });
   const lines = JSON.parse(r.stdout).commands.filter((c) => c.startsWith("asset "));
-  assert.deepEqual(lines.map((c) => c.split(" ").slice(0, 2).join(" ")), ["asset slot", "asset add", "asset pick", "asset reject", "asset restore", "asset retire", "asset list"]);
+  assert.deepEqual(lines.map((c) => c.split(" ").slice(0, 2).join(" ")), ["asset slot", "asset slot", "asset add", "asset pick", "asset reject", "asset restore", "asset retire", "asset list"]);
 });

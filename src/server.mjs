@@ -9,7 +9,7 @@ import { parseImport, observationsCsv } from "./import.mjs";
 import { monitor } from "./collectors.mjs";
 import { readDocument } from "./documents.mjs";
 import { workspaceCatalog, describeWorkspaces } from "./catalog.mjs";
-import { addSlot, addAsset, pickAsset, rejectAsset, restoreAsset, retireAsset, maxAssetBytes, maxAssetText } from "./assets.mjs";
+import { addSlot, setSlot, addAsset, pickAsset, rejectAsset, restoreAsset, retireAsset, maxAssetBytes, maxAssetText } from "./assets.mjs";
 import { assetExtensions, assetKinds } from "./schema.mjs";
 import { serveAsset, receiveUpload, fileLabel } from "./asset-http.mjs";
 async function body(req) {
@@ -126,8 +126,17 @@ const assetRoutes = {
       name: text(d, "name", true),
       kind: text(d, "kind", true),
       spec: text(d, "spec"),
+      waitingOn: text(d, "waitingOn"),
       projectId: text(d, "projectId"),
       initiativeId: text(d, "initiativeId"),
+      revision: d.revision,
+    }),
+  // What a slot waits on, its spec and its note: a text sets it, null clears it, leaving it out keeps it.
+  "/api/asset/slot/set": (file, d) =>
+    setSlot(file, text(d, "slotId", true), {
+      waitingOn: d.waitingOn === null ? null : text(d, "waitingOn"),
+      spec: d.spec === null ? null : text(d, "spec"),
+      notes: d.notes === null ? null : text(d, "notes"),
       revision: d.revision,
     }),
 };
