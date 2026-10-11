@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { collections, emptyWorkspace, validateWorkspace, workspaceWarnings, patchWarnings } from "../src/schema.mjs";
@@ -282,3 +282,48 @@ test("a long dependency cycle is named by its first few initiatives and a count,
   assert.throws(() => validateWorkspace(short), /^Error: initiatives\.a\.dependsOn: dependency cycle a -> b -> a$/);
 });
 
+test("any write adds an empty gates collection to a ledger saved without one, which is why older runtimes must be updated first", () => {
+  const dir = mkdtempSync(join(tmpdir(), "marketing-gates-compat-")), file = join(dir, "w.json");
+  try {
+    const old = ledger();
+    delete old.gates;
+    delete old.reports;
+    writeFileSync(file, JSON.stringify(old));
+    assert.equal("gates" in JSON.parse(readFileSync(file, "utf8")), false);
+    readWorkspace(file);
+    assert.equal("gates" in JSON.parse(readFileSync(file, "utf8")), false, "reading changes nothing on disk");
+    // An ordinary evidence write, with no gate anywhere in it.
+    importRecords(file, { evidence: [evidence()] }, 0);
+    assert.deepEqual(JSON.parse(readFileSync(file, "utf8")).gates, []);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("a free-form hours or dependsOn the plan check cannot read is refused, with a hint to rename it", () => {
+  assert.throws(
+    () => validateWorkspace(withGates([], [initiative("a", { hours: "2-3" })])),
+    /initiatives\.a\.hours: expected nonnegative number.*rename/,
+  );
+  assert.throws(
+    () => validateWorkspace(withGates([], [initiative("a", { dependsOn: "gov-beta" })])),
+    /initiatives\.a\.dependsOn: expected an array of gate or initiative IDs.*rename/,
+  );
+  assert.throws(
+    () => validateWorkspace(withGates([], [initiative("a", { dependsOn: [3] })])),
+    /initiatives\.a\.dependsOn: expected an array of gate or initiative IDs.*rename/,
+  );
+  // The refusals that name a real problem with a real dependency carry no such hint.
+  assert.throws(
+    () => validateWorkspace(withGates([], [initiative("a", { dependsOn: ["nope"] })])),
+    (e) => /"nope" is not a gate or initiative/.test(e.message) && !/rename/.test(e.message),
+  );
+});
+
+test("docs/CLI.md says any first write adds gates, that older runtimes refuse them, and that hours and dependsOn are validated", () => {
+  const cli = readFileSync("docs/CLI.md", "utf8").replace(/\s+/g, " ");
+  assert.match(cli, /gain an empty `gates` collection the first time the new runtime writes them, whatever the write/);
+  assert.match(cli, /update every runtime that reads the ledger[^.]*before the new runtime writes to it, not only before the first gate is recorded/);
+  assert.match(cli, /`hours` and `dependsOn` are now validated fields/);
+  assert.match(cli, /rename that field/);
+});

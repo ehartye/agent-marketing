@@ -621,8 +621,8 @@ test("docs/CLI.md documents the plan command, the gate and initiative fields and
   assert.match(doc, /spread evenly over the days from its `start` to its `end`, both included/);
   assert.match(doc, /Monday to Sunday/);
   assert.match(doc, /An initiative without `hours` is unknown, not zero/);
-  assert.match(doc, /empty `gates` collection and need no migration/);
-  assert.match(doc, /older runtime refuses a ledger that holds gates/);
+  assert.match(doc, /empty `gates` collection the first time the new runtime writes them, whatever the write[^.]*and need no migration/);
+  assert.match(doc, /older runtime refuses any ledger that has a `gates` key/);
   assert.doesNotMatch(doc, /such as `dependsOn`, `hours` or `targets`/);
 });
 

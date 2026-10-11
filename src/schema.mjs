@@ -121,13 +121,20 @@ function document(v, p) {
   timestamp(v.updatedAt, p + ".updatedAt");
 }
 const gateStatuses = ["open", "passed", "failed", "waived"];
+// hours and dependsOn are read by the plan check. A ledger that kept free text under either name
+// before then is refused, so the message says what to do about it.
+const renameHint = " (the plan check reads this field; if it holds something else, rename that field)";
+function plannedHours(v, p) {
+  if (!Number.isFinite(v) || v < 0) fail(p, "expected nonnegative number of planned maker-hours" + renameHint);
+}
 // An initiative lists the gates and initiatives it waits on by ID, all in its own project.
 function dependencies(r, p, gates, initiatives) {
-  const where = p + ".dependsOn";
-  if (!Array.isArray(r.dependsOn)) fail(where, "expected an array of gate or initiative IDs");
+  const where = p + ".dependsOn",
+    expected = "expected an array of gate or initiative IDs" + renameHint;
+  if (!Array.isArray(r.dependsOn)) fail(where, expected);
   const seen = new Set();
   for (const id of r.dependsOn) {
-    if (typeof id !== "string" || !id) fail(where, "expected an array of gate or initiative IDs");
+    if (typeof id !== "string" || !id) fail(where, expected);
     if (id === r.id) fail(where, "an initiative cannot depend on itself");
     if (seen.has(id)) fail(where, `duplicate dependency "${id}"`);
     seen.add(id);
@@ -279,7 +286,7 @@ export function validateWorkspace(w) {
           date(r.end, p + ".end");
           if (r.end < r.start) fail(p, "end precedes start");
           n("budget");
-          if (r.hours !== undefined) n("hours");
+          if (r.hours !== undefined) plannedHours(r.hours, p + ".hours");
           if (r.dependsOn !== undefined) dependencies(r, p, gates, initiatives);
           break;
         case "gates":
