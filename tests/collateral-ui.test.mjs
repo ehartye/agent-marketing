@@ -124,7 +124,7 @@ test("the add forms name what a file may be, carry drafts, and a refused upload 
 test("the new slot form takes a name, kind and spec, and asks for a project only when there is a choice", () => {
   const one = newSlotForm({ workspace: ws(), selection: { projectId: "" } });
   assert.match(one, /name="name"/);
-  assert.match(one, /<option>video<\/option>/);
+  assert.match(one, /<option value="video">video<\/option>/);
   assert.doesNotMatch(one, /name="projectId"/);
   const many = newSlotForm({ workspace: ws({ projects: [{ id: "p", name: "P" }, { id: "q", name: "Q" }] }), selection: { projectId: "" } });
   assert.match(many, /name="projectId" required/);

@@ -2,7 +2,7 @@ import { $, esc } from "../shared.js";
 import { setOpen, draftValue, clearDrafts, statusChip, gotoButton } from "../hub-shared.js";
 import {
   assetMedia, assetThumb, fmtBytes, fmtDay, slotState, getLimits, loadLimits, newSlotId,
-  resetCollateralView, setCollateralFilter, setInitiativeFocus, setUploadRows, uploadRows, uploadRow,
+  resetCollateralView, setCollateralFilter, setInitiativeFocus, setUploadRows, uploadRows, patchUploadRow,
 } from "./collateral.js";
 
 // The lightbox where a slot's candidates are looked at, one at a time or two side by side at actual
@@ -113,7 +113,7 @@ export function closeViewer() {
 
 const CAN_TYPE = "input, textarea, select";
 
-export function bindCollateral({ root, write, upload, snapshot, save, setView, say, rerender, fetchJson }) {
+export function bindCollateral({ root, write, upload, snapshot, save, setView, say, rerender, fetchJson, busy = () => false }) {
   const ws = () => snapshot().workspace,
     asset = (id) => (ws().assets ?? []).find((a) => a.id === id),
     slotName = (id) => (ws().assetSlots ?? []).find((s) => s.id === id)?.name ?? id,
@@ -171,9 +171,14 @@ export function bindCollateral({ root, write, upload, snapshot, save, setView, s
     relayout(`[data-lb-pick="${CSS.escape(view.ids[at])}"]`);
   }
 
+  // Only the final word on a file (added or refused) is announced, and in a region of its own: the list
+  // it belongs to is redrawn on every progress tick and after the save, which would drop or repeat it.
+  const announce = (text) => { const live = $("upload-live"); if (live) live.textContent = text; };
   async function sendFiles(slotId, files, form) {
     const list = [...files];
     if (!list.length) return;
+    // A drop while another save runs would be lost without a word, and its rows with it.
+    if (busy()) return say("The desk is busy saving or loading, so those files were not added. Drop or choose them again in a moment.", true);
     const limits = getLimits(),
       label = list.length === 1 ? (form.querySelector('[name="label"]')?.value ?? "").trim() : "",
       source = (form.querySelector('[name="source"]')?.value ?? "").trim(),
@@ -182,16 +187,21 @@ export function bindCollateral({ root, write, upload, snapshot, save, setView, s
     rerender();
     const drawRow = (n) => {
       const li = document.querySelector(`[data-upload-list="${CSS.escape(slotId)}"] [data-upload-row="${n}"]`);
-      if (li) li.outerHTML = uploadRow(slotId, rows[n], n);
+      if (li) patchUploadRow(li, rows[n], slotId, n);
     };
-    save(async () => {
+    const settle = (n) => {
+      const row = rows[n];
+      announce(row.state === "added" ? `${row.name}: added.` : `${row.name}: refused. ${row.message ?? ""}`);
+      drawRow(n);
+    };
+    const ran = await save(async () => {
       let revision = ws().revision, added = 0, stopped = false;
       for (const [n, file] of list.entries()) {
         const row = rows[n];
-        if (stopped) { Object.assign(row, { state: "refused", message: "Not sent: the workspace changed." }); continue; }
-        if (!file.size) { Object.assign(row, { state: "refused", message: "The file is empty." }); drawRow(n); continue; }
-        if (file.size > limits.maxBytes) { Object.assign(row, { state: "refused", message: `It is ${fmtBytes(file.size)}; the limit is ${fmtBytes(limits.maxBytes)}.` }); drawRow(n); continue; }
-        Object.assign(row, { state: "sending", fraction: 0 });
+        if (stopped) { Object.assign(row, { state: "refused", message: "Not sent: the workspace changed." }); settle(n); continue; }
+        if (!file.size) { Object.assign(row, { state: "refused", message: "The file is empty." }); settle(n); continue; }
+        if (file.size > limits.maxBytes) { Object.assign(row, { state: "refused", message: `It is ${fmtBytes(file.size)}; the limit is ${fmtBytes(limits.maxBytes)}.` }); settle(n); continue; }
+        Object.assign(row, { state: "sending", fraction: 0, message: "" });
         drawRow(n);
         try {
           const result = await upload({ slotId, revision, filename: file.name, label, source }, file, (fraction) => { row.fraction = fraction; drawRow(n); });
@@ -203,14 +213,16 @@ export function bindCollateral({ root, write, upload, snapshot, save, setView, s
           Object.assign(row, { state: "refused", message: error.message });
           if (error.status === 409) stopped = true;
         }
-        drawRow(n);
+        settle(n);
       }
       setUploadRows(slotId, rows.filter((r) => r.state !== "added"));
       clearDrafts(`up-label:${slotId}`);
       if (!added) throw new Error(`Nothing was added. ${rows.map((r) => `${r.name}: ${r.message}`).join(" ")}`);
       return { added, refused: rows.filter((r) => r.state === "refused") };
     }, ({ added, refused }) => `Added ${added} ${added === 1 ? "file" : "files"} to "${slotName(slotId)}".${refused.length ? ` Refused: ${refused.map((r) => `${r.name} (${r.message})`).join("; ")}` : ""}`,
-    [`[data-slot-card="${CSS.escape(slotId)}"] [data-file-input]`, `[data-slot-card="${CSS.escape(slotId)}"] h3`]);
+    [`[data-slot-card="${CSS.escape(slotId)}"] [data-file-input]`, `[data-slot-card="${CSS.escape(slotId)}"] h3`], { retry: false });
+    // The desk would not take the save at all: drop the rows that promised it, so none are left waiting.
+    if (ran === false) { setUploadRows(slotId, []); rerender(); say("The files were not added: the desk could not take a save just now. Choose them again.", true); }
   }
 
   root.addEventListener("click", (event) => {
@@ -274,6 +286,12 @@ export function bindCollateral({ root, write, upload, snapshot, save, setView, s
       setUploadRows(slotId, uploadRows(slotId).filter((_, i) => i !== n));
       rerender();
     }
+  });
+
+  // A message about the field is stale the moment the field changes.
+  root.addEventListener("input", (event) => {
+    const error = event.target.closest?.("[data-asset-decide]")?.querySelector("[data-lb-error]");
+    if (error?.textContent) error.textContent = "";
   });
 
   root.addEventListener("change", (event) => {
@@ -357,7 +375,8 @@ export function bindCollateral({ root, write, upload, snapshot, save, setView, s
       if (!data.projectId && snapshot().selection.projectId) data.projectId = snapshot().selection.projectId;
       save(async () => {
         const result = await write("/api/asset/slot", data);
-        clearDrafts("new-slot:name", "new-slot:spec");
+        const scope = snapshot().selection.projectId || "all";
+        clearDrafts(...["name", "spec", "kind", "projectId", "initiativeId"].map((n) => `new-slot:${scope}:${n}`));
         setOpen("new-slot", false);
         return result;
       }, `Added the slot "${name}". Add candidates to it, then pick one.`, [`[data-slot-card="${CSS.escape(data.id)}"] h3`, "#collateral-heading"]);
