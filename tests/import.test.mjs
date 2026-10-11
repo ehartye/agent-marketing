@@ -4,6 +4,7 @@ import { parseImport, taggedUrl } from "../src/import.mjs";
 import { ledger } from "./fixtures.mjs";
 import { readFileSync } from "node:fs";
 import { validateWorkspace } from "../src/schema.mjs";
+import { report } from "../src/analysis.mjs";
 test("quoted CSV handles multiline definitions and converts numeric values", () => {
   const x = parseImport(
     'id,value,definition\r\na,12,"views, public\nplay starts"\r\n',
@@ -23,6 +24,7 @@ test("a complete exported ledger imports as validated collection arrays", () => 
         Object.entries(w).filter(([k]) => !["schema", "revision"].includes(k)),
       ),
       reports: [], // ledgers saved before reports existed gain an empty collection
+      gates: [], // and so do ledgers saved before gates existed
     },
   );
 });
@@ -41,7 +43,7 @@ test("campaign tagging preserves existing query/fragment and canonicalizes label
   assert.equal(u.searchParams.get("utm_content"), "clip-a");
   assert.throws(() => taggedUrl("https://example.com", { source: "x" }));
 });
-for (const channel of ["tiktok", "facebook", "x", "linkedin", "steam", "itch", "discord", "email", "github", "hacker-news", "product-hunt", "youtube", "reddit", "search", "instagram", "twitch", "bluesky", "apple-app-store", "google-play"]) {
+for (const channel of ["tiktok", "facebook", "x", "linkedin", "steam", "itch", "discord", "email", "github", "hacker-news", "product-hunt", "youtube", "reddit", "search", "instagram", "twitch", "bluesky", "apple-app-store", "google-play", "poki", "crazygames", "newgrounds", "gamejolt", "press", "mastodon"]) {
   test(`${channel} example import validates and keeps definitions distinct`, () => {
     const base = JSON.parse(readFileSync("examples/studio.json", "utf8")),
       patch = parseImport(
@@ -80,4 +82,33 @@ test("installs, unsubscribes and follows are ledger metrics used by the store, e
       observations: [...base.observations, ...patch.observations],
     });
   }
+});
+test("plays, ratings and playtime hours are used by the portal and rating examples", () => {
+  const used = (channel) =>
+    parseImport(
+      readFileSync(`examples/observations-${channel}.csv`, "utf8"),
+      "csv",
+    ).observations;
+  const metricsOf = (channel) => new Set(used(channel).map((o) => o.metric));
+  assert.ok(metricsOf("poki").has("plays"));
+  assert.ok(metricsOf("crazygames").has("plays"));
+  assert.ok(metricsOf("newgrounds").has("ratings"));
+  assert.ok(metricsOf("gamejolt").has("ratings"));
+  // Platforms report an average playtime; the example shows the derived total as decimal hours.
+  assert.equal(used("poki").find((o) => o.metric === "hours").value, 37.5);
+  assert.equal(used("crazygames").find((o) => o.metric === "hours").value, 52);
+});
+test("the CrazyGames example imports into a ledger whose report shows a 12% day 1 return rate", () => {
+  const base = JSON.parse(readFileSync("examples/studio.json", "utf8")),
+    patch = parseImport(
+      readFileSync("examples/observations-crazygames.csv", "utf8"),
+      "csv",
+    ),
+    w = validateWorkspace({ ...base, observations: patch.observations }),
+    [rate] = report(w, { projectId: "orbit" }).returnRates;
+  assert.equal(rate.channel, "crazygames");
+  assert.equal(rate.starts, 400);
+  assert.equal(rate.returns, 48);
+  assert.equal(rate.rate, 0.12);
+  assert.equal(rate.interpretation, "Cohort return rate");
 });

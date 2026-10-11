@@ -1,7 +1,8 @@
-import { $, esc, num, pct, empty, link, projectLabel, refLinks as references } from "../shared.js";
+import { $, esc, num, pct, empty, sourceLink, projectLabel, refLinks as references } from "../shared.js";
 import { documentCard } from "../documents.js";
+import { initiativeFlags } from "./plan.js";
 
-export function renderCampaign({ workspace, data, actions, channels, refs, selection }) {
+export function renderCampaign({ workspace, data, actions, channels, refs, selection, plan }) {
   const p = workspace.projects.find(p => p.id === selection.projectId);
   const refLinks = ids => references(ids, refs);
   const initiatives = () => workspace.initiatives.filter(i => (!selection.projectId || i.projectId === selection.projectId) && (!selection.initiativeId || i.id === selection.initiativeId));
@@ -17,7 +18,7 @@ export function renderCampaign({ workspace, data, actions, channels, refs, selec
             workspace.observations.find((x) => x.id === id) ||
             workspace.reactions.find((x) => x.id === id) ||
             workspace.evidence.find((x) => x.id === id);
-          return o ? link(o.url, id) : esc(id);
+          return o ? sourceLink(o.url, id) : esc(id);
         })
         .join(
           " · ",
@@ -29,10 +30,10 @@ export function renderCampaign({ workspace, data, actions, channels, refs, selec
       );
   $("initiatives").innerHTML = initiatives().length
     ? initiatives()
-        .map(
-          (i) =>
-            `<article class="initiative">${!selection.projectId ? projectLabel(i.projectId, workspace) : ""}<div class="row"><div><span class="pill">${esc(i.channel)}</span><h3>${esc(i.name)}</h3></div><label>Status<select data-initiative="${esc(i.id)}">${["planned", "running", "paused", "complete"].map((s) => `<option ${i.status === s ? "selected" : ""}>${s}</option>`).join("")}</select></label></div><p>${esc(i.hypothesis)}</p><p class="caption">${esc(i.cta)} · ${esc(i.start)} → ${esc(i.end)} · ${esc(i.owner)}</p>${documentCard(i, "campaign")}</article>`,
-        )
+        .map((i) => {
+          const flags = initiativeFlags(plan?.initiatives?.find((x) => x.id === i.id));
+          return `<article class="initiative">${!selection.projectId ? projectLabel(i.projectId, workspace) : ""}<div class="row"><div><span class="pill">${esc(i.channel)}</span>${flags.chips}<h3>${esc(i.name)}</h3></div><label>Status<select data-initiative="${esc(i.id)}">${["planned", "running", "paused", "complete"].map((s) => `<option ${i.status === s ? "selected" : ""}>${s}</option>`).join("")}</select></label></div><p>${esc(i.hypothesis)}</p><p class="caption">${esc(i.cta)} · ${esc(i.start)} → ${esc(i.end)} · ${esc(i.owner)}${i.hours === undefined ? "" : ` · ${esc(i.hours)} h`}</p>${flags.notes}${documentCard(i, "campaign")}</article>`;
+        })
         .join("")
     : empty(
         "No initiatives yet. Import a campaign plan or use the market-campaign skill to create one.",

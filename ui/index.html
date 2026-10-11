@@ -84,6 +84,22 @@
           <button data-open-view="results">Import an existing workspace</button>
         </div>
         <div id="decision"></div>
+        <div id="plan-view" class="desk-grid plan-view" hidden>
+          <section class="panel" aria-labelledby="gates-heading">
+            <div class="section-head">
+              <h2 id="gates-heading">Readiness gates</h2>
+              <span id="gate-summary" class="meta"></span>
+            </div>
+            <div id="gates"></div>
+          </section>
+          <section class="panel" aria-labelledby="load-heading">
+            <div class="section-head">
+              <h2 id="load-heading">Weekly maker hours</h2>
+              <span id="load-summary" class="meta"></span>
+            </div>
+            <div id="load"></div>
+          </section>
+        </div>
         <section class="panel"><h2>Project strategy</h2><div id="strategy"></div></section>
         <div class="desk-grid">
           <section class="panel">

@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 const root = new URL("../", import.meta.url),
   refs = JSON.parse(readFileSync(new URL("craft/references.json", root)));
 const body =
-  "# References\n\nVerified research access: 2026-10-08. Quality indicates source credibility, not applicability to every project. Working papers and practitioner guidance are labeled. Recheck changing policies and metric definitions when planning a real initiative.\n\n" +
+  "# References\n\nVerified research access: 2026-10-08 to 2026-10-11; each entry shows its own check date. Quality indicates source credibility, not applicability to every project. Working papers and practitioner guidance are labeled. Recheck changing policies and metric definitions when planning a real initiative.\n\n" +
   refs
     .map(
       (r) =>

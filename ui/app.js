@@ -1,7 +1,8 @@
 import { $, esc, num, restoreFocus } from "./shared.js";
-import { api, createDeskClient, reviewDrafts } from "./state.js";
+import { api, createDeskClient, reviewDrafts, importMessage } from "./state.js";
 import { renderActivity, drawChart } from "./chart.js";
 import { renderCampaign } from "./views/campaign.js";
+import { renderPlan } from "./views/plan.js";
 import { renderReception } from "./views/reception.js";
 import { renderResearch } from "./views/research.js";
 import { renderReports } from "./views/reports.js";
@@ -56,7 +57,7 @@ function render(snapshot) {
   $("revision").textContent = `${workspaceLabel ? workspaceLabel + " · " : ""}Saved revision ${workspace.revision}`;
   $("scope-summary").textContent = `${project?.name || "All projects"} · ${scope.initiativeId ? workspace.initiatives.find(i => i.id === scope.initiativeId)?.name : "All initiatives"} · ${scope.from || "Beginning"} → ${scope.to || "Latest"}. Dates limit readings and feedback; plans and research stay visible.`;
   $("welcome").hidden = workspace.projects.length > 0;
-  const vitals = [["rev", workspace.revision], ["projects", workspace.projects.length], ["initiatives", workspace.initiatives.length], ["evidence", workspace.evidence.length], ["reports", workspace.reports.length], ["sources", workspace.sources.length], ["sync", new Date().toLocaleTimeString([], { hour12: false })]];
+  const vitals = [["rev", workspace.revision], ["projects", workspace.projects.length], ["initiatives", workspace.initiatives.length], ["gates", workspace.gates.length], ["evidence", workspace.evidence.length], ["reports", workspace.reports.length], ["sources", workspace.sources.length], ["sync", new Date().toLocaleTimeString([], { hour12: false })]];
   $("telemetry").innerHTML = `<span class="ws">ws<b>${esc(workspaceLabel || "workspace")}</b></span>` + vitals.map(([k, v]) => `<span>${k}<b>${esc(v)}</b></span>`).join("") + `<span class="cursor" aria-hidden="true">▮</span>`;
   $("telemetry").hidden = false;
   $("data-scope").textContent = `${workspace.sources.length} registered sources across the workspace. Collection and downloads include every project; filters only change this view.`;
@@ -86,6 +87,8 @@ async function load(initial = false) {
     render(snapshot);
     $("views").hidden = false;
     $("load-note").hidden = true;
+    // The weekly strip sizes its columns to the box it sits in, which has no width while the views are hidden.
+    renderPlan(snapshot);
   } catch (error) {
     if (current !== generation) return;
     failed = true;
@@ -216,7 +219,7 @@ $("upload").onchange = event => {
   if (file.size > 2 * 1024 * 1024) return message("Import exceeds 2 MB. Split it into smaller files and choose the file again.", true);
   save(async () => api("/api/import", { workspaceId,
     text: await file.text(), format: file.name.toLowerCase().endsWith(".csv") ? "csv" : "json", revision: client.snapshot.workspace.revision,
-  }), "Results imported. Records with matching IDs were updated.", "#import");
+  }), importMessage, "#import");
 };
 $("collect").onclick = () => save(() => api("/api/monitor", { workspaceId, revision: client.snapshot.workspace.revision }), result => {
   const errors = result.sources.flatMap(s => s.errors);

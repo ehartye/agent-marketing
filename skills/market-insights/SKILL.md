@@ -5,7 +5,7 @@ description: Review marketing results, reach, reception, sentiment or viability 
 
 # Turn results into a decision
 
-Read [measurement](../../craft/measurement.md), [reception](../../craft/reception.md), [discovery](../../craft/discovery.md) and [CLI contract](../../docs/CLI.md). Use market-setup. Run `marketing report --project <id>` and `marketing advise <id>`; inspect the cited observation/reaction/evidence records before accepting automated suggestions.
+Read [measurement](../../craft/measurement.md), [reception](../../craft/reception.md), [discovery](../../craft/discovery.md) and [CLI contract](../../docs/CLI.md). Use market-setup. Run `marketing report --project <id>` and `marketing advise <id>`; inspect the cited observation/reaction/evidence records before accepting automated suggestions. When `advise` names a gate or a week over the cap, run `marketing plan <id>` and report what is blocked and why.
 
 Separate attention, attributed first use, returning cohorts and payment. Preserve metric definitions and periods. Do not infer unique people across platforms or causal incrementality from tagged links. Count reviewed captured sentiment separately from unreviewed suggestions; explain sampling and silent-user gaps. The CLI's 20% activation trigger is a house triage heuristic, not a market benchmark.
 

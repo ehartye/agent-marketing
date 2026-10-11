@@ -1,4 +1,4 @@
-import { chartKey, chartLabel } from "/analysis.js";
+import { chartKey, chartLabel } from "/chart-key.js";
 import { $, esc, num, empty, link } from "./shared.js";
 export function renderActivity(workspace, data, metricKey) {
   const projectNames = new Map(workspace.projects.map((p) => [p.id, p.name]));

@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+press-visitors,orbit,orbit-video,press,visitors,140,2026-10-01,2026-10-07,period,"Visitors to the press page in the site's own analytics, whatever their referrer",https://example.com/press-evidence,2026-10-08T12:00:00Z
+press-clicks,orbit,orbit-video,press,clicks,63,2026-10-01,2026-10-07,period,"Tagged visits from links in hand-written outreach messages (utm_source=press, one utm_content per recipient group), counted by the site's own analytics",https://example.com/press-evidence,2026-10-08T12:00:00Z
+press-replies,orbit,orbit-video,press,comments,7,2026-10-01,2026-10-07,period,"Replies from creators and outlets to hand-written messages, logged by hand with their themes; a reply is not coverage",https://example.com/press-evidence,2026-10-08T12:00:00Z

@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { readWorkspace, importRecords } from "./store.mjs";
-import { report, advise } from "./analysis.mjs";
+import { report, advise, plan } from "./analysis.mjs";
 import { recommendChannels, channelLibrary } from "./channels.mjs";
 import { parseImport, observationsCsv } from "./import.mjs";
 import { monitor } from "./collectors.mjs";
@@ -80,12 +80,14 @@ export async function startServer(
           res.writeHead(204);
           return res.end();
         }
-        if (u.pathname === "/analysis.js") {
+        // The one src module the page imports. It has no imports of its own; analysis.mjs, which
+        // pulls in the advice code, is not served.
+        if (u.pathname === "/chart-key.js") {
           res.writeHead(200, {
             "Content-Type": "text/javascript; charset=utf-8",
           });
           return res.end(
-            readFileSync(new URL("./analysis.mjs", import.meta.url)),
+            readFileSync(new URL("./chart-key.mjs", import.meta.url)),
           );
         }
         if (u.pathname === "/api/ping") return send({ ok: true });
@@ -108,6 +110,8 @@ export async function startServer(
               ? advise(readWorkspace(file), filter.projectId, filter)
               : [],
           );
+        if (u.pathname === "/api/plan")
+          return send(filter.projectId ? plan(readWorkspace(file), filter.projectId) : null);
         if (u.pathname === "/api/channels") {
           const p = readWorkspace(file).projects.find(
             (p) => p.id === filter.projectId,
@@ -145,7 +149,7 @@ export async function startServer(
           "/theme.js": ["theme.js", "text/javascript"],
           ...Object.fromEntries([
             "state.js", "shared.js", "chart.js", "documents.js", "markdown.js", "views/campaign.js",
-            "views/reception.js", "views/research.js", "views/reports.js", "views/experiments.js", "views/results.js",
+            "views/reception.js", "views/research.js", "views/reports.js", "views/experiments.js", "views/results.js", "views/plan.js",
           ].map(name => ["/" + name, [name, "text/javascript"]])),
         };
         if (assets[u.pathname]) {
@@ -178,6 +182,7 @@ export async function startServer(
               file,
               { [data.collection]: [data.record] },
               data.revision,
+              { strict: data.strict === true },
             ),
           );
         if (u.pathname === "/api/import")
@@ -186,6 +191,7 @@ export async function startServer(
               file,
               parseImport(data.text, data.format),
               data.revision,
+              { strict: data.strict === true },
             ),
           );
         if (u.pathname === "/api/monitor") {

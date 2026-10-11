@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+ng-views,orbit,orbit-video,newgrounds,views,1450,2026-10-01,2026-10-07,period,"Views shown on the Newgrounds game page, read by hand on 2026-10-07; the game was uploaded on 2026-10-01 so the total covers the window, and the page does not define the count",https://example.com/newgrounds-evidence,2026-10-08T12:00:00Z
+ng-reviews,orbit,orbit-video,newgrounds,ratings,9,2026-10-01,2026-10-07,period,"Reviews posted on the Newgrounds game page, counted by hand on 2026-10-07; the 0 to 5 judging votes are not counted here",https://example.com/newgrounds-evidence,2026-10-08T12:00:00Z
+ng-clicks,orbit,orbit-video,newgrounds,clicks,86,2026-10-01,2026-10-07,period,"Tagged visits from the link in the author commentary (utm_source=newgrounds), counted by the site's own analytics",https://example.com/newgrounds-evidence,2026-10-08T12:00:00Z

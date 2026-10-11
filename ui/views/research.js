@@ -1,9 +1,9 @@
-import { $, esc, empty, link, projectLabel } from "../shared.js";
+import { $, esc, empty, link, sourceLink, projectLabel } from "../shared.js";
 
 // Optional claim-level audit fields, shown only when the evidence record carries them.
 export function auditNote(e) {
   const parts = [
-    e.status && `Status: ${e.status}`,
+    e.status && `Status: ${e.status}${e.status === "product-fact" ? " (about the project itself)" : ""}`,
     e.credibility && `Credibility: ${e.credibility}`,
     e.relevance && `Relevance: ${e.relevance}`,
     e.publishedAt && `Published ${e.publishedAt}`,
@@ -17,7 +17,7 @@ export function renderResearch({ workspace, data, selection }) {
   $("viability").innerHTML = ["problem", "activation", "retention", "payment", "positioning", "channel"]
     .map((d) => {
       const evidence = data.evidence.filter((e) => e.dimension === d);
-      return `<article class="evidence"><h3>${d}</h3>${evidence.length ? evidence.map((e) => `<p>${!selection.projectId ? projectLabel(e.projectId, workspace) : ""}<span class="pill">${esc(e.result)} · ${esc(e.strength)}</span>${esc(e.claim)}<br>${link(e.url, "Evidence source")} · <span class="meta">Checked ${esc(e.checkedAt)}</span>${auditNote(e)}</p>`).join("") : '<p class="caption">No evidence recorded. This remains an open question.</p>'}</article>`;
+      return `<article class="evidence"><h3>${d}</h3>${evidence.length ? evidence.map((e) => `<p>${!selection.projectId ? projectLabel(e.projectId, workspace) : ""}<span class="pill">${esc(e.result)} · ${esc(e.strength)}</span>${esc(e.claim)}<br>${sourceLink(e.url, "Evidence source")} · <span class="meta">Checked ${esc(e.checkedAt)}</span>${auditNote(e)}</p>`).join("") : '<p class="caption">No evidence recorded. This remains an open question.</p>'}</article>`;
     })
     .join("");
   $("competitors").innerHTML = data.competitors.length
