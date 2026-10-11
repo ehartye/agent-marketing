@@ -3,7 +3,7 @@ import { hasDrafts } from "./hub-shared.js";
 import { api, uploadFile, createDeskClient, reviewDrafts, importMessage } from "./state.js";
 import { renderActivity, drawChart } from "./chart.js";
 import { renderCampaign } from "./views/campaign.js";
-import { renderPlan } from "./views/plan.js";
+import { renderPlan, redrawLoad } from "./views/plan.js";
 import { renderHub, bindHub, resetDeskState } from "./views/hub.js";
 import { clearActed } from "./views/decisions.js";
 import { renderCollateral } from "./views/collateral.js";
@@ -232,7 +232,7 @@ bindHub({
   snapshot: () => client.snapshot,
   save, setView, say: (text, error = false) => message(text, error),
   rerender: () => { renderHub(client.snapshot); renderCollateral(client.snapshot); },
-  redraw: () => { if (client.snapshot) renderPlan(client.snapshot); },
+  redraw: () => { if (client.snapshot) redrawLoad(client.snapshot); },
 });
 bindCollateral({
   root: $("views"),

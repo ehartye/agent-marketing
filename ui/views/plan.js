@@ -166,3 +166,13 @@ export function renderPlan({ workspace, plan }) {
     + (load.weeks.length ? weeksTable(plan) : "")
     + (plan.warnings.length ? `<ul class="plan-notes caption">${plan.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>` : "");
 }
+
+// The weekly strip is drawn to the width of its box, which a folded section does not have. When the
+// section opens, only the strip is redrawn, so the gate cards (and the focus a jump just put on one) stay.
+export function redrawLoad({ plan }) {
+  const box = $("load"), old = box.querySelector(".load-scroll, .empty");
+  if (!hasPlanData(plan) || !old || !box.clientWidth) return;
+  const next = document.createElement("template");
+  next.innerHTML = loadStrip(plan, box.clientWidth);
+  old.replaceWith(next.content);
+}

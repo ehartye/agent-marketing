@@ -1281,3 +1281,5 @@ progress::-moz-progress-bar { background: var(--teal); }
 @media (prefers-reduced-motion: no-preference) { .jumpbar a { transition: background 0.12s, color 0.12s; } }
 @media (max-width: 640px) { .jumpbar { margin-left: -4px; margin-right: -4px; } .fold-panel { scroll-margin-top: 60px; } }
 @media print { .jumpbar { display: none; } }
+/* A jump to a record lands below the sticky bar, not under it. */
+#campaign [data-gate], #campaign [data-decision], #campaign [data-action], #campaign [data-initiative-card], #campaign [data-update] { scroll-margin-top: 72px; }
