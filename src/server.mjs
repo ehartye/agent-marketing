@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { readWorkspace, importRecords } from "./store.mjs";
-import { report, advise } from "./analysis.mjs";
+import { report, advise, plan } from "./analysis.mjs";
 import { recommendChannels, channelLibrary } from "./channels.mjs";
 import { parseImport, observationsCsv } from "./import.mjs";
 import { monitor } from "./collectors.mjs";
@@ -108,6 +108,8 @@ export async function startServer(
               ? advise(readWorkspace(file), filter.projectId, filter)
               : [],
           );
+        if (u.pathname === "/api/plan")
+          return send(filter.projectId ? plan(readWorkspace(file), filter.projectId) : null);
         if (u.pathname === "/api/channels") {
           const p = readWorkspace(file).projects.find(
             (p) => p.id === filter.projectId,

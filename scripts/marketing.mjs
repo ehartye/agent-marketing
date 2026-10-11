@@ -8,7 +8,7 @@ import {
   importRecords,
 } from "../src/store.mjs";
 import { collections, validateWorkspace, workspaceWarnings, failOnWarnings } from "../src/schema.mjs";
-import { report, advise, analyzeExperiment } from "../src/analysis.mjs";
+import { report, advise, plan, analyzeExperiment } from "../src/analysis.mjs";
 import { parseImport, taggedUrl, observationsCsv } from "../src/import.mjs";
 import { monitor } from "../src/collectors.mjs";
 import { recommendChannels, channelLibrary } from "../src/channels.mjs";
@@ -41,6 +41,7 @@ const help = {
     "document export <strategy|campaign|report> <record-id> [--out file.md]",
     "report [--project id --initiative id --from date --to date]",
     "advise <project-id>",
+    "plan <project-id>",
     "channels [project-id]",
     "experiment <experiment-id>",
     "utm <url> --source x --medium y --campaign z [--content c]",
@@ -177,6 +178,8 @@ try {
       required(p[0] || v.project, "project ID"),
       filter,
     );
+  else if (command === "plan")
+    result = plan(readWorkspace(file), required(p[0] || v.project, "project ID"));
   else if (command === "channels") {
     const id = p[0] || v.project;
     const project = id
