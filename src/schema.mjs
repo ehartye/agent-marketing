@@ -52,6 +52,8 @@ export const metrics = [
   "installs",
   "unsubscribes",
   "follows",
+  "plays",
+  "ratings",
 ];
 export const sentiments = [
   "positive",

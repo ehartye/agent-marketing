@@ -68,6 +68,61 @@ function groupKey(o) {
     o.cohort || "",
   ]);
 }
+// Two totals cover the same window when their period lists are identical.
+function windowSignature(periods) {
+  return JSON.stringify(
+    periods.toSorted((a, b) =>
+      JSON.stringify(a).localeCompare(JSON.stringify(b)),
+    ),
+  );
+}
+// A return rate is returns divided by starts for the same project, initiative, channel, cohort
+// and window. It is derived here and never stored: the ledger holds counts, so a dashboard's
+// percentage is recorded as the counts it implies. Without a cohort it is an observed ratio only.
+function returnRates(totals) {
+  return totals
+    .filter((t) => t.metric === "returns")
+    .map((r) => {
+      const entry = (starts, rate, interpretation) => ({
+        projectId: r.projectId,
+        initiativeId: r.initiativeId,
+        channel: r.channel,
+        cohort: r.cohort,
+        returns: r.value,
+        starts: starts?.value ?? null,
+        rate,
+        returnsDefinition: r.definition,
+        startsDefinition: starts?.definition ?? null,
+        evidence: [...r.evidence, ...(starts?.evidence || [])],
+        interpretation,
+      });
+      if (r.ambiguous)
+        return entry(null, null, "Overlapping or mixed readings; reconcile them first");
+      const matches = totals.filter(
+        (s) =>
+          s.metric === "starts" &&
+          !s.ambiguous &&
+          s.projectId === r.projectId &&
+          s.initiativeId === r.initiativeId &&
+          s.channel === r.channel &&
+          s.cohort === r.cohort &&
+          windowSignature(s.periods) === windowSignature(r.periods),
+      );
+      if (matches.length > 1)
+        return entry(null, null, "More than one starts definition covers this window; keep one");
+      const [s] = matches;
+      if (!s || !(s.value > 0)) return entry(s, null, "No compatible denominator");
+      if (r.value > s.value)
+        return entry(s, null, "Returns exceed starts; they cannot be the same people");
+      return entry(
+        s,
+        r.value / s.value,
+        r.cohort
+          ? "Cohort return rate"
+          : "Observed ratio; returns may include people who started outside this window",
+      );
+    });
+}
 export function report(w, filter = {}) {
   const belongs = (r) =>
     (!filter.projectId || r.projectId === filter.projectId) &&
@@ -144,13 +199,7 @@ export function report(w, filter = {}) {
         s.definition === "starts" &&
         s.cohort === t.cohort,
     );
-    const signature = (periods) =>
-      JSON.stringify(
-        periods.toSorted((a, b) =>
-          JSON.stringify(a).localeCompare(JSON.stringify(b)),
-        ),
-      );
-    const sameWindow = s && signature(s.periods) === signature(t.periods);
+    const sameWindow = s && windowSignature(s.periods) === windowSignature(t.periods);
     const rate =
       sameWindow && t.value > 0 && s.value !== null && s.value <= t.value
         ? s.value / t.value
@@ -197,6 +246,7 @@ export function report(w, filter = {}) {
     reactions,
     sentiment,
     funnels,
+    returnRates: returnRates(totals),
     experiments,
     competitors: w.competitors.filter(belongs),
     evidence: w.evidence.filter(belongs),
