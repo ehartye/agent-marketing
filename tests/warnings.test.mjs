@@ -246,3 +246,16 @@ test("docs/CLI.md documents the warnings, the did-you-mean and --strict", () => 
   assert.match(cli, /`--strict`[^.]*turns the warnings into an error before anything is written/);
   assert.match(cli, /`recordFields` in `src\/schema\.mjs`/);
 });
+
+test("a very long unknown field name is reported at a bounded length and does not stall the did-you-mean", () => {
+  const key = "x".repeat(1000000);
+  const started = Date.now();
+  const warnings = patchWarnings({ evidence: [{ id: "e1", [key]: 1 }] });
+  assert.ok(Date.now() - started < 1000, `took ${Date.now() - started} ms`);
+  assert.equal(warnings.length, 1);
+  assert.ok(warnings[0].length < 300, `warning is ${warnings[0].length} characters`);
+  assert.match(warnings[0], /^evidence\.e1: unknown field "x{20,}[^"]*"; nothing reads it$/);
+  assert.match(warnings[0], /…/);
+  // A name that fits is quoted whole, and a near miss still gets its suggestion.
+  assert.deepEqual(patchWarnings({ evidence: [{ id: "e1", credibilty: 1 }] }), ['evidence.e1: unknown field "credibilty"; did you mean "credibility"?']);
+});

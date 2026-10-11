@@ -165,6 +165,14 @@ function dependencyCycle(records) {
     }
   }
 }
+// A cycle of any length is named by its first ten initiatives and the number in it, so the error
+// stays readable and small however long the loop is.
+function cycleText(cycle) {
+  const shown = 10;
+  return cycle.length <= shown + 1
+    ? cycle.join(" -> ")
+    : `${cycle.slice(0, shown).join(" -> ")} -> … (${cycle.length - 1} initiatives in the cycle)`;
+}
 const reportKinds = ["market-landscape", "demand", "competition", "positioning", "other"];
 const levels = ["high", "medium", "low"];
 const evidenceStatuses = [
@@ -403,7 +411,7 @@ export function validateWorkspace(w) {
       }
     }
   const cycle = dependencyCycle(w.initiatives);
-  if (cycle) fail(`initiatives.${cycle[0]}.dependsOn`, "dependency cycle " + cycle.join(" -> "));
+  if (cycle) fail(`initiatives.${cycle[0]}.dependsOn`, "dependency cycle " + cycleText(cycle));
   return w;
 }
 
@@ -446,15 +454,19 @@ function distance(a, b) {
 // The closest field the record does not already have, if it is about one typo per four letters
 // away (never more than two), ignoring case.
 function closest(key, known, record) {
-  const lower = key.toLowerCase();
+  const lower = key.toLowerCase(),
+    allowed = Math.min(2, Math.max(1, Math.floor(lower.length / 4)));
   let best,
     nearest = Infinity;
   for (const field of known) {
     if (field in record) continue;
+    // Strings further apart in length than the allowance cannot be that close, so a very long
+    // name is never compared letter by letter.
+    if (Math.abs(lower.length - field.length) > allowed) continue;
     const d = distance(lower, field.toLowerCase());
     if (d < nearest) [best, nearest] = [field, d];
   }
-  return nearest <= Math.min(2, Math.max(1, Math.floor(lower.length / 4))) ? best : undefined;
+  return nearest <= allowed ? best : undefined;
 }
 // Non-fatal warnings for fields no record type defines, for an object of collection arrays.
 // The same field on many records is one warning that names the first few, so a CSV with a
@@ -484,7 +496,8 @@ export function patchWarnings(patch) {
   return [...groups.values()].map(({ collection, where, key, hint, ids }) => {
     const all = [...ids],
       named = all.slice(0, 3).join(", ") + (all.length > 3 ? ` and ${all.length - 3} more` : "");
-    return `${collection}.${named}${where}: unknown field "${key}"; ${hint ? `did you mean "${hint}"?` : "nothing reads it"}`;
+    const shown = key.length > 60 ? key.slice(0, 60) + "…" : key;
+    return `${collection}.${named}${where}: unknown field "${shown}"; ${hint ? `did you mean "${hint}"?` : "nothing reads it"}`;
   });
 }
 export function workspaceWarnings(w) {

@@ -263,3 +263,22 @@ test("gate, hours and dependsOn are known fields, and typos of them are caught",
       `${collection}.r1: unknown field "${field}"; did you mean "${expected}"?`,
     ]);
 });
+
+test("a long dependency cycle is named by its first few initiatives and a count, not by all of them", () => {
+  const n = 20000,
+    ring = Array.from({ length: n }, (_, i) => initiative(`n${i}`, { dependsOn: [`n${(i + 1) % n}`] }));
+  let message;
+  try {
+    validateWorkspace(withGates([], ring));
+  } catch (e) {
+    message = e.message;
+  }
+  assert.ok(message, "the cycle is refused");
+  assert.ok(message.length < 600, `message is ${message.length} characters`);
+  assert.match(message, /^initiatives\.n0\.dependsOn: dependency cycle n0 -> n1 -> n2 -> /);
+  assert.match(message, /20000 initiatives/);
+  // A short cycle is still spelled out in full.
+  const short = withGates([], [initiative("a", { dependsOn: ["b"] }), initiative("b", { dependsOn: ["a"] })]);
+  assert.throws(() => validateWorkspace(short), /^Error: initiatives\.a\.dependsOn: dependency cycle a -> b -> a$/);
+});
+

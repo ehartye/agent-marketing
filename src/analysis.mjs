@@ -263,7 +263,11 @@ export function report(w, filter = {}) {
 // Dates are whole UTC days, so no clock, time zone or daylight saving enters the arithmetic.
 const DAY = 86400000;
 const dayNumber = (date) => Date.parse(date + "T00:00:00Z") / DAY;
-const dayText = (n) => new Date(n * DAY).toISOString().slice(0, 10);
+// The calendar the ledger accepts runs from 0000-01-01 to 9999-12-31. A week that crosses either end
+// is shown cut at it, so every boundary is a four-digit-year date like the ones the ledger stores.
+const FIRST_DAY = dayNumber("0000-01-01"),
+  LAST_DAY = dayNumber("9999-12-31");
+const dayText = (n) => new Date(Math.min(LAST_DAY, Math.max(FIRST_DAY, n)) * DAY).toISOString().slice(0, 10);
 // 1970-01-01 was a Thursday, so day 0 falls three days after a Monday.
 const mondayOf = (n) => n - ((((n + 3) % 7) + 7) % 7);
 const round2 = (x) => Math.round(x * 100) / 100 + 0;
@@ -283,17 +287,30 @@ function unmetDependencies(i, gates, initiatives) {
     return [{ id, kind: "missing", name: id, status: "missing" }];
   });
 }
+// The weeks drawn are limited to MAX_WEEKS from the earliest start, so one mistyped year cannot make
+// the plan, the page and the advice build and carry half a million weeks. The count left out is
+// returned, with the span the initiatives cover, for the caller to say so.
+const MAX_WEEKS = 260;
 function weeklyLoad(weeklyHours, initiatives) {
   const weeks = new Map();
   let first = Infinity,
-    last = -Infinity;
+    last = -Infinity,
+    from = Infinity,
+    to = -Infinity;
+  for (const i of initiatives) {
+    const start = dayNumber(i.start),
+      end = dayNumber(i.end);
+    first = Math.min(first, mondayOf(start));
+    last = Math.max(last, mondayOf(end));
+    from = Math.min(from, start);
+    to = Math.max(to, end);
+  }
+  const stop = Math.min(last, first + (MAX_WEEKS - 1) * 7);
   for (const i of initiatives) {
     const start = dayNumber(i.start),
       end = dayNumber(i.end),
       days = end - start + 1;
-    first = Math.min(first, mondayOf(start));
-    last = Math.max(last, mondayOf(end));
-    for (let monday = mondayOf(start); monday <= end; monday += 7) {
+    for (let monday = mondayOf(start); monday <= Math.min(end, stop); monday += 7) {
       if (!weeks.has(monday)) weeks.set(monday, { shares: [], unknown: [] });
       const week = weeks.get(monday);
       if (!Number.isFinite(i.hours)) week.unknown.push(i.id);
@@ -304,7 +321,7 @@ function weeklyLoad(weeklyHours, initiatives) {
     }
   }
   const list = [];
-  for (let monday = first; monday <= last; monday += 7) {
+  for (let monday = first; monday <= stop; monday += 7) {
     const { shares, unknown } = weeks.get(monday) ?? { shares: [], unknown: [] },
       hours = round2(shares.reduce((n, x) => n + x.share, 0)),
       overBy = hours > weeklyHours ? round2(hours - weeklyHours) : 0;
@@ -319,10 +336,19 @@ function weeklyLoad(weeklyHours, initiatives) {
       unknownHours: unknown,
     });
   }
-  return list;
+  return {
+    weeks: list,
+    omitted: last >= first ? (last - first) / 7 + 1 - list.length : 0,
+    from: dayText(from),
+    to: dayText(to),
+  };
 }
 const describeDependency = (d) =>
   d.kind === "missing" ? `"${d.id}" (not found)` : `${d.kind} "${d.id}" (${d.status})`;
+// A list for a sentence: the first few, then how many more, so one record with thousands of
+// dependencies cannot make a message of thousands of names.
+const some = (items, show, limit = 5) =>
+  items.slice(0, limit).map(show).join(", ") + (items.length > limit ? `, and ${items.length - limit} more` : "");
 // Gates with their status, whether each initiative is blocked and by what, the maker hours per
 // calendar week against the project's weeklyHours, and the initiative budgets against its
 // budget. Reads one project only. A pure function of the ledger: no clock, nothing is written.
@@ -333,11 +359,17 @@ export function plan(w, projectId) {
     ownGates = (w.gates ?? []).filter((g) => g.projectId === projectId),
     gates = new Map(ownGates.map((g) => [g.id, g])),
     byId = new Map(rows.map((i) => [i.id, i])),
-    warnings = [];
+    warnings = [],
+    requiredBy = new Map();
+  for (const i of rows)
+    for (const id of i.dependsOn ?? []) {
+      if (!requiredBy.has(id)) requiredBy.set(id, []);
+      requiredBy.get(id).push(i.id);
+    }
   const initiatives = rows.map((i) => {
     const unmet = unmetDependencies(i, gates, byId);
     if (unmet.length && (i.status === "running" || i.status === "complete"))
-      warnings.push(`Initiative "${i.id}" is ${i.status} although it waits on ${unmet.map(describeDependency).join(", ")}`);
+      warnings.push(`Initiative "${i.id}" is ${i.status} although it waits on ${some(unmet, describeDependency)}`);
     return {
       id: i.id,
       name: i.name,
@@ -353,14 +385,18 @@ export function plan(w, projectId) {
       overCapWeeks: [],
     };
   });
-  const weeks = weeklyLoad(project.weeklyHours, rows);
+  const { weeks, omitted, from, to } = weeklyLoad(project.weeklyHours, rows),
+    entry = new Map(initiatives.map((i) => [i.id, i]));
   for (const week of weeks)
-    if (week.overCap)
-      for (const { id } of week.initiatives) initiatives.find((i) => i.id === id).overCapWeeks.push(week.start);
+    if (week.overCap) for (const { id } of week.initiatives) entry.get(id).overCapWeeks.push(week.start);
+  if (omitted)
+    warnings.unshift(
+      `The weekly load covers ${weeks.length} weeks (${weeks[0].start} to ${weeks.at(-1).end}) of the ${weeks.length + omitted} that the initiatives span (${from} to ${to}); the later ${omitted} are left out. Check the initiative dates.`,
+    );
   const unknownHours = initiatives.filter((i) => i.hours === null).map((i) => i.id);
   if (unknownHours.length)
     warnings.unshift(
-      `${unknownHours.length} initiative${unknownHours.length === 1 ? " has" : "s have"} no hours (${unknownHours.join(", ")}); the weekly load counts only initiatives with hours.`,
+      `${unknownHours.length} initiative${unknownHours.length === 1 ? " has" : "s have"} no hours (${some(unknownHours, String)}); the weekly load counts only initiatives with hours.`,
     );
   for (const i of rows)
     if (i.status !== "complete")
@@ -387,7 +423,7 @@ export function plan(w, projectId) {
       checkedAt: g.checkedAt ?? null,
       evidenceIds: g.evidenceIds ?? [],
       notes: g.notes ?? null,
-      requiredBy: rows.filter((i) => i.dependsOn?.includes(g.id)).map((i) => i.id),
+      requiredBy: requiredBy.get(g.id) ?? [],
     })),
     initiatives,
     load: {
@@ -396,6 +432,7 @@ export function plan(w, projectId) {
       totalHours: round2(rows.reduce((n, i) => n + (Number.isFinite(i.hours) ? i.hours : 0), 0)),
       capacityHours: round2(project.weeklyHours * weeks.length),
       unknownHours,
+      omittedWeeks: omitted,
       weeks,
     },
     budget: {
@@ -422,19 +459,23 @@ export function plan(w, projectId) {
 // The plan itself still lists every status, as the record of what was planned.
 function planActions(project, p, over) {
   const actions = [],
-    name = (id) => p.initiatives.find((i) => i.id === id).name,
+    initiativeById = new Map(p.initiatives.map((i) => [i.id, i])),
+    gateById = new Map(p.gates.map((g) => [g.id, g])),
+    name = (id) => initiativeById.get(id).name,
     byStart = p.initiatives.toSorted((a, b) => a.start.localeCompare(b.start) || a.end.localeCompare(b.end));
   const running = byStart.filter((i) => i.status === "running" && i.blocked);
   if (running.length) {
-    const gate = p.gates.find((g) => running.some((i) => i.blockedBy.some((b) => b.id === g.id)));
+    const blocking = new Set(running.flatMap((i) => i.blockedBy.map((b) => b.id))),
+      gate = p.gates.find((g) => blocking.has(g.id)),
+      shown = running.slice(0, 3);
     actions.push({
       kind: "readiness",
       priority: 1,
       title: "Running work is ahead of its gate",
-      reason: `${running.map((i) => `${i.name} (running) waits on ${i.blockedBy.map((b) => `${b.name} (${b.status})`).join(", ")}`).join("; ")}.`,
+      reason: `${shown.map((i) => `${i.name} (running) waits on ${some(i.blockedBy, (b) => `${b.name} (${b.status})`)}`).join("; ")}${running.length > 3 ? `; and ${running.length - 3} more` : ""}.`,
       next: gate
         ? `Check ${gate.name} against its pass condition: ${gate.criteria}. Pause the running work until it passes, or waive the gate with a note if the owner accepts the risk.`
-        : `Finish ${running[0].blockedBy.map((b) => b.name).join(", ")} first, or pause the running work.`,
+        : `Finish ${some(running[0].blockedBy, (b) => b.name)} first, or pause the running work.`,
       stop: "Decide in this review: pause the work, or record the gate as passed, failed or waived with a note, using marketing put gates.",
       evidence: [],
       referenceIds: [],
@@ -449,14 +490,14 @@ function planActions(project, p, over) {
           held.get(b.id).push(i);
         }
   if (held.size) {
-    const entries = [...held].map(([id, work]) => ({ gate: p.gates.find((g) => g.id === id), work })),
+    const entries = [...held].map(([id, work]) => ({ gate: gateById.get(id), work })),
       shown = entries.slice(0, 3),
       first = entries[0];
     actions.push({
       kind: "readiness",
       priority: 2,
       title: "Settle the gate that holds up planned work",
-      reason: `Planned work is waiting on gates: ${shown.map((e) => `${e.gate.name} (${e.gate.status}) holds ${e.work.map((i) => i.name).join(", ")}`).join("; ")}${entries.length > 3 ? `; and ${entries.length - 3} more` : ""}.`,
+      reason: `Planned work is waiting on gates: ${shown.map((e) => `${e.gate.name} (${e.gate.status}) holds ${some(e.work, (i) => i.name)}`).join("; ")}${entries.length > 3 ? `; and ${entries.length - 3} more` : ""}.`,
       next: `Start with ${first.gate.name}, which holds the earliest start (${first.work[0].name}, ${first.work[0].start}). Its pass condition: ${first.gate.criteria}.${first.gate.status === "failed" ? " It failed its last check: fix the cause and check it again, or change the plan." : ""}`,
       stop: "Check it once against the pass condition, then record passed, failed or waived with a note using marketing put gates. Do not start the held initiatives before then.",
       evidence: [],
@@ -465,13 +506,13 @@ function planActions(project, p, over) {
   }
   if (over.length) {
     const n = over.length,
-      unknown = p.load.unknownHours.filter((id) => p.initiatives.find((i) => i.id === id).status !== "complete").map(name),
+      unknown = p.load.unknownHours.filter((id) => initiativeById.get(id).status !== "complete").map(name),
       finished = p.initiatives.some((i) => i.status === "complete" && i.hours > 0);
     actions.push({
       kind: "capacity",
       priority: 2,
       title: "Planned hours exceed the weekly cap",
-      reason: `${n} week${n === 1 ? " exceeds" : "s exceed"} the ${project.weeklyHours} hour weekly cap: ${over.slice(0, 3).map((x) => `${x.start} (${x.hours} h, ${x.overBy} over)`).join(", ")}${n > 3 ? `, and ${n - 3} more` : ""}.${finished ? " Completed initiatives are not counted." : ""}${unknown.length ? ` Initiatives without hours are not counted: ${unknown.join(", ")}.` : ""}`,
+      reason: `${n} week${n === 1 ? " exceeds" : "s exceed"} the ${project.weeklyHours} hour weekly cap: ${over.slice(0, 3).map((x) => `${x.start} (${x.hours} h, ${x.overBy} over)`).join(", ")}${n > 3 ? `, and ${n - 3} more` : ""}.${finished ? " Completed initiatives are not counted." : ""}${unknown.length ? ` Initiatives without hours are not counted: ${some(unknown, String)}.` : ""}`,
       next: `Move work out of the heaviest week, shorten or drop an initiative, or ask the owner to raise the cap. Then run marketing plan ${project.id} again.`,
       stop: "Do not add an initiative to a week that is already over the cap.",
       evidence: [],
@@ -504,7 +545,7 @@ export function advise(w, projectId, filter = {}) {
     ...planActions(
       project,
       p,
-      (unfinished.length === p.initiatives.length ? p.load.weeks : weeklyLoad(project.weeklyHours, unfinished)).filter(
+      (unfinished.length === p.initiatives.length ? p.load.weeks : weeklyLoad(project.weeklyHours, unfinished).weeks).filter(
         (x) => x.overCap,
       ),
     ),

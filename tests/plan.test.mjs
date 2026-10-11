@@ -489,6 +489,65 @@ test("advise leaves finished work out of the capacity action, and the plan still
   assert.doesNotMatch(advise(open, "game").find((a) => a.kind === "capacity").reason, /Completed initiatives/);
 });
 
+test("a plan over centuries draws a bounded number of weeks, says what it left out, and stays small", () => {
+  const p = plan(W([I("a", "0001-01-01", "9999-12-31", 100)]), "game");
+  assert.equal(p.load.weeks.length, 260);
+  assert.ok(p.load.omittedWeeks > 500000, `omittedWeeks ${p.load.omittedWeeks}`);
+  assert.equal(p.load.weeks[0].start, "0001-01-01");
+  assert.equal(p.load.capacityHours, 260 * p.weeklyHours);
+  const note = p.warnings.find((x) => /260 weeks/.test(x));
+  assert.ok(note, "a warning says the weeks were limited");
+  assert.match(note, /0001-01-01 to 9999-12-31/);
+  assert.match(note, /dates/);
+  assert.ok(JSON.stringify(p).length < 250000, "the plan stays small");
+  // Inside the limit nothing is left out and nothing is said.
+  const year = plan(W([I("a", "2026-01-05", "2027-01-03", 52)]), "game");
+  assert.equal(year.load.omittedWeeks, 0);
+  assert.equal(year.load.weeks.length, 52);
+  assert.ok(!year.warnings.some((x) => /weeks/.test(x)));
+  // The limit is a number of weeks, so exactly 260 fit and one more does not.
+  const addDays = (d, n) => new Date(Date.parse(d + "T00:00:00Z") + n * 86400000).toISOString().slice(0, 10);
+  assert.equal(plan(W([I("a", "2026-01-05", addDays("2026-01-05", 260 * 7 - 1), 5)]), "game").load.omittedWeeks, 0);
+  assert.equal(plan(W([I("a", "2026-01-05", addDays("2026-01-05", 260 * 7), 5)]), "game").load.omittedWeeks, 1);
+});
+
+test("a later initiative beyond the limit is left out of the weeks but is still listed", () => {
+  const p = plan(W([I("a", "2026-01-05", "2026-01-11", 5), I("late", "2046-01-05", "2046-01-11", 5)]), "game");
+  assert.equal(p.load.weeks.length, 260);
+  assert.ok(p.load.weeks.every((x) => !x.initiatives.some((i) => i.id === "late")));
+  assert.deepEqual(p.initiatives.map((i) => i.id), ["a", "late"]);
+  assert.ok(p.load.omittedWeeks > 0);
+  assert.equal(p.load.totalHours, 10);
+});
+
+test("week boundaries at the ends of the calendar are still four-digit dates", () => {
+  const isDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
+  const late = plan(W([I("a", "9999-12-25", "9999-12-31", 7)]), "game");
+  assert.deepEqual(late.load.weeks.map((x) => [x.start, x.end]), [["9999-12-20", "9999-12-26"], ["9999-12-27", "9999-12-31"]]);
+  const early = plan(W([I("a", "0000-01-01", "0000-01-05", 5)]), "game");
+  assert.deepEqual(early.load.weeks.map((x) => [x.start, x.end]), [["0000-01-01", "0000-01-02"], ["0000-01-03", "0000-01-09"]]);
+  for (const p of [late, early]) for (const x of p.load.weeks) assert.ok(isDate(x.start) && isDate(x.end), `${x.start} ${x.end}`);
+  assert.deepEqual(early.initiatives[0].overCapWeeks, []);
+});
+
+test("plan and advise stay fast for thousands of initiatives that overlap for years", () => {
+  // 5000 initiatives each in 156 weeks make 780000 week entries, so a lookup that scans the initiative
+  // list for each entry is quadratic: several seconds for each call.
+  const many = Array.from({ length: 5000 }, (_, k) => I(`n${k}`, MON, "2029-10-14", 1));
+  const w = W(many, [], { weeklyHours: 5 });
+  let t = Date.now();
+  const p = plan(w, "game");
+  const planMs = Date.now() - t;
+  t = Date.now();
+  const actions = advise(w, "game");
+  const adviseMs = Date.now() - t;
+  assert.equal(p.load.weeks.length, 157);
+  assert.equal(p.initiatives.length, 5000);
+  assert.ok(actions.some((a) => a.kind === "capacity"));
+  assert.ok(planMs < 2000, `plan took ${planMs} ms`);
+  assert.ok(adviseMs < 2000, `advise took ${adviseMs} ms`);
+});
+
 const cli = (file, ...args) =>
   spawnSync(process.execPath, [resolve("scripts/marketing.mjs"), ...args, "--workspace", file], { encoding: "utf8" });
 
