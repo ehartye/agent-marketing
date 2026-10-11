@@ -9,7 +9,12 @@ export const collections = [
   "sources",
   "reports",
   "gates",
+  "decisions",
+  "actions",
+  "updates",
 ];
+// Collections that workspaces saved by an earlier release do not have; they gain an empty one.
+const addedLater = ["reports", "gates", "decisions", "actions", "updates"];
 export const channels = [
   "youtube",
   "tiktok",
@@ -180,6 +185,68 @@ function cycleText(cycle) {
     ? cycle.join(" -> ")
     : `${cycle.slice(0, shown).join(" -> ")} -> … (${cycle.length - 1} initiatives in the cycle)`;
 }
+export const decisionStatuses = ["open", "decided", "deferred", "superseded"];
+export const actionStatuses = ["todo", "doing", "done", "blocked", "dropped"];
+export const updateKinds = ["decision", "gate", "initiative", "action", "asset", "document", "note"];
+const idPattern = /^[a-zA-Z0-9_.:-]{1,160}$/;
+// The dimensions the owner wants every option to state. Each is optional text, so a draft decision
+// can be saved before they are all written, but docs/CLI.md asks for all five.
+export const optionDimensions = ["time", "risk", "complexity", "bestPractice", "maintainability"];
+function options(r, p) {
+  const where = p + ".options";
+  if (!Array.isArray(r.options))
+    fail(where, "expected an array of {id, label, summary?, time?, risk?, complexity?, bestPractice?, maintainability?}");
+  const seen = new Set();
+  for (const o of r.options) {
+    if (!o || typeof o !== "object" || Array.isArray(o)) fail(where, "expected an option record");
+    text(o.id, where + ".id");
+    if (!idPattern.test(o.id)) fail(where + ".id", "invalid option ID");
+    if (seen.has(o.id)) fail(where, `duplicate option ID "${o.id}"`);
+    seen.add(o.id);
+    text(o.label, `${where}.${o.id}.label`);
+    for (const key of ["summary", ...optionDimensions]) if (o[key] !== undefined) text(o[key], `${where}.${o.id}.${key}`);
+  }
+}
+// Earlier choices of a decision that was changed, oldest first.
+function decisionHistory(r, p) {
+  if (!Array.isArray(r.history)) fail(p + ".history", "expected an array of {chosen, rationale?, decidedAt}");
+  for (const h of r.history) {
+    if (!h || typeof h !== "object" || Array.isArray(h)) fail(p + ".history", "expected {chosen, rationale?, decidedAt}");
+    text(h.chosen, p + ".history.chosen");
+    if (h.rationale !== undefined) text(h.rationale, p + ".history.rationale");
+    timestamp(h.decidedAt, p + ".history.decidedAt");
+  }
+}
+// A list of IDs, each a record of the same project in `known`.
+function references(r, key, p, known, noun) {
+  const where = `${p}.${key}`;
+  if (!Array.isArray(r[key])) fail(where, `expected an array of ${noun} IDs`);
+  const seen = new Set();
+  for (const id of r[key]) {
+    if (typeof id !== "string" || !id) fail(where, `expected an array of ${noun} IDs`);
+    if (seen.has(id)) fail(where, `duplicate ${noun} "${id}"`);
+    seen.add(id);
+    if (known.get(id)?.projectId !== r.projectId) fail(where, `"${id}" is not a ${noun} in this project`);
+  }
+}
+// One optional ID of a record of the same project in `known`.
+function reference(r, key, p, known, noun) {
+  if (r[key] === undefined) return;
+  if (known.get(r[key])?.projectId !== r.projectId) fail(`${p}.${key}`, `"${r[key]}" is not a ${noun} in this project`);
+}
+// An initiative's parent groups it for reading; it is separate from dependsOn, which orders work.
+// Each initiative has at most one parent, so the chain from any initiative either ends or repeats.
+function parentCycle(records) {
+  const byId = new Map(records.map((r) => [r.id, r]));
+  for (const first of records) {
+    const path = [first.id];
+    for (let at = byId.get(first.parentId); at; at = byId.get(at.parentId)) {
+      const seen = path.indexOf(at.id);
+      if (seen >= 0) return [...path.slice(seen), at.id];
+      path.push(at.id);
+    }
+  }
+}
 const reportKinds = ["market-landscape", "demand", "competition", "positioning", "other"];
 const levels = ["high", "medium", "low"];
 const evidenceStatuses = [
@@ -222,8 +289,8 @@ function vaultLink(v, p) {
 export function validateWorkspace(w) {
   if (!w || w.schema !== "marketing/workspace@1")
     fail("schema", "expected marketing/workspace@1");
-  // Workspaces saved before reports or gates existed have no such collection; they gain an empty one.
-  for (const k of ["reports", "gates"]) if (w[k] === undefined) w[k] = [];
+  // Workspaces saved before these collections existed have none; they gain an empty one.
+  for (const k of addedLater) if (w[k] === undefined) w[k] = [];
   number(w.revision, "revision", true);
   for (const k of Object.keys(w))
     if (!["schema", "revision", ...collections].includes(k))
@@ -236,7 +303,7 @@ export function validateWorkspace(w) {
       if (!r || typeof r !== "object" || Array.isArray(r))
         fail(k, "expected record");
       text(r.id, `${k}.id`);
-      if (!/^[a-zA-Z0-9_.:-]{1,160}$/.test(r.id)) fail(k, "invalid ID");
+      if (!idPattern.test(r.id)) fail(k, "invalid ID");
       if (ids.has(r.id)) fail(k, `duplicate ID ${r.id}`);
       ids.add(r.id);
     }
@@ -244,6 +311,8 @@ export function validateWorkspace(w) {
   const projects = new Map(w.projects.map((r) => [r.id, r])),
     initiatives = new Map(w.initiatives.map((r) => [r.id, r])),
     gates = new Map(w.gates.map((r) => [r.id, r])),
+    decisions = new Map(w.decisions.map((r) => [r.id, r])),
+    reports = new Map(w.reports.map((r) => [r.id, r])),
     evidence = new Map(w.evidence.map((r) => [r.id, r]));
   for (const k of collections)
     for (const r of w[k]) {
@@ -293,12 +362,20 @@ export function validateWorkspace(w) {
           n("budget");
           if (r.hours !== undefined) plannedHours(r.hours, p + ".hours");
           if (r.dependsOn !== undefined) dependencies(r, p, gates, initiatives);
+          if (r.note !== undefined) t("note");
+          if (r.parentId !== undefined) {
+            if (r.parentId === r.id) fail(p + ".parentId", "an initiative cannot be its own parent");
+            if (initiatives.get(r.parentId)?.projectId !== r.projectId)
+              fail(p + ".parentId", `"${r.parentId}" is not an initiative in this project`);
+          }
           break;
         case "gates":
           for (const key of ["name", "criteria"]) t(key);
           one(r.status, gateStatuses, p + ".status");
           if (r.checkedAt !== undefined) date(r.checkedAt, p + ".checkedAt");
           if (r.notes !== undefined) t("notes");
+          if (r.due !== undefined) date(r.due, p + ".due");
+          if (r.hours !== undefined) plannedHours(r.hours, p + ".hours");
           if (initiatives.get(r.id)?.projectId === r.projectId)
             fail(p, "ID is also an initiative in this project; a dependency must name one or the other");
           if (r.evidenceIds !== undefined) {
@@ -404,6 +481,54 @@ export function validateWorkspace(w) {
           document({ markdown: r.markdown, updatedAt: r.updatedAt }, p);
           if (r.kind !== undefined) one(r.kind, reportKinds, p + ".kind");
           if (r.vaultUrl !== undefined) vaultLink(r.vaultUrl, p + ".vaultUrl");
+          reference(r, "gateId", p, gates, "gate");
+          reference(r, "decisionId", p, decisions, "decision");
+          break;
+        case "decisions": {
+          for (const key of ["title", "question"]) t(key);
+          one(r.status, decisionStatuses, p + ".status");
+          if (r.needBy !== undefined) date(r.needBy, p + ".needBy");
+          for (const key of ["defaultIfSilent", "recommendation", "rationale"]) if (r[key] !== undefined) t(key);
+          options(r, p);
+          if (r.chosen !== undefined && !r.options.some((o) => o.id === r.chosen))
+            fail(p + ".chosen", `"${r.chosen}" is not one of the options`);
+          if (r.status === "decided") {
+            if (r.chosen === undefined) fail(p + ".chosen", "a decided decision needs the option chosen");
+            if (r.decidedAt === undefined) fail(p + ".decidedAt", "a decided decision needs the time it was decided");
+          }
+          if (r.decidedAt !== undefined) timestamp(r.decidedAt, p + ".decidedAt");
+          if (r.history !== undefined) decisionHistory(r, p);
+          if (r.reportId !== undefined) {
+            const memo = reports.get(r.reportId);
+            if (!memo || (memo.projectId !== undefined && memo.projectId !== r.projectId))
+              fail(p + ".reportId", `"${r.reportId}" is not a report of this project or of the workspace`);
+          }
+          if (r.gateIds !== undefined) references(r, "gateIds", p, gates, "gate");
+          if (r.status === "superseded" && r.supersededBy === undefined)
+            fail(p + ".supersededBy", "a superseded decision needs the decision that replaced it");
+          if (r.supersededBy !== undefined) {
+            if (r.supersededBy === r.id) fail(p + ".supersededBy", "a decision cannot supersede itself");
+            reference(r, "supersededBy", p, decisions, "decision");
+          }
+          break;
+        }
+        case "actions":
+          t("title");
+          one(r.owner, ["owner", "agent"], p + ".owner");
+          one(r.status, actionStatuses, p + ".status");
+          if (r.due !== undefined) date(r.due, p + ".due");
+          if (r.hours !== undefined) n("hours");
+          for (const key of ["notes", "blockedBy"]) if (r[key] !== undefined) t(key);
+          if (r.doneAt !== undefined) timestamp(r.doneAt, p + ".doneAt");
+          reference(r, "gateId", p, gates, "gate");
+          reference(r, "decisionId", p, decisions, "decision");
+          break;
+        case "updates":
+          timestamp(r.at, p + ".at");
+          one(r.kind, updateKinds, p + ".kind");
+          t("text");
+          // refId is not checked: the log is a history, and it must stay valid if a record it names is removed.
+          if (r.refId !== undefined) t("refId");
           break;
         case "sources":
           t("name");
@@ -424,6 +549,8 @@ export function validateWorkspace(w) {
     }
   const cycle = dependencyCycle(w.initiatives);
   if (cycle) fail(`initiatives.${cycle[0]}.dependsOn`, "dependency cycle " + cycleText(cycle));
+  const family = parentCycle(w.initiatives);
+  if (family) fail(`initiatives.${family[0]}.parentId`, "parent cycle " + cycleText(family));
   return w;
 }
 
@@ -433,19 +560,26 @@ export function validateWorkspace(w) {
 // A field that a new feature reads must be added here.
 export const recordFields = {
   projects: ["id", "name", "audience", "category", "problem", "promise", "stage", "objective", "weeklyHours", "budget", "currency", "strategy"],
-  initiatives: ["id", "projectId", "name", "channel", "hypothesis", "cta", "status", "start", "end", "budget", "owner", "brief", "hours", "dependsOn"],
+  initiatives: ["id", "projectId", "name", "channel", "hypothesis", "cta", "status", "start", "end", "budget", "owner", "brief", "hours", "dependsOn", "parentId", "note"],
   observations: ["id", "projectId", "initiativeId", "channel", "metric", "value", "start", "end", "kind", "series", "definition", "url", "collectedAt", "currency", "cohort"],
   reactions: ["id", "projectId", "initiativeId", "channel", "text", "url", "collectedAt", "sentiment", "reviewed", "theme"],
   competitors: ["id", "projectId", "initiativeId", "name", "kind", "positioning", "url", "checkedAt", "claims"],
   experiments: ["id", "projectId", "initiativeId", "name", "hypothesis", "primaryMetric", "stoppingRule", "targetPerArm", "randomized", "arms"],
   evidence: ["id", "projectId", "initiativeId", "claim", "dimension", "result", "strength", "url", "checkedAt", "publishedAt", "dataPeriod", "denominator", "limit", "credibility", "relevance", "status"],
   sources: ["id", "projectId", "initiativeId", "name", "adapter", "channel", "target", "traffic", "lastCheckedAt", "lastError"],
-  reports: ["id", "projectId", "title", "markdown", "updatedAt", "kind", "vaultUrl"],
-  gates: ["id", "projectId", "name", "criteria", "status", "checkedAt", "evidenceIds", "notes"],
+  reports: ["id", "projectId", "title", "markdown", "updatedAt", "kind", "vaultUrl", "initiativeId", "gateId", "decisionId"],
+  gates: ["id", "projectId", "name", "criteria", "status", "checkedAt", "evidenceIds", "notes", "due", "hours", "initiativeId"],
+  decisions: ["id", "projectId", "initiativeId", "title", "question", "status", "needBy", "defaultIfSilent", "recommendation", "options", "chosen", "rationale", "decidedAt", "reportId", "gateIds", "supersededBy", "history"],
+  actions: ["id", "projectId", "initiativeId", "gateId", "decisionId", "title", "owner", "status", "due", "hours", "notes", "doneAt", "blockedBy"],
+  updates: ["id", "projectId", "initiativeId", "at", "kind", "refId", "text"],
 };
 const nestedFields = {
   competitors: { claims: ["dimension", "value", "url", "checkedAt"] },
   experiments: { arms: ["name", "trials", "successes"] },
+  decisions: {
+    options: ["id", "label", "summary", ...optionDimensions],
+    history: ["chosen", "rationale", "decidedAt"],
+  },
 };
 // Optimal string alignment distance: insert, delete, substitute or swap two neighbours.
 function distance(a, b) {
