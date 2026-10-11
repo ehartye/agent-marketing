@@ -354,12 +354,15 @@ test("a symbolic link that leaves the assets folder is not followed", (t) =>
     }
     assert.equal(resolveAssetFile(file, { ...a, id: "evil", file: "capsule/evil.png" }), null);
     // A folder link that points out is refused too, and a link that stays inside is fine.
+    // Only a refusal to make the link skips this; a failed assertion must fail the test.
+    let junction = true;
     try {
       symlinkSync(dir, join(assetsDir(file), "outside"), "junction");
-      assert.equal(resolveAssetFile(file, { ...a, file: "outside/secret.png" }), null);
     } catch (e) {
-      if (!e.code) throw e;
+      if (!["EPERM", "EACCES"].includes(e.code)) throw e;
+      junction = false;
     }
+    if (junction) assert.equal(resolveAssetFile(file, { ...a, file: "outside/secret.png" }), null);
     symlinkSync(join(assetsDir(file), "capsule", "a.png"), join(assetsDir(file), "capsule", "inside.png"), "file");
     assert.ok(resolveAssetFile(file, { ...a, file: "capsule/inside.png" }));
   }));
