@@ -8,7 +8,8 @@ import {
   importRecords,
 } from "../src/store.mjs";
 import { collections, validateWorkspace, workspaceWarnings, failOnWarnings } from "../src/schema.mjs";
-import { report, advise, plan, analyzeExperiment } from "../src/analysis.mjs";
+import { report, advise, plan, analyzeExperiment, attention, localDate } from "../src/analysis.mjs";
+import { decide, defer, addAction, setActionStatus, setGate, addUpdate } from "../src/progress.mjs";
 import { parseImport, taggedUrl, observationsCsv } from "../src/import.mjs";
 import { monitor } from "../src/collectors.mjs";
 import { recommendChannels, channelLibrary } from "../src/channels.mjs";
@@ -42,6 +43,13 @@ const help = {
     "report [--project id --initiative id --from date --to date]",
     "advise <project-id>",
     "plan <project-id>",
+    "next [project-id] [--today YYYY-MM-DD]",
+    "decide <decision-id> --option <option-id> [--rationale text] [--change] [--revision n]",
+    "defer <decision-id> [--until YYYY-MM-DD] [--note text] [--revision n]",
+    "action add --id id --title text [--owner owner|agent] [--due YYYY-MM-DD] [--hours n] [--initiative id] [--gate id] [--decision id] [--note text] [--project id] [--revision n]",
+    "action status <action-id> <todo|doing|done|blocked|dropped> [--note text] [--revision n]",
+    "gate set <gate-id> --status <open|passed|failed|waived> [--note text] [--evidence id,id] [--revision n]",
+    "update add --text text [--kind note|decision|gate|initiative|action|asset|document] [--initiative id] [--ref id] [--project id] [--revision n]",
     "channels [project-id]",
     "experiment <experiment-id>",
     "utm <url> --source x --medium y --campaign z [--content c]",
@@ -59,6 +67,7 @@ try {
     options: {
       studio: { type: "boolean" },
       strict: { type: "boolean" },
+      change: { type: "boolean" },
       ...Object.fromEntries(
       [
         "workspace",
@@ -79,6 +88,21 @@ try {
         "kind",
         "vault-url",
         "idle-minutes",
+        "option",
+        "rationale",
+        "until",
+        "note",
+        "owner",
+        "due",
+        "hours",
+        "gate",
+        "decision",
+        "id",
+        "evidence",
+        "text",
+        "ref",
+        "today",
+        "status",
       ].map((k) => [k, { type: "string" }]),
       ),
     },
@@ -180,6 +204,60 @@ try {
     );
   else if (command === "plan")
     result = plan(readWorkspace(file), required(p[0] || v.project, "project ID"));
+  else if (command === "next") {
+    const w = readWorkspace(file);
+    let id = p[0] || v.project;
+    if (!id) {
+      if (w.projects.length === 1) id = w.projects[0].id;
+      else
+        throw new Error(
+          w.projects.length
+            ? `The workspace has several projects (${w.projects.map((r) => r.id).join(", ")}); name one: marketing next <project-id>`
+            : "The workspace has no projects yet; add one with marketing put projects, or use --workspace for the right file",
+        );
+    }
+    result = attention(w, id, v.today ?? localDate());
+  } else if (["decide", "defer", "action", "gate", "update"].includes(command)) {
+    // Progress commands print the changed record and the log entry they wrote with it.
+    const revision = v.revision === undefined ? undefined : Number(v.revision),
+      note = v.note;
+    let done;
+    if (command === "decide")
+      done = decide(file, required(p[0], "decision ID"), {
+        optionId: v.option, rationale: v.rationale, change: v.change, revision,
+      });
+    else if (command === "defer")
+      done = defer(file, required(p[0], "decision ID"), { until: v.until, note, revision });
+    else if (command === "action" && p[0] === "add")
+      done = addAction(file, {
+        id: required(v.id, "--id"),
+        title: required(v.title, "--title"),
+        owner: v.owner,
+        due: v.due,
+        hours: v.hours === undefined ? undefined : Number(v.hours),
+        initiativeId: v.initiative,
+        gateId: v.gate,
+        decisionId: v.decision,
+        notes: note,
+        projectId: v.project,
+        revision,
+      });
+    else if (command === "action" && p[0] === "status")
+      done = setActionStatus(file, required(p[1], "action ID"), required(p[2], "status"), { notes: note, revision });
+    else if (command === "gate" && p[0] === "set")
+      done = setGate(file, required(p[1], "gate ID"), {
+        status: required(v.status, "--status"),
+        note,
+        evidenceIds: v.evidence === undefined ? undefined : v.evidence.split(",").map((x) => x.trim()).filter(Boolean),
+        revision,
+      });
+    else if (command === "update" && p[0] === "add")
+      done = addUpdate(file, {
+        text: required(v.text, "--text"), kind: v.kind, initiativeId: v.initiative, refId: v.ref, projectId: v.project, revision,
+      });
+    else throw new Error(`Unknown ${command} command: ${p[0] ?? "(none)"}. Run help.`);
+    result = { workspace: file, ...done };
+  }
   else if (command === "channels") {
     const id = p[0] || v.project;
     const project = id

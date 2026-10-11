@@ -197,3 +197,41 @@ export function setInitiativeNote(file, initiativeId, note, { revision, ...time 
     return { record: structuredClone(i), update };
   });
 }
+
+// A new action. Its project is the one named, or the project of the initiative, gate or decision
+// it names, or the workspace's only project. An ID already in use is refused: this adds, it does
+// not replace.
+export function addAction(
+  file,
+  { id, title, owner = "owner", status = "todo", due, hours, notes, initiativeId, gateId, decisionId, projectId, revision, ...time } = {},
+) {
+  const { at } = clock(time);
+  return write(file, revision, (w) => {
+    if (!id) throw new Error("Required: id");
+    if (w.actions.some((a) => a.id === id)) throw new Error(`Action "${id}" already exists; change it with action status`);
+    const named = [
+      initiativeId && find(w, "initiatives", "Initiative", initiativeId),
+      gateId && find(w, "gates", "Gate", gateId),
+      decisionId && find(w, "decisions", "Decision", decisionId),
+    ].find(Boolean);
+    projectId = projectId ?? named?.projectId;
+    if (!projectId) {
+      if (w.projects.length !== 1)
+        throw new Error(`The workspace has several projects (${words(w.projects.map((p) => p.id))}); name one with a project`);
+      projectId = w.projects[0].id;
+    }
+    const record = { id, projectId, title, owner, status };
+    for (const [key, value] of Object.entries({ initiativeId, gateId, decisionId, due, hours, notes }))
+      if (value !== undefined) record[key] = value;
+    w.actions.push(record);
+    const update = log(w, {
+      projectId,
+      initiativeId,
+      kind: "action",
+      refId: id,
+      text: `Added ${owner === "agent" ? "agent " : ""}action "${title}"${due ? `, due ${due}` : ""}`,
+      at,
+    });
+    return { record: structuredClone(record), update };
+  });
+}
