@@ -47,14 +47,21 @@ export function createDeskClient(request = api) {
         selection.initiativeId = "";
       const query = new URLSearchParams(Object.entries(selection).filter(([,value]) => value)).toString();
       const suffix = query ? "?" + query : "";
-      const [data, actions, channels, refs, plan] = await Promise.all([
+      // What needs the owner is read for the one project in view; the hierarchy needs a plan for
+      // every project it shows, so with no project chosen each gets its own.
+      const [data, actions, channels, refs, plan, attention, plans] = await Promise.all([
         request("/api/report" + suffix), request("/api/advise" + suffix),
         request("/api/channels" + suffix), references || request("/api/references"),
         request("/api/plan" + suffix),
+        selection.projectId ? request("/api/attention?projectId=" + encodeURIComponent(selection.projectId)) : null,
+        selection.projectId ? null : Promise.all(workspace.projects.map(p => request("/api/plan?projectId=" + encodeURIComponent(p.id)))),
       ]);
       if (current !== generation) return null;
       references = refs;
-      snapshot = { workspace, selection, data, actions, channels, refs, plan };
+      const byProject = selection.projectId
+        ? { [selection.projectId]: plan }
+        : Object.fromEntries(workspace.projects.map((p, n) => [p.id, plans[n]]));
+      snapshot = { workspace, selection, data, actions, channels, refs, plan, plans: byProject, attention };
       return snapshot;
     },
   };

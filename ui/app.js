@@ -3,6 +3,7 @@ import { api, createDeskClient, reviewDrafts, importMessage } from "./state.js";
 import { renderActivity, drawChart } from "./chart.js";
 import { renderCampaign } from "./views/campaign.js";
 import { renderPlan } from "./views/plan.js";
+import { renderHub, bindHub } from "./views/hub.js";
 import { renderReception } from "./views/reception.js";
 import { renderResearch } from "./views/research.js";
 import { renderReports } from "./views/reports.js";
@@ -27,7 +28,7 @@ function syncControls() {
   $("import").disabled = writing || loading || failed;
   $("collect").title = client.snapshot?.workspace.sources.length ? "Collect every registered source in this workspace" : "Register a source with market-monitor to enable collection";
   $("filters").querySelectorAll("input, select, button").forEach(el => { el.disabled = writing; });
-  $("views").querySelectorAll("button, input, select").forEach(el => { el.disabled = writing || loading || failed; });
+  $("views").querySelectorAll("button, input, select, textarea").forEach(el => { el.disabled = writing || loading || failed; });
   $("collect").disabled = writing || loading || failed || !client.snapshot?.workspace.sources.length;
 }
 function setView(id, focus = false) {
@@ -62,6 +63,7 @@ function render(snapshot) {
   $("telemetry").hidden = false;
   $("data-scope").textContent = `${workspace.sources.length} registered sources across the workspace. Collection and downloads include every project; filters only change this view.`;
   renderCampaign(snapshot);
+  renderHub(snapshot);
   metricKey = renderActivity(workspace, data, metricKey);
   renderReception(snapshot, drafts);
   renderResearch(snapshot);
@@ -73,13 +75,17 @@ function render(snapshot) {
   const params = new URLSearchParams(Object.entries(scope));
   history.replaceState(null, "", "?" + params + location.hash);
 }
-async function load(initial = false) {
+// `quiet` is a refresh after the owner's own save: the views stay on screen, so the page does not
+// collapse and lose its scroll position under the control that was just used.
+async function load(initial = false, quiet = false) {
   const current = ++generation;
   loading = true;
   failed = false;
-  $("load-note").textContent = "Loading the selected evidence…";
-  $("load-note").hidden = false;
-  $("views").hidden = true;
+  if (!quiet) {
+    $("load-note").textContent = "Loading the selected evidence…";
+    $("load-note").hidden = false;
+    $("views").hidden = true;
+  }
   syncControls();
   try {
     const snapshot = await client.load(selection(), initial);
@@ -111,6 +117,8 @@ async function reload(initial = false) {
   try { await loadWorkspaces(); await load(initial); if (!loading) message(initial ? "" : "Selection updated."); }
   catch (error) { message(error.message, true, true); }
 }
+// `focusKey` is a selector, or a list of them: focus returns to the first that is still on screen after the
+// redraw, because the control that was used may have moved or gone (a decided question leaves "Open").
 async function save(action, success, focusKey) {
   if (writing || loading || failed || !client.snapshot) return;
   writing = true;
@@ -120,7 +128,7 @@ async function save(action, success, focusKey) {
   try {
     const result = await action();
     committed = true;
-    await load();
+    await load(false, true);
     message(typeof success === "function" ? success(result) : success);
   } catch (error) {
     message((committed ? "Saved, but the display could not refresh. " : "") + error.message, true, committed || error.status === 409);
@@ -130,7 +138,7 @@ async function save(action, success, focusKey) {
   } finally {
     writing = false;
     syncControls();
-    if (!loading && !failed) restoreFocus(document.querySelector(focusKey) ? focusKey : "#sentiment-filter");
+    if (!loading && !failed) restoreFocus([].concat(focusKey).find(key => key && document.querySelector(key)?.checkVisibility?.() !== false && document.querySelector(key)) ?? "#sentiment-filter");
   }
 }
 
@@ -179,6 +187,13 @@ gear.onclick = () => setMenu(menu.hidden);
 menu.onchange = event => { if (event.target.name === "theme") window.deskTheme?.set(event.target.value); };
 document.addEventListener("keydown", event => { if (event.key === "Escape" && !menu.hidden) setMenu(false, true); });
 document.addEventListener("click", event => { if (!menu.hidden && !event.target.closest(".settings")) setMenu(false); });
+bindHub({
+  root: $("views"),
+  write: (path, data) => api(path, { workspaceId, revision: client.snapshot.workspace.revision, ...data }),
+  snapshot: () => client.snapshot,
+  save, setView, say: text => message(text),
+  rerender: () => renderHub(client.snapshot),
+});
 $("dismiss").onclick = () => { $("notice").hidden = true; };
 $("refresh").onclick = $("retry").onclick = () => reload();
 $("clear").onclick = () => { $("from").value = $("to").value = ""; reload(); };

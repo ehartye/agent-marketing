@@ -83,7 +83,45 @@
           <p>Use market-discover to save your audience and goal, then market-campaign to record the first small test. Return here to review results and choose the next action.</p>
           <button data-open-view="results">Import an existing workspace</button>
         </div>
+        <section id="needs" class="panel needs" aria-labelledby="needs-heading">
+          <div class="section-head">
+            <h2 id="needs-heading" tabindex="-1">Needs you now</h2>
+            <span id="needs-summary" class="meta"></span>
+          </div>
+          <div id="needs-body"></div>
+        </section>
+        <section id="decisions" class="panel" aria-labelledby="decisions-heading">
+          <div class="section-head">
+            <h2 id="decisions-heading" tabindex="-1">Decisions</h2>
+            <span id="decisions-summary" class="meta"></span>
+          </div>
+          <div id="decision-filters" class="segmented" role="group" aria-label="Show decisions that are"></div>
+          <div id="decisions-list"></div>
+        </section>
+        <div class="desk-grid hub-grid">
+          <section id="actions" class="panel" aria-labelledby="actions-heading">
+            <div class="section-head">
+              <h2 id="actions-heading" tabindex="-1">Actions</h2>
+              <span id="actions-summary" class="meta"></span>
+            </div>
+            <div id="actions-list"></div>
+          </section>
+          <section id="timeline" class="panel" aria-labelledby="timeline-heading">
+            <div class="section-head">
+              <h2 id="timeline-heading" tabindex="-1">Timeline</h2>
+              <span id="timeline-summary" class="meta"></span>
+            </div>
+            <div id="timeline-list"></div>
+          </section>
+        </div>
         <div id="decision"></div>
+        <section class="panel">
+          <div class="section-head">
+            <h2>Initiatives</h2>
+            <span class="meta">Parents hold their children. One hypothesis each.</span>
+          </div>
+          <div id="initiatives"></div>
+        </section>
         <div id="plan-view" class="desk-grid plan-view" hidden>
           <section class="panel" aria-labelledby="gates-heading">
             <div class="section-head">
@@ -102,13 +140,6 @@
         </div>
         <section class="panel"><h2>Project strategy</h2><div id="strategy"></div></section>
         <div class="desk-grid">
-          <section class="panel">
-            <div class="section-head">
-              <h2>Initiatives</h2>
-              <span class="meta">One hypothesis. One next action.</span>
-            </div>
-            <div id="initiatives"></div>
-          </section>
           <section class="panel">
             <div class="section-head"><h2>From visit to first use</h2></div>
             <div id="funnels"></div>

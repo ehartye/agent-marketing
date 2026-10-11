@@ -239,7 +239,7 @@ export async function startServer(
           "/style.css": ["style.css", "text/css"],
           "/theme.js": ["theme.js", "text/javascript"],
           ...Object.fromEntries([
-            "state.js", "shared.js", "chart.js", "documents.js", "markdown.js", "views/campaign.js",
+            "state.js", "shared.js", "hub-shared.js", "chart.js", "documents.js", "markdown.js", "views/campaign.js",
             "views/reception.js", "views/research.js", "views/reports.js", "views/experiments.js", "views/results.js", "views/plan.js",
             "views/needs.js", "views/decisions.js", "views/actions.js", "views/timeline.js", "views/hierarchy.js", "views/hub.js",
           ].map(name => ["/" + name, [name, "text/javascript"]])),
