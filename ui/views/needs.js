@@ -1,5 +1,6 @@
 import { $, esc } from "../shared.js";
-import { plural, daysFrom, dueBadge, gotoButton, initiativeName, hoursText } from "../hub-shared.js";
+import { plural, daysFrom, dueBadge, gotoButton, initiativeName, hoursText, foldMain, fullTitle } from "../hub-shared.js";
+import { recommendedLabel } from "./decisions.js";
 import { actionControls } from "./actions.js";
 import { kindBadge } from "./timeline.js";
 
@@ -50,56 +51,58 @@ function group(key, title, items, { quiet = false, note = "" } = {}) {
       : "";
   return `<section class="need-group${quiet ? " quiet" : ""}" data-need-group="${key}"><h3>${esc(title)} <span class="count">${items.length}</span></h3>${note}<ul class="need-list">${shown.join("")}</ul>${more}</section>`;
 }
-const row = (key, main, controls) => `<li class="need" data-need="${esc(key)}"><div class="need-main">${main}</div><div class="need-controls">${controls}</div></li>`;
+// One scannable line per item: what kind it is, when it is due, what it is and, beside it, the control.
+// Whatever else the item says (the question, the recommendation, what happens if the owner stays silent,
+// the initiative it is for) waits behind the row's Details toggle. The controls sit outside the toggle.
+const row = (key, { head, detail = "", controls = "" }) =>
+  `<li class="need" data-need="${esc(key)}">${foldMain({ key: "need:" + key, head, detail })}<div class="need-controls">${controls}</div></li>`;
+// Collateral is what the owner calls an asset in the desk.
+const collateralBadge = '<span class="pill kind asset"><span aria-hidden="true">▤</span> Collateral</span>';
+const title = (text) => `<strong class="row-title">${esc(text)}</strong>`;
+const chips = (...parts) => `<span class="row-chips">${parts.filter(Boolean).join("")}</span>`;
+const forInitiative = (workspace, id) => (id ? `<p class="caption">For ${gotoButton("initiative", id, initiativeName(workspace, id))}</p>` : "");
 
-// Every item of the list as { kind, overdue, daysLeft, build(lead) }. `lead` is a chip put in front of
-// the others: it names the kind when the item is shown under Overdue, away from the heading that would.
+// Every item of the list as { kind, overdue, daysLeft, build() }. Each row carries its own kind badge, so
+// it still says what it is when it is shown under Overdue, away from the heading that would name it.
 function needItems(a, { workspace }) {
   const staleIds = new Set(a.stale.map((s) => s.id)),
     hours = (h) => (h !== null && h !== undefined ? `<span class="meta">${hoursText(h)}</span>` : "");
-  const decisions = a.decisions.map((d) => ({ kind: "decision", overdue: isOverdue(d), daysLeft: d.daysLeft, build: (lead) => row(
-    "decision:" + d.id,
-    `<div class="chips">${lead}${dueBadge(d.daysLeft, d.needBy)}${staleIds.has(d.id) ? `<span class="pill due overdue">Stale: ${plural(a.stale.find((s) => s.id === d.id).daysOverdue, "day")} unanswered</span>` : ""}${d.status === "deferred" ? '<span class="pill">deferred, back again</span>' : ""}</div>
-     <strong>${esc(d.title)}</strong>
-     <p class="caption">${esc(d.question)}</p>
-     ${d.recommendation ? `<p class="caption"><span class="label">Recommended</span>${esc(d.recommendation)}</p>` : ""}
-     ${d.defaultIfSilent ? `<p class="caption"><span class="label">If you stay silent</span>${esc(d.defaultIfSilent)}</p>` : ""}`,
-    `<button type="button" class="primary" data-goto="decision:${esc(d.id)}" aria-label="Compare the ${d.optionCount} options and decide: ${esc(d.title)}">${d.optionCount ? `Compare ${plural(d.optionCount, "option")} and decide` : "Open the question"}</button>`,
-  ) }));
-  const actions = a.actions.map((x) => ({ kind: "action", overdue: isOverdue(x), daysLeft: x.daysLeft, build: (lead) => {
-    const full = workspace.actions.find((w) => w.id === x.id);
-    return row(
-      "action:" + x.id,
-      `<div class="chips">${lead}${x.reason === "blocked" ? '<span class="pill due overdue">Blocked</span>' : dueBadge(x.daysLeft, x.due)}${hours(x.hours)}</div>
-       <strong>${esc(x.title)}</strong>
-       ${x.blockedBy ? `<p class="caption waiting"><strong>Blocked by</strong> ${esc(x.blockedBy)}</p>` : ""}
-       ${x.initiativeId ? `<p class="caption">For ${gotoButton("initiative", x.initiativeId, initiativeName(workspace, x.initiativeId))}</p>` : ""}`,
-      full ? actionControls(full) : "",
-    );
+  const decisions = a.decisions.map((d) => ({ kind: "decision", overdue: isOverdue(d), daysLeft: d.daysLeft, build: () => {
+    const rec = recommendedLabel(workspace.decisions?.find((w) => w.id === d.id));
+    return row("decision:" + d.id, {
+      head: `${chips(kindBadge("decision"), dueBadge(d.daysLeft, d.needBy), staleIds.has(d.id) && `<span class="pill due overdue">Stale: ${plural(a.stale.find((s) => s.id === d.id).daysOverdue, "day")} unanswered</span>`, d.status === "deferred" && '<span class="pill">deferred, back again</span>')}${title(d.title)}${rec ? `<span class="row-sub rec-line">${esc(rec)}</span>` : ""}`,
+      detail: `${fullTitle(d.title)}<p class="caption">${esc(d.question)}</p>
+       ${d.recommendation ? `<p class="caption"><span class="label">Recommended</span>${esc(d.recommendation)}</p>` : ""}
+       ${d.defaultIfSilent ? `<p class="caption"><span class="label">If you stay silent</span>${esc(d.defaultIfSilent)}</p>` : ""}
+       ${forInitiative(workspace, d.initiativeId)}`,
+      controls: `<button type="button" class="primary" data-goto="decision:${esc(d.id)}" aria-label="Compare the ${d.optionCount} options and decide: ${esc(d.title)}">${d.optionCount ? `Compare ${plural(d.optionCount, "option")} and decide` : "Open the question"}</button>`,
+    });
   } }));
-  const gates = a.gates.map((g) => ({ kind: "gate", overdue: isOverdue(g), daysLeft: g.daysLeft, build: (lead) => row(
-    "gate:" + g.id,
-    `<div class="chips">${lead}${dueBadge(g.daysLeft, g.due)}<span class="pill gate-chip ${esc(g.status)}">${esc(g.status)}</span>${hours(g.hours)}</div>
-     <strong>${esc(g.name)}</strong>
-     <p class="caption"><span class="label">Pass when</span>${esc(g.criteria)}</p>
+  const actions = a.actions.map((x) => ({ kind: "action", overdue: isOverdue(x), daysLeft: x.daysLeft, build: () => {
+    const full = workspace.actions.find((w) => w.id === x.id);
+    return row("action:" + x.id, {
+      head: `${chips(kindBadge("action"), x.reason === "blocked" ? '<span class="pill due overdue">Blocked</span>' : dueBadge(x.daysLeft, x.due), hours(x.hours))}${title(x.title)}`,
+      detail: `${fullTitle(x.title)}${x.blockedBy ? `<p class="caption waiting"><strong>Blocked by</strong> ${esc(x.blockedBy)}</p>` : ""}${forInitiative(workspace, x.initiativeId)}`,
+      controls: full ? actionControls(full) : "",
+    });
+  } }));
+  const gates = a.gates.map((g) => ({ kind: "gate", overdue: isOverdue(g), daysLeft: g.daysLeft, build: () => row("gate:" + g.id, {
+    head: `${chips(kindBadge("gate"), dueBadge(g.daysLeft, g.due), `<span class="pill gate-chip ${esc(g.status)}">${esc(g.status)}</span>`, hours(g.hours))}${title(g.name)}`,
+    detail: `${fullTitle(g.name)}<p class="caption"><span class="label">Pass when</span>${esc(g.criteria)}</p>
      ${g.blocks.length ? `<p class="caption waiting"><strong>Holding up</strong> ${g.blocks.map((b) => esc(b.name)).join(", ")}</p>` : ""}`,
-    gotoButton("gate", g.id, "Open the gate", "primary-link"),
-  ) }));
-  const blocked = a.blockedInitiatives.map((i) => ({ kind: "initiative", overdue: false, daysLeft: null, build: (lead) => row(
-    "initiative:" + i.id,
-    `<div class="chips">${lead}<span class="pill due overdue">Blocked</span><span class="meta">${i.status === "running" ? "running" : `starts ${esc(i.start)}`}</span></div>
-     <strong>${esc(i.name)}</strong>
-     <p class="caption waiting"><strong>Waits on</strong> ${esc(i.blocker.name)} (${esc(i.blocker.kind)}, ${esc(i.blocker.status)})</p>`,
-    i.blocker.kind === "gate" ? gotoButton("gate", i.blocker.id, "Open the gate", "primary-link") : gotoButton("initiative", i.id, "Open the initiative", "primary-link"),
-  ) }));
+    controls: gotoButton("gate", g.id, "Open the gate", "primary-link"),
+  }) }));
+  const blocked = a.blockedInitiatives.map((i) => ({ kind: "initiative", overdue: false, daysLeft: null, build: () => row("initiative:" + i.id, {
+    head: `${chips(kindBadge("initiative"), '<span class="pill due overdue">Blocked</span>', `<span class="meta">${i.status === "running" ? "running" : `starts ${esc(i.start)}`}</span>`)}${title(i.name)}`,
+    detail: `${fullTitle(i.name)}<p class="caption waiting"><strong>Waits on</strong> ${esc(i.blocker.name)} (${esc(i.blocker.kind)}, ${esc(i.blocker.status)})</p>`,
+    controls: i.blocker.kind === "gate" ? gotoButton("gate", i.blocker.id, "Open the gate", "primary-link") : gotoButton("initiative", i.id, "Open the initiative", "primary-link"),
+  }) }));
   // An open slot with two or more candidates is a choice only the owner can make.
-  const picks = (a.picks ?? []).map((p) => ({ kind: "asset", overdue: false, daysLeft: null, build: (lead) => row(
-    "pick:" + p.slotId,
-    `<div class="chips">${lead}<span class="pill kind asset"><span aria-hidden="true">▤</span> Collateral</span></div>
-     <strong>Pick the ${esc(p.name)}</strong>
-     <p class="caption">${plural(p.candidates, "candidate")} waiting${p.initiativeId ? ` · for ${gotoButton("initiative", p.initiativeId, initiativeName(workspace, p.initiativeId))}` : ""}</p>`,
-    `<button type="button" class="primary" data-collateral-pick="${esc(p.slotId)}" aria-label="Compare ${p.candidates} candidates and pick: ${esc(p.name)}">Compare and pick</button>`,
-  ) }));
+  const picks = (a.picks ?? []).map((p) => ({ kind: "asset", overdue: false, daysLeft: null, build: () => row("pick:" + p.slotId, {
+    head: `${chips(collateralBadge, `<span class="meta">${plural(p.candidates, "candidate")} waiting</span>`)}${title("Pick the " + p.name)}`,
+    detail: fullTitle("Pick the " + p.name) + forInitiative(workspace, p.initiativeId),
+    controls: `<button type="button" class="primary" data-collateral-pick="${esc(p.slotId)}" aria-label="Compare ${p.candidates} candidates and pick: ${esc(p.name)}">Compare and pick</button>`,
+  }) }));
   return { decisions, actions, gates, blocked, picks };
 }
 
@@ -109,13 +112,11 @@ function waitingRows(a, { workspace }) {
   const waiting = a.waiting ?? (workspace.assetSlots ?? [])
     .filter((s) => s.projectId === a.projectId && s.status === "open" && s.waitingOn)
     .map((s) => ({ slotId: s.id, name: s.name, waitingOn: s.waitingOn, candidates: (workspace.assets ?? []).filter((x) => x.slotId === s.id && x.status === "candidate").length, initiativeId: s.initiativeId ?? null }));
-  return waiting.map((w) => row(
-    "waiting:" + w.slotId,
-    `<div class="chips"><span class="pill kind asset"><span aria-hidden="true">▤</span> Collateral</span></div>
-     <strong>${esc(w.name)}</strong>
-     <p class="caption waiting"><strong>Waiting on</strong> ${esc(w.waitingOn)}${w.candidates ? " · " + plural(w.candidates, "candidate") + " so far" : ""}${w.initiativeId ? ` · for ${gotoButton("initiative", w.initiativeId, initiativeName(workspace, w.initiativeId))}` : ""}</p>`,
-    `<button type="button" data-collateral-pick="${esc(w.slotId)}" aria-label="Open the slot: ${esc(w.name)}">Open the slot</button>`,
-  ));
+  return waiting.map((w) => row("waiting:" + w.slotId, {
+    head: `${chips(collateralBadge)}${title(w.name)}<span class="row-sub waiting"><strong>Waiting on</strong> ${esc(w.waitingOn)}</span>`,
+    detail: fullTitle(w.name) + (w.candidates || w.initiativeId ? `<p class="caption waiting">${w.candidates ? plural(w.candidates, "candidate") + " so far" : ""}${w.candidates && w.initiativeId ? " · " : ""}${w.initiativeId ? `for ${gotoButton("initiative", w.initiativeId, initiativeName(workspace, w.initiativeId))}` : ""}</p>` : ""),
+    controls: `<button type="button" data-collateral-pick="${esc(w.slotId)}" aria-label="Open the slot: ${esc(w.name)}">Open the slot</button>`,
+  }));
 }
 
 // Groups in the order the owner should meet them: what is late, then decisions, actions, gates, blocked
@@ -127,8 +128,8 @@ export function needsBody(a, ctx) {
       const n = list.filter((i) => i.overdue).length;
       return n ? `<p class="caption">${plural(n, "other item is", "other items are")} overdue, shown above under Overdue.</p>` : "";
     },
-    section = (key, title, list) => group(key, title, list.filter((i) => !i.overdue).map((i) => i.build("")), { note: moved(list) });
-  return group("overdue", "Overdue", late.map((i) => i.build(kindBadge(i.kind))))
+    section = (key, title, list) => group(key, title, list.filter((i) => !i.overdue).map((i) => i.build()), { note: moved(list) });
+  return group("overdue", "Overdue", late.map((i) => i.build()))
     + section("decisions", "Decisions to make", items.decisions)
     + section("actions", "Your actions", items.actions)
     + section("gates", "Gates due", items.gates)

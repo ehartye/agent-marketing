@@ -42,32 +42,41 @@
     <div id="telemetry" class="telemetry" role="group" aria-label="Workspace vitals" hidden></div>
     <main id="desk" tabindex="-1" aria-busy="true">
       <div class="intro">
-        <div>
+        <div class="intro-main">
           <p class="eyebrow">YOUR NEXT SMALL TEST STARTS HERE</p>
           <h1>Campaign desk<span class="dot">.</span></h1>
-          <p id="project-summary">Loading your studio…</p>
+          <div class="clamp clamp-promise">
+            <p id="project-summary" class="clamp-text">Loading your studio…</p>
+            <div id="project-summary-more"></div>
+          </div>
         </div>
         <div class="project-goal">
           <span class="eyebrow">Working toward</span>
-          <strong id="project-objective">Loading your project goal…</strong>
+          <div class="clamp clamp-objective">
+            <strong id="project-objective" class="clamp-text">Loading your project goal…</strong>
+            <div id="project-objective-more"></div>
+          </div>
           <span id="project-resources" class="caption"></span>
         </div>
       </div>
-      <form class="filters" id="filters">
-        <label
-          >Project<select id="project">
-            <option value="">All projects</option>
-          </select></label
-        ><label
-          >Initiative<select id="initiative">
-            <option value="">All initiatives</option>
-          </select></label
-        ><label>Readings from<input id="from" type="date" /></label
-        ><label>Through<input id="to" type="date" /></label
-        ><button type="button" id="clear">Clear dates</button
-        ><span id="revision" class="meta"></span>
-      </form>
-      <p id="scope-summary" class="caption scope-summary"></p>
+      <details class="filters-fold" id="filters-fold" open>
+        <summary>Filters <span id="filters-now" class="meta"></span></summary>
+        <form class="filters" id="filters">
+          <label
+            >Project<select id="project">
+              <option value="">All projects</option>
+            </select></label
+          ><label
+            >Initiative<select id="initiative">
+              <option value="">All initiatives</option>
+            </select></label
+          ><label>Readings from<input id="from" type="date" /></label
+          ><label>Through<input id="to" type="date" /></label
+          ><button type="button" id="clear">Clear dates</button
+          ><span id="revision" class="meta"></span>
+        </form>
+        <p id="scope-summary" class="caption scope-summary"></p>
+      </details>
       <nav class="tabs" role="tablist" aria-label="Desk views">
         <button id="tab-campaign" role="tab" data-tab="campaign" aria-controls="campaign" aria-selected="true">Decide &amp; plan</button>
         <button id="tab-collateral" role="tab" data-tab="collateral" aria-controls="collateral" aria-selected="false" tabindex="-1">Collateral</button>

@@ -1,7 +1,7 @@
 import { $ } from "../shared.js";
 import { setOpen, setDraft, clearDrafts, localDay, isShown, resetHubState } from "../hub-shared.js";
 import { renderNeeds, toggleNeedGroup, resetNeeds } from "./needs.js";
-import { renderDecisions, setDecisionFilter, changeRefusal, markActed, resetDecisionView } from "./decisions.js";
+import { renderDecisions, setDecisionFilter, showAllOpen, changeRefusal, markActed, resetDecisionView } from "./decisions.js";
 import { renderActions, slug } from "./actions.js";
 import { renderTimeline, resetTimeline, showMoreTimeline } from "./timeline.js";
 import { renderHierarchy, treeOrder, subtreeIds } from "./hierarchy.js";
@@ -143,13 +143,14 @@ export function bindHub({ root, write, snapshot, save, setView, say, rerender, r
     if (!tab) return;
     setView(tab);
     let el = find(kind, id);
+    // A decision past the rows the Open view lists is listed by showing them all; one not open at all, by the All view.
+    if (!el && kind === "decision") { showAllOpen(true); rerender(); el = find(kind, id); }
     if (!el && kind === "decision") { setDecisionFilter("all"); rerender(); el = find(kind, id); }
-    if (!el && kind === "action") { setOpen("actions-closed", true); rerender(); el = find(kind, id); }
     if (!el && (kind === "slot" || kind === "asset")) { resetCollateralView(); rerender(); el = find(kind, id); }
     if (el) openFolds(el);
     // Found in the page but not visible (a view that is hidden, a card nobody can see) is as good as not found.
     if (!isShown(el)) return say("That record is not shown for the current selection. Choose its project, or clear the initiative filter.");
-    if (kind === "decision" && !el.open) el.open = true;
+    if ((kind === "decision" || kind === "initiative") && el.matches("details") && !el.open) { el.open = true; if (el.dataset.key) setOpen(el.dataset.key, true); }
     if (kind === "report") el.querySelector("details")?.setAttribute("open", "");
     const target = el.matches("details") ? el.querySelector("summary") : el;
     if (!target.hasAttribute("tabindex") && !target.matches("summary, button, a, input, select")) target.tabIndex = -1;
@@ -179,6 +180,10 @@ export function bindHub({ root, write, snapshot, save, setView, say, rerender, r
       setDecisionFilter(d.decisionFilter);
       rerender();
       document.querySelector(`[data-decision-filter="${d.decisionFilter}"]`)?.focus({ preventScroll: true });
+    } else if ("decisionMore" in d) {
+      showAllOpen(button.getAttribute("aria-expanded") !== "true");
+      rerender();
+      document.querySelector("[data-decision-more]")?.focus({ preventScroll: true });
     } else if (d.needMore) {
       toggleNeedGroup(d.needMore);
       rerender();

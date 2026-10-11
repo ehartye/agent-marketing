@@ -1,5 +1,5 @@
 import { $, esc, empty } from "../shared.js";
-import { openAttr, draftAttr, draftValue, plural, daysFrom, dueBadge, statusChip, gotoButton, initiativeName } from "../hub-shared.js";
+import { openAttr, draftAttr, draftValue, plural, daysFrom, dueBadge, statusChip, gotoButton, initiativeName, clampMore } from "../hub-shared.js";
 
 // Decisions: a question, the options laid side by side on the owner's five dimensions, and the
 // controls to decide or defer in place. A decided question folds down to the choice and why, with
@@ -17,12 +17,30 @@ let filter = "", touched = false;
 export const decisionFilter = () => filter;
 export function setDecisionFilter(value) { filter = value; touched = true; clearActed(); }
 
+// How many open questions the Open view lists as rows before the rest wait behind one button. Whatever
+// was just acted on stays listed, and a jump to a hidden one lists them all.
+export const OPEN_ROWS = 5;
+let listAll = false;
+export const showAllOpen = (value = true) => { listAll = value; };
+export const decisionRows = (list, all, keep = () => false) => {
+  if (all || list.length <= OPEN_ROWS) return { shown: list, hidden: 0 };
+  const shown = list.filter((d, n) => n < OPEN_ROWS || keep(d));
+  return { shown, hidden: list.length - shown.length };
+};
+
 const optionLabel = (d, id) => d.options.find((o) => o.id === id)?.label ?? id;
 // The option the agent recommends is the one the decision names by id (`recommendedOptionId`). The
 // recommendation is free text and is only ever shown, never read for a guess: "Don't ship now" would
 // otherwise mark "Ship now". No named option means no badge and no primary button.
 export function recommendedOption(d) {
   return d.options.some((o) => o.id === d.recommendedOptionId) ? d.recommendedOptionId : null;
+}
+
+// The line a row carries: "Recommended: <that option's own label>", from the id the decision names and
+// never from its prose. Empty when no option is named.
+export function recommendedLabel(d) {
+  const id = d ? recommendedOption(d) : null;
+  return id ? "Recommended: " + optionLabel(d, id) : "";
 }
 
 // Changing a decision to the choice it already has would only overwrite its reason in the history.
@@ -102,11 +120,22 @@ export function decisionBody(d, { workspace, today }) {
       ...gates.map((g) => "Affects gate: " + gotoButton("gate", g.id, g.name)),
       ...(workspace.assetSlots ?? []).filter((s) => s.decisionId === d.id).map((s) => "Collateral slot: " + gotoButton("slot", s.id, s.name)),
     ].filter(Boolean);
+  // A long question, recommendation or default is shown in a few lines with a toggle for the rest, so the card
+  // reaches its options without a screenful of prose first.
+  const clamped = (text, label, lines, at, cls, inner = esc(text)) =>
+    `<div class="clamp clamp-${lines} ${cls}">${inner}${clampMore(text, label, { at })}</div>`;
+  const recText = `${recommendedOption(d) ? optionLabel(d, d.recommendedOptionId) + (d.recommendation ? " — " : "") : ""}${d.recommendation ?? ""}`;
   const facts = [
-    (d.recommendation || recommendedOption(d)) && `<p class="callout"><span class="label">Recommended</span>${recommendedOption(d) ? `<strong>${esc(optionLabel(d, d.recommendedOptionId))}</strong>${d.recommendation ? " — " : ""}` : ""}${esc(d.recommendation ?? "")}</p>`,
-    d.defaultIfSilent && d.status !== "decided" && `<p class="callout quiet"><span class="label">If you stay silent</span>${esc(d.defaultIfSilent)}</p>`,
+    (d.recommendation || recommendedOption(d)) && `<div class="callout"><span class="label">Recommended</span>${clamped(recText, "Read the whole recommendation", 3, 260, "", `<p class="clamp-text">${recommendedOption(d) ? `<strong>${esc(optionLabel(d, d.recommendedOptionId))}</strong>${d.recommendation ? " — " : ""}` : ""}${esc(d.recommendation ?? "")}</p>`)}</div>`,
+    d.defaultIfSilent && d.status !== "decided" && `<div class="callout quiet"><span class="label">If you stay silent</span>${clamped(d.defaultIfSilent, "Read the whole default", 2, 170, "", `<p class="clamp-text">${esc(d.defaultIfSilent)}</p>`)}</div>`,
   ].filter(Boolean).join("");
-  const head = `<p class="question">${esc(d.question)}</p>${links.length ? `<p class="caption links">${links.join(" · ")}</p>` : ""}${facts}`;
+  const linkLabel = [
+    d.initiativeId && "initiative",
+    memos.length && plural(memos.length, "memo"),
+    gates.length && plural(gates.length, "gate"),
+    (workspace.assetSlots ?? []).some((s) => s.decisionId === d.id) && "collateral",
+  ].filter(Boolean).join(", ");
+  const head = `${clamped(d.question, "Read the whole question", 4, 300, "question", `<p class="question clamp-text">${esc(d.question)}</p>`)}${links.length > 2 ? `<details class="linked-records" ${openAttr("links:" + d.id)}><summary>Linked: ${esc(linkLabel)}</summary><p class="caption links">${links.join(" · ")}</p></details>` : links.length ? `<p class="caption links">${links.join(" · ")}</p>` : ""}${facts}`;
   if (d.status === "decided") {
     const history = d.history?.length
       ? `<div class="history"><h4>Earlier choices</h4><ol>${d.history.toReversed().map((h) => `<li>${esc(optionLabel(d, h.chosen))} <span class="meta">${esc(day(h.decidedAt))}</span>${h.rationale ? ` — ${esc(h.rationale)}` : ""}</li>`).join("")}</ol></div>`
@@ -127,6 +156,8 @@ export function decisionItem(d, ctx) {
     left = d.needBy ? daysFrom(today, d.needBy) : null,
     live = d.status === "open" || d.status === "deferred",
     stale = d.status === "open" && left !== null && left < -7;
+  const rec = live ? recommendedLabel(d) : "";
+  const cue = live ? (d.options.length ? `Compare ${plural(d.options.length, "option")}` : "Open the question") : "Details";
   const meta = [
     live && dueBadge(left, d.needBy),
     stale && `<span class="pill due overdue">Waiting ${plural(-left, "day")} past its date</span>`,
@@ -134,8 +165,10 @@ export function decisionItem(d, ctx) {
     ctx.showProject && `<span class="meta">${esc(workspace.projects.find((p) => p.id === d.projectId)?.name ?? d.projectId)}</span>`,
   ].filter(Boolean).join("");
   const banner = ctx.banner ? `<p class="acted-banner"><span aria-hidden="true">✓</span> <strong>${esc(ctx.banner)}</strong> <span class="meta">It leaves the Open list when you change the filter or the tab.</span></p>` : "";
+  // An open question is a row, not a card: the Open view already says it is open, so the line is the title,
+  // when it is needed by, the option the agent recommends and the cue to compare. The card opens inline.
   return `${banner}<details class="dcard ${esc(d.status)}${ctx.banner ? " acted" : ""}" data-decision="${esc(d.id)}" ${openAttr("decision:" + d.id, startOpen)}>
-    <summary><span class="dtitle">${statusChip(d.status)}<strong>${esc(d.title)}</strong></span><span class="dmeta">${meta}</span></summary>
+    <summary><span class="dtitle">${d.status === "open" ? "" : statusChip(d.status)}<strong>${esc(d.title)}</strong>${rec ? `<span class="row-sub rec-line">${esc(rec)}</span>` : ""}</span><span class="dmeta">${meta}<span class="row-toggle">${esc(cue)}</span></span></summary>
     <div class="dbody">${decisionBody(d, ctx)}</div>
   </details>`;
 }
@@ -160,12 +193,16 @@ export function renderDecisions({ workspace, selection, inScope, attention, toda
     first = all.find((d) => d.status === "open")?.id,
     ctx = { workspace, today, showProject: !selection.projectId },
     item = (d) => decisionItem(d, { ...ctx, startOpen: d.id === first, banner: actedText(d.id) });
+  const rows = filter === "open" ? decisionRows(primary, listAll, (d) => acted.has(d.id)) : { shown: primary, hidden: 0 },
+    more = filter === "open" && primary.length > OPEN_ROWS
+      ? `<button type="button" class="link-button need-more" data-decision-more aria-expanded="${listAll}">${listAll ? "Show fewer" : `Show all ${primary.length} open questions`}</button>`
+      : "";
   const fold = folded.length
     ? `<details class="fold decided-fold" ${openAttr("section:decided-list")}><summary>Decided, deferred and replaced <span class="count">${folded.length}</span></summary>${folded.map(item).join("")}</details>`
     : "";
   $("decisions-list").innerHTML = primary.length || folded.length
-    ? primary.map(item).join("") + fold
+    ? rows.shown.map(item).join("") + more + fold
     : empty(all.length ? `No ${filter} decisions.` : "No decisions recorded yet. When a choice needs the owner, the agent records it with its options and a recommendation, and it appears here.");
 }
 // A new workspace starts again on its open questions.
-export function resetDecisionView() { filter = ""; touched = false; clearActed(); }
+export function resetDecisionView() { filter = ""; touched = false; listAll = false; clearActed(); }

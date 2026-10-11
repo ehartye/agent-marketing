@@ -1283,3 +1283,180 @@ progress::-moz-progress-bar { background: var(--teal); }
 @media print { .jumpbar { display: none; } }
 /* A jump to a record lands below the sticky bar, not under it. */
 #campaign [data-gate], #campaign [data-decision], #campaign [data-action], #campaign [data-initiative-card], #campaign [data-update] { scroll-margin-top: 72px; }
+
+/* ---- Density: a compact hero, one-line rows and detail that folds away. ---- */
+/* The intro: the promise and the goal sit side by side, and neither may stretch the page. */
+.intro { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); align-items: start; gap: 8px 28px; margin-bottom: 10px; }
+.intro h1 { font-size: clamp(28px, 3vw, 38px); letter-spacing: -1.5px; margin: 0 0 6px; }
+.intro .eyebrow { margin: 0 0 4px; }
+.intro p { margin: 0; }
+.project-goal { padding: 8px 16px; }
+.project-goal strong { font-size: 15px; line-height: 1.4; margin: 0; }
+.project-goal .caption { margin-top: 4px; }
+.clamp-text { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; margin: 0; }
+.clamp:has(.clamp-more[open]) .clamp-text { display: block; -webkit-line-clamp: unset; line-clamp: unset; overflow: visible; }
+.clamp-more > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; min-height: 32px; color: var(--blue); font: 600 12px var(--utility-font); letter-spacing: 0.5px; }
+.clamp-more > summary::-webkit-details-marker { display: none; }
+.clamp-more > summary::after { content: " \25BE"; content: " \25BE" / ""; margin-left: 4px; }
+.clamp-more[open] > summary::after { content: " \25B4"; content: " \25B4" / ""; }
+.clamp-shut, .clamp-more[open] .clamp-open { display: none; }
+.clamp-more[open] .clamp-shut { display: inline; }
+.filters { padding: 8px 0; }
+.scope-summary { margin: 6px 0; }
+.tabs { padding: 4px 0 0; margin-bottom: 10px; }
+.jumpbar { margin-bottom: 10px; }
+@media (max-width: 850px) { .intro { grid-template-columns: minmax(0, 1fr); } }
+
+/* A row: a line that says what it is, and the rest behind a Details toggle. */
+.row-line { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; min-width: 0; }
+summary.row-line { list-style: none; cursor: pointer; min-height: 36px; padding: 2px 0; }
+summary.row-line::-webkit-details-marker { display: none; }
+summary.row-line::before { content: "\25B8"; content: "\25B8" / ""; flex: none; width: 0.9em; color: var(--muted); }
+details[open] > summary.row-line::before { content: "\25BE"; content: "\25BE" / ""; }
+.row-chips { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.row-chips .pill, .row-chips .meta { margin: 0; }
+.row-title { flex: 1 1 14rem; min-width: 0; font-size: 14px; overflow-wrap: anywhere; }
+.row-sub { flex: 1 0 100%; padding-left: calc(0.9em + 10px); font-size: 12px; color: var(--muted); }
+.rec-line { color: var(--blue); font-weight: 600; }
+.row-toggle { margin-left: auto; font: 600 11px var(--utility-font); letter-spacing: 0.5px; text-transform: uppercase; color: var(--blue); }
+.row-detail { padding: 0 0 8px calc(0.9em + 10px); }
+.row-detail p { margin: 4px 0; font-size: 13px; max-width: 80ch; }
+.need { padding: 3px 0; align-items: center; }
+.need-main p { margin: 4px 0; }
+.need-controls, .action-controls { align-items: center; }
+.need-controls button, .action-controls button, .need-controls .primary-link, .action-controls .inline-pop > summary { min-height: 36px; padding-top: 4px; padding-bottom: 4px; }
+.need-controls .link-button.primary-link { display: inline-flex; align-items: center; }
+.need-group { margin-top: 10px; }
+.need-group h3 { margin-bottom: 2px; }
+.action-row { padding: 3px 0; align-items: center; }
+.action-group h3 { margin: 8px 0 0; }
+.action-group + .action-group { margin-top: 4px; }
+.closed-actions { margin-top: 6px; }
+.closed-actions > .action-group:first-of-type h3 { margin-top: 4px; }
+.headline { margin-bottom: 6px; }
+
+/* Decisions as rows. */
+.dcard { margin-bottom: 4px; }
+.dcard > summary { list-style: none; cursor: pointer; padding: 2px 12px; min-height: 40px; gap: 2px 12px; }
+.dcard > summary::-webkit-details-marker { display: none; }
+.dcard > summary .dtitle { flex: 1 1 16rem; flex-wrap: wrap; gap: 0 10px; }
+.dcard > summary .dtitle::before { content: "\25B8"; content: "\25B8" / ""; color: var(--muted); }
+.dcard[open] > summary .dtitle::before { content: "\25BE"; content: "\25BE" / ""; }
+.dcard > summary .dtitle .row-sub { flex-basis: 100%; padding-left: 1.2em; }
+.dcard > summary .dmeta .pill { margin: 0; }
+.decision-more, .need-more { margin-top: 4px; }
+
+/* Initiatives as rows. */
+.init-tree .init-node > .initiative { padding: 0 12px; margin-bottom: 4px; }
+.init-tree .init-node > .initiative > summary.init-line { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; min-height: 40px; padding: 4px 0; }
+.init-line::-webkit-details-marker { display: none; }
+.init-line::before { content: "\25B8"; content: "\25B8" / ""; flex: none; width: 0.9em; color: var(--muted); }
+.initiative[open] > .init-line::before { content: "\25BE"; content: "\25BE" / ""; }
+.init-name { margin: 0; font-size: 15px; flex: 1 1 12rem; min-width: 0; overflow-wrap: anywhere; }
+.init-facts { white-space: nowrap; }
+.init-progress { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 9rem; }
+.init-progress progress { margin: 0; flex: 1 1 auto; min-width: 3rem; }
+.init-progress .meta { white-space: nowrap; }
+.init-note { flex: 1 0 100%; padding-left: calc(0.9em + 12px); font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.init-note.none { font-style: italic; opacity: 0.8; }
+.init-body { padding: 0 0 12px calc(0.9em + 12px); }
+.init-body > .row { margin: 4px 0; }
+.init-body > p { margin: 6px 0; }
+.init-body .init-children { margin-left: 0; }
+.status-chip.running { color: var(--blue); border-color: var(--blue); }
+.status-chip.complete { color: var(--teal); border-color: var(--teal); }
+.status-chip.paused { color: var(--muted); border-style: dashed; }
+@media (max-width: 850px) {
+  .need, .action-row { grid-template-columns: minmax(0, 1fr); }
+  .init-tree .init-node > .initiative { padding: 0 8px; }
+  .init-body { padding-left: 4px; }
+  .row-detail { padding-left: 4px; }
+  .init-facts { white-space: normal; }
+  .init-progress { flex: 1 0 8rem; }
+}
+@media print { .row-fold:not([open]) .row-detail, .initiative:not([open]) .init-body { display: block; } .row-toggle { display: none; } }
+/* The toggle stays on the first line, and what a row adds (its recommendation) takes the line below only when it must. */
+.row-toggle { order: 2; }
+.row-sub { order: 3; flex: 0 1 auto; max-width: 100%; padding-left: 0; margin-left: calc(0.9em + 10px); line-height: 1.3; }
+.dcard > summary .dtitle .row-sub { margin-left: 1.2em; padding-left: 0; flex: 0 1 auto; }
+.dcard > summary .dmeta { order: 2; }
+.filters select { max-width: min(100%, 22rem); }
+.filters .meta { margin-left: auto; padding-bottom: 12px; white-space: nowrap; }
+.need-controls button.primary, .need-controls button { min-height: 36px; }
+.filters label { max-width: min(100%, 24rem); }
+.row-sub { flex: 1 0 100%; }
+.dcard > summary .dtitle .row-sub { flex: 1 0 100%; }
+.row-chips { flex: none; max-width: 100%; }
+.row-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+.row-sub.waiting { font-size: 12px; }
+.row-sub.waiting strong { color: var(--ink); }
+.full-title .label { margin-right: 8px; }
+/* A decision card reaches its options without a screenful of prose first. */
+.clamp-2 > .clamp-text { -webkit-line-clamp: 2; line-clamp: 2; }
+.clamp-4 > .clamp-text { -webkit-line-clamp: 4; line-clamp: 4; }
+.clamp.question { margin: 4px 0 6px; }
+.dbody .question { font-size: 14px; margin: 0; }
+.dbody .callout { margin: 6px 0; padding: 4px 12px; }
+.dbody .callout p { margin: 0; }
+.dbody .callout .label { margin-bottom: 0; }
+.dbody .clamp-more > summary { min-height: 28px; }
+.linked-records { margin: 2px 0 4px; }
+.linked-records > summary { list-style: none; cursor: pointer; min-height: 28px; display: flex; align-items: center; color: var(--blue); font-size: 12px; font-weight: 600; }
+.linked-records > summary::-webkit-details-marker { display: none; }
+.linked-records > summary::before { content: "\25B8"; content: "\25B8" / ""; width: 0.9em; margin-right: 4px; color: var(--muted); }
+.linked-records[open] > summary::before { content: "\25BE"; content: "\25BE" / ""; }
+.linked-records .links { margin: 2px 0 6px; }
+.options { margin: 8px 0; }
+.decide-form { margin-top: 8px; }
+.fold-panel { padding: 14px 22px; }
+.fold[open] > summary.section-head { margin-bottom: 8px; }
+.need { padding: 2px 0; }
+/* Titles line up down a list when the chips before them have room to. */
+@media (min-width: 851px) { .need .row-chips { min-width: 16.5rem; } .action-row .row-chips { min-width: 21rem; } }
+.init-own { margin: 6px 0 0; }
+.init-own > summary { list-style: none; cursor: pointer; min-height: 32px; display: flex; align-items: center; color: var(--blue); font-size: 13px; font-weight: 600; }
+.init-own > summary::-webkit-details-marker { display: none; }
+.init-own > summary::before { content: "\25B8"; content: "\25B8" / ""; width: 0.9em; margin-right: 4px; color: var(--muted); }
+.init-own[open] > summary::before { content: "\25BE"; content: "\25BE" / ""; }
+.init-own > .row, .init-own > p { margin-left: 0; }
+
+/* Filters: always on show on a wide screen, one folded line on a phone. */
+.filters-fold > summary { display: none; }
+@media (max-width: 850px) {
+  .filters-fold > summary { display: flex; align-items: center; flex-wrap: wrap; gap: 2px 10px; list-style: none; cursor: pointer; min-height: 40px; padding: 4px 10px; border: 1px solid var(--line); border-radius: var(--radius); font: 600 12px var(--utility-font); letter-spacing: 1px; text-transform: uppercase; color: var(--blue); }
+  .filters-fold > summary::-webkit-details-marker { display: none; }
+  .filters-fold > summary::before { content: "\25B8"; content: "\25B8" / ""; color: var(--muted); }
+  .filters-fold[open] > summary::before { content: "\25BE"; content: "\25BE" / ""; }
+  .filters-fold > summary .meta { text-transform: none; letter-spacing: 0; font-size: 12px; overflow-wrap: anywhere; }
+  .filters-fold[open] > summary { margin-bottom: 4px; }
+}
+@media print { .filters-fold { display: none; } }
+
+/* A phone: the header, the vitals, the hero and the tabs take less, so the jump bar and what needs the owner come first. */
+@media (max-width: 640px) {
+  header { padding: 8px 14px; gap: 6px 12px; }
+  header .actions { gap: 6px; }
+  header .actions button { min-height: 36px; padding: 4px 10px; }
+  .workspace-switch select { min-height: 36px; padding: 4px 8px; margin-top: 0; }
+  .brand { font-size: 16px; letter-spacing: 2px; }
+  .telemetry { padding: 4px 14px; gap: 0 12px; font-size: 10px; letter-spacing: 0.5px; }
+  main { padding: 10px 14px 100px; }
+  .intro { gap: 6px; margin-bottom: 6px; }
+  .intro h1 { font-size: 26px; margin-bottom: 2px; }
+  .intro .eyebrow { margin-bottom: 2px; font-size: 10px; }
+  .intro-main .clamp-text { -webkit-line-clamp: 2; line-clamp: 2; font-size: 14px; }
+  .project-goal { padding: 4px 12px; }
+  .project-goal strong { font-size: 14px; }
+  .project-goal .clamp-text { -webkit-line-clamp: 2; line-clamp: 2; }
+  .project-goal .eyebrow { margin-bottom: 0; }
+  .clamp-more > summary { min-height: 28px; }
+  .tabs { grid-template-columns: 1fr 1fr; gap: 0; }
+  .tabs button { min-height: 36px; padding: 4px 6px; font-size: 11px; letter-spacing: 0.8px; }
+  .jumpbar { margin-bottom: 6px; padding: 2px 6px; }
+  .jumpbar a { min-height: 36px; }
+  .fold-panel { padding: 10px 12px; }
+  .panel { padding: 12px; }
+}
+/* A sub-line is indented under the title and never wider than the row. */
+.row-sub { flex: none; width: calc(100% - 0.9em - 10px); box-sizing: border-box; overflow-wrap: anywhere; }
+.dcard > summary .dtitle .row-sub { flex: none; width: calc(100% - 1.2em); }

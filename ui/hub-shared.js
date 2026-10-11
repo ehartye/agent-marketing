@@ -60,7 +60,7 @@ export function dueBadge(daysLeft, date) {
   return `<span class="pill due${daysLeft <= 3 ? " soon" : ""}">Due in ${plural(daysLeft, "day")}${when}</span>`;
 }
 
-const GLYPH = { open: "○", decided: "✓", deferred: "…", superseded: "↷", todo: "○", doing: "◐", done: "✓", blocked: "✕", dropped: "↷", passed: "✓", failed: "✕", waived: "↷", picked: "✓", candidate: "○", selected: "★", rejected: "✕", retired: "↷" };
+const GLYPH = { open: "○", decided: "✓", deferred: "…", superseded: "↷", todo: "○", doing: "◐", done: "✓", blocked: "✕", dropped: "↷", passed: "✓", failed: "✕", waived: "↷", picked: "✓", candidate: "○", selected: "★", rejected: "✕", retired: "↷", planned: "○", running: "▶", paused: "‖", complete: "✓" };
 // A status is a word and a shape as well as a colour.
 export const statusChip = (status) =>
   `<span class="pill status-chip ${esc(status)}"><span aria-hidden="true">${GLYPH[status] ?? "•"}</span> ${esc(status)}</span>`;
@@ -72,3 +72,26 @@ export const gotoButton = (kind, id, label, extra = "") =>
 export const initiativeName = (workspace, id) => workspace.initiatives.find((i) => i.id === id)?.name ?? id;
 // Whether text is waiting half typed in this tab. A chosen option in a select is a preference, not work to lose.
 export const hasDrafts = () => [...drafts.keys()].some((k) => !/:(owner|initiativeId|kind|projectId)$/.test(k));
+
+// A long text (the project's objective, its promise) is clamped to a few lines by the stylesheet, and
+// this is the toggle that shows all of it: a <details> whose open state the stylesheet reads to lift the
+// clamp, so the text is in the page once and the summary says what it does. Short text needs no toggle.
+export function clampMore(text, label, { at = 150 } = {}) {
+  if (!text || String(text).length <= at) return "";
+  return `<details class="clamp-more"><summary><span class="clamp-open">${esc(label)}</span><span class="clamp-shut">Show less</span></summary></details>`;
+}
+
+// A row shows its title in two lines at most (the stylesheet clamps it); a title longer than that is given
+// whole as the first thing under the row's Details, so nothing is cut off for good.
+export const TITLE_LINE = 100;
+export const fullTitle = (text) => (String(text ?? "").length > TITLE_LINE ? `<p class="caption full-title"><span class="label">Full title</span>${esc(text)}</p>` : "");
+
+// A row that stays one line: `head` is what it says at a glance, `detail` what waits behind its Details
+// toggle. The controls are never put in here; they sit beside it so they stay one click away. With no
+// detail there is no toggle. The toggle is a <details>, so the browser keeps it keyboard reachable and
+// says whether it is open; `key` keeps it open across the redraw that follows a save.
+export function foldMain({ key, head, detail = "", label = "Details" }) {
+  if (!detail) return `<div class="row-line">${head}</div>`;
+  return `<details class="row-fold" ${openAttr(key)}><summary class="row-line">${head}<span class="row-toggle">${esc(label)}</span></summary><div class="row-detail">${detail}</div></details>`;
+}
+
