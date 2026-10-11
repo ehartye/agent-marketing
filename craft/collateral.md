@@ -13,6 +13,8 @@ Start with the smallest asset that makes the useful outcome credible. A tool may
 | Press/creator kit | Make accurate coverage easier | Are concise facts, approved images and contact details easy to find? |
 | FAQ | Resolve observed objections | Are claims, limitations and availability current? |
 
+For a game with a store page, the capsule, screenshot and trailer rules and the AI-assistance statements are in the [game launch guide](games.md).
+
 Prepare a message spine: audience situation, outcome, proof, differentiator, next action. Adapt it to the channel; do not paste the same generic pitch everywhere. Use actual product footage and verifiable claims. Label concept images and planned features honestly. Quote reactions only with appropriate permission/context; do not turn a child's identity, face or private details into marketing material by default.
 
 Optional sibling plugins can help: agent-vids for captured demonstrations, agent-prose for scripts/voice/instructions, agent-sprites for pixel assets and agent-beeps for audio. Read an available sibling skill only when the chosen deliverable needs it. Agent Marketing still works without them.

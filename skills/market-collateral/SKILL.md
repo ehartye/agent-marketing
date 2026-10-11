@@ -1,6 +1,6 @@
 ---
 name: market-collateral
-description: Advise on or draft marketing collateral such as product pages, native launch posts, demos, screenshots, creator kits, quickstarts or campaign copy.
+description: Advise on or draft marketing collateral such as product pages, native launch posts, demos, screenshots, store-page assets and trailers, creator kits, quickstarts or campaign copy.
 ---
 
 # Make the useful outcome visible
@@ -10,6 +10,8 @@ Read [collateral craft](../../craft/collateral.md). Start from the project's pos
 Draft a message spine: audience situation, outcome, proof, distinction, next action. Adapt it to the native channel and viewing context. Demonstrate real current behavior; distinguish planned features and concept visuals. Verify factual claims and obtain appropriate permission/context for testimonials or private material. Keep family/child private details out of public drafts unless specifically chosen by the owner.
 
 For a landing page include who it helps, concrete payoff, actual demonstration, access/price, relevant limits and one CTA. For a press/creator kit provide concise reusable facts, approved screenshots/logo/video, try link and an owner-chosen contact route. For a tool, validate the runnable quickstart. For a game, ensure the clip conveys genre and the playable loop.
+
+For a game's store page, read [game launch craft](../../craft/games.md): Steam's capsule sizes and the title-only reading of its text rule, gameplay-only screenshots, the trailer specification and the measured anatomy of trailers, and the AI-assistance statement each venue asks for. Check every asset at its target size against the guide's checklist; a title-screen crop with a tagline and menu buttons is not a capsule. Build the inventory of what ships and how it was made before drafting an AI statement, and never write one from memory.
 
 Use available agent-vids/prose/sprites/beeps skills only when the requested asset needs them. They are optional; a concise text-and-screenshot draft can stand alone. Current platform dimensions/specifications should come from official sources.
 

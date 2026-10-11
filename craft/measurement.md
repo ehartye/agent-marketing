@@ -10,4 +10,6 @@ Counts with matching attributed channel/initiative and identical windows can pro
 
 GitHub monitoring reads public stars and optional repository traffic; the latter needs appropriate `GITHUB_TOKEN` access and retains [14 days](https://docs.github.com/en/rest/metrics/traffic?apiVersion=2026-03-10). Collect daily counts weekly to preserve history; unique counts remain per-day definitions. HN monitoring uses the [official API](https://github.com/HackerNews/API) for scores, comment counts and a bounded comment sample. Other platforms use authorized exports normalized to the ledger's CSV/JSON contract. No scraping or account connection is implied.
 
+A game with no analytics of its own, a static host or children among its players needs its own plan: see the [game launch guide](games.md).
+
 At every review, record unavailable sources, last successful checks, sampling limits and late/incomplete periods. A missing metric is unknown, not zero. Compare spend and time with useful outcomes; acquisition-cost and ROI calculations require matching attribution scope and an economically appropriate outcome.

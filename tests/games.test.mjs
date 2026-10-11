@@ -312,3 +312,72 @@ test("the game rules are queryable, sourced and carry their working", () => {
   assert.match(rules.find((r) => r.id === "trailer-benchmarks-are-descriptive").reason, /67\.8/);
   assert.equal(rules.find((r) => r.id === "store-assets-conform").kind, "external");
 });
+
+// ---- the skills and docs point at the guide --------------------------------------------------
+
+const skillNames = [
+  "market-campaign",
+  "market-collateral",
+  "market-discover",
+  "market-experiment",
+  "market-insights",
+  "market-monitor",
+  "market-research",
+  "market-setup",
+  "market-strategy",
+];
+const skill = (name) => read(`skills/${name}/SKILL.md`);
+const description = (name) => /^description: (.+)$/m.exec(skill(name))?.[1].trim() ?? "";
+
+test("the five skills that meet a game point at the game guide", () => {
+  for (const name of ["market-research", "market-strategy", "market-campaign", "market-collateral", "market-monitor"])
+    assert.match(skill(name), /\]\(\.\.\/\.\.\/craft\/games\.md\)/, name);
+  assert.match(skill("market-strategy"), /marketing advise/);
+  assert.match(skill("market-strategy"), /stage/);
+  assert.match(skill("market-campaign"), /marketing advise/);
+  assert.match(skill("market-campaign"), /Next Fest/);
+  assert.match(skill("market-collateral"), /capsule/i);
+  assert.match(skill("market-collateral"), /AI/);
+  assert.match(skill("market-monitor"), /returnRates/);
+  assert.match(skill("market-monitor"), /private repository/i);
+  assert.match(skill("market-research"), /query, sort|sort order/i);
+});
+
+test("skill descriptions stay short and trigger-accurate after the game changes", () => {
+  for (const name of skillNames) {
+    const d = description(name);
+    assert.ok(d.length >= 100 && d.length <= 215, `${name}: ${d.length} characters`);
+    assert.doesNotMatch(d, /games\.md/, name);
+    assert.ok(skill(name).split("\n").length < 500, name);
+  }
+  assert.match(description("market-collateral"), /store-page assets/);
+  assert.match(description("market-monitor"), /no analytics/);
+  // The routing words that the Yoda audit checked for the other skills are unchanged.
+  assert.match(description("market-research"), /who would pay, what game to build/);
+  assert.match(description("market-strategy"), /where to promote/);
+});
+
+test("the craft guides send a game to the game guide for the part they leave out", () => {
+  for (const file of ["channels", "collateral", "measurement", "campaigns"])
+    assert.match(read(`craft/${file}.md`), /\]\(games\.md\)/, file);
+});
+
+test("docs/CLI.md states the GitHub adapter's private repository limit and that Pages has no visit analytics", () => {
+  const cli = squash(read("docs/CLI.md"));
+  assert.match(cli, /private repository answers HTTP 404/i);
+  assert.match(cli, /GitHub Pages/);
+  assert.match(cli, /no visit analytics/i);
+  assert.match(cli, /Traffic graph/);
+  assert.match(cli, /no Pages adapter/i);
+  assert.match(cli, /craft\/games\.md/);
+});
+
+test("the README lists the stage-aware advice, the game guide and the revised skill rows", () => {
+  const readme = squash(read("README.md"));
+  assert.match(readme, /\]\(craft\/games\.md\)/);
+  assert.match(readme, /`advise` and `channels` read the project's stage/);
+  assert.match(readme, /free web release/i);
+  assert.match(readme, /store-page assets/i);
+  assert.match(readme, /no analytics/i);
+  for (const name of skillNames) assert.match(readme, new RegExp(`\| ${name} \|`), name);
+});

@@ -49,11 +49,11 @@ Setup installs a content-verified runtime under `~/.agent-marketing/releases/` a
 |---|---|
 | market-setup | Install/check the managed runtime |
 | market-discover | Audience, value, readiness gates and evidence brief |
-| market-strategy | Channel choice with effort, risk and maintenance tradeoffs, sequenced behind gates and checked against the weekly hours |
+| market-strategy | Channel choice with effort, risk and maintenance tradeoffs for the project's stage, sequenced behind gates and checked against the weekly hours |
 | market-research | Paying demand, underserved/language markets, alternatives and a sourced decision report |
 | market-campaign | Testable campaign, CTA, tagged links, hours, dependencies and review plan |
-| market-collateral | Actual reviewable copy, demo/asset brief or creator kit |
-| market-monitor | Supported API collection, export imports and local desk |
+| market-collateral | Actual reviewable copy, demo/asset brief or creator kit, including store-page assets and trailers for a game |
+| market-monitor | Supported API collection, export imports, local desk and what to read when a game has no analytics |
 | market-insights | Reach/reception/viability review and a bounded next action |
 | market-experiment | Experiment design, counts, uncertainty and stop review |
 
@@ -67,11 +67,15 @@ Strategy and campaign skills save their full Markdown briefs inside the workspac
 
 A launch that waits on things (a name decision, a truth sheet, a pinned build, an outside playtest, store assets) can say so. A `gates` record is a pass condition with a status (open, passed, failed or waived), an initiative lists the gates and initiatives it waits on in `dependsOn` and its planned maker-hours in `hours`, and `plan <project-id>` reports what is blocked and by what, the hours each calendar week carries against the project's weekly cap, and the budget roll-up. `advise` mentions blocked work and over-cap weeks when they exist, and the desk shows the same under **Decide & plan**. The demo workspace includes a small gated game launch, Lantern Harbor. See [gates, dependencies and weekly hours](docs/CLI.md#gates-dependencies-and-weekly-hours).
 
+`advise` and `channels` read the project's stage, so an idea, a prototype, a beta and a launched project no longer get the same advice. An idea checks the promise and listens before it posts; a prototype gets intended strangers to a first session; a beta widens through the channel with the best observed ratio; a launched project reads who returns and what players say. For a game, a free web release comes before a paid store page and the store page waits for its readiness gates. Every action names the rules it rests on (`ruleIds`), and `marketing rules stage` and `marketing rules games` print them with their provenance. See [stage-aware advice and channels](docs/CLI.md#stage-aware-advice-and-channels).
+
 Monitoring reads public GitHub stars, optional repository traffic with an appropriately scoped `GITHUB_TOKEN`, and public HN threads through official APIs. Other platform results use authorized JSON/CSV exports normalized to the documented observation schema. Collection errors preserve previous readings; repeated snapshots do not inflate totals. Monitoring is one-shot; an owner-chosen scheduler can call it periodically. No social posting, outreach, ad spending or scheduler is installed.
 
 ## Marketing craft
 
 [Craft guides](craft/GUIDE.md), [queryable rules](craft/rules.json), [channel cards](library/channels.json) and [dated research references](craft/REFERENCES.md) cover discovery, positioning, competition, campaigns, collateral, measurement, reception and experiments. They separate research findings from planning heuristics and explain transfer limits. The channel cards cover social, store and community channels as well as web game portals (Poki, CrazyGames, Newgrounds, Game Jolt), press and creator outreach, and Mastodon, each with its verified platform rules and an example import.
+
+The [game launch guide](craft/games.md) covers what a game needs that a tool does not: free web release versus a store page, what Steam requires and charges (with Valve's contradictory figures stated, not resolved), a store-asset checklist, trailer benchmarks with their sample sizes, measuring a game with no analytics, AI-assistance disclosure with the sentiment spread by population, the name check and ten readiness gates with numeric pass criteria.
 
 Ask market-research “Which gamer population is underserved, including non-English markets?” for a saved [demand report](library/demand-report.md): purchasing evidence, supply gaps, sources and their limits, delivery tradeoffs, and one validation test. The [worked gamer example](docs/research/gamer-demand-2026-10-08.md) treats regional opportunities as hypotheses until genre-specific supply and paid conversion are checked. Research runs through the agent skill; the CLI's numeric `report` command summarizes ledger observations.
 
