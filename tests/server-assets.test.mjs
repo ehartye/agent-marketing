@@ -1,12 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { request } from "node:http";
-import { mkdirSync, mkdtempSync, readdirSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, statSync, truncateSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { createWorkspace, readWorkspace } from "../src/store.mjs";
 import { startServer } from "../src/server.mjs";
+import { receiveUpload } from "../src/asset-http.mjs";
+import { Readable } from "node:stream";
 import { addSlot, addAsset, assetsDir, maxAssetBytes, resolveAssetFile } from "../src/assets.mjs";
 import { ledger } from "./fixtures.mjs";
 import { png, pdf } from "./images.mjs";
@@ -128,8 +130,9 @@ test("range requests give 206 slices for video, and 416 when the range is outsid
     ({ r } = await slice("bytes=1000-"));
     assert.equal(r.status, 416);
     assert.equal(r.headers.get("content-range"), "bytes */1000");
-    ({ r } = await slice("bytes=5-2"));
-    assert.equal(r.status, 416);
+    ({ r, bytes } = await slice("bytes=5-2"));
+    assert.equal(r.status, 200, "a range whose end precedes its start is invalid, and an invalid range is ignored (RFC 9110)");
+    assert.equal(bytes.length, 1000);
     ({ r, bytes } = await slice("bytes=0-1,5-9"));
     assert.equal(r.status, 200, "several ranges are not served; the whole file is");
     assert.equal(bytes.length, 1000);
@@ -443,10 +446,10 @@ test("an upload over the size limit is refused with 413 and is not kept", () =>
         { host: "127.0.0.1", port: new URL(base).port, method: "POST", path: `/api/asset/upload?slotId=capsule&filename=a.png&revision=${read().revision}`, headers: { "Content-Type": "application/octet-stream", "Content-Length": String(5 * maxAssetBytes) } },
         (res) => { res.resume(); resolve(res.statusCode); req.destroy(); },
       );
-      req.on("error", (e) => (e.code === "ECONNRESET" ? resolve("reset") : reject(e)));
+      req.on("error", reject);
       req.flushHeaders();
     });
-    assert.ok(declared === 413 || declared === "reset");
+    assert.equal(declared, 413, "the client is told, not dropped");
     assert.deepEqual(uploadDirs(), before);
   }), );
 
@@ -542,4 +545,80 @@ test("an upload that is still arriving when the desk switches workspace is refus
       rmSync(dir, { recursive: true, force: true });
     }
   }
+});
+
+test("a stored file that is empty is served as an empty 200, not left hanging", () =>
+  desk(async ({ get, file, read }) => {
+    const asset = read().assets.find((a) => a.id === "dusk");
+    truncateSync(resolveAssetFile(file, asset), 0);
+    const r = await get("/assets/dusk");
+    assert.equal(r.status, 200);
+    assert.equal(r.headers.get("content-length"), "0");
+    assert.equal((await r.arrayBuffer()).byteLength, 0);
+    const ranged = await get("/assets/dusk", { Range: "bytes=0-" });
+    assert.ok([200, 416].includes(ranged.status));
+    await ranged.arrayBuffer();
+  }));
+
+test("a record with no sha256 gets a validator made from the file's size and time, never the word undefined", () =>
+  desk(async ({ get, file, read }) => {
+    const { mutateWorkspace } = await import("../src/store.mjs");
+    mutateWorkspace(file, (w) => {
+      delete w.assets.find((a) => a.id === "dusk").sha256;
+    });
+    const stat = statSync(resolveAssetFile(file, read().assets.find((a) => a.id === "dusk")));
+    const r = await get("/assets/dusk");
+    assert.equal(r.status, 200);
+    const tag = r.headers.get("etag");
+    assert.doesNotMatch(tag, /undefined/);
+    assert.equal(tag, `"${stat.size}-${stat.mtimeMs}"`);
+    await r.arrayBuffer();
+    const again = await get("/assets/dusk", { "If-None-Match": tag });
+    assert.equal(again.status, 304);
+    // A file that changes gets a different validator.
+    writeFileSync(resolveAssetFile(file, read().assets.find((a) => a.id === "dusk")), png(9, 9, 1));
+    const changed = await get("/assets/dusk");
+    assert.notEqual(changed.headers.get("etag"), tag);
+    await changed.arrayBuffer();
+  }));
+
+// A request-like stream of `total` bytes in pieces of `piece`, counting what was pulled from it.
+function body(total, piece) {
+  const state = { pulled: 0 };
+  let sent = 0;
+  state.stream = Object.assign(
+    new Readable({
+      read() {
+        if (sent >= total) return this.push(null);
+        const n = Math.min(piece, total - sent);
+        sent += n;
+        state.pulled += n;
+        this.push(Buffer.alloc(n, 1));
+      },
+    }),
+    { headers: {} },
+  );
+  return state;
+}
+const response = { setHeader() {} };
+
+test("receiveUpload keeps a body up to the limit, drains one over it into a 413, and cuts one off at four times the limit", async () => {
+  const limit = 100000;
+  const ok = body(limit, 10000);
+  const kept = await receiveUpload(ok.stream, response, "a.png", limit);
+  assert.equal(statSync(kept.path).size, limit);
+  kept.cleanup();
+  const over = body(limit + 1, 10000);
+  await assert.rejects(receiveUpload(over.stream, response, "a.png", limit), (e) => e.status === 413 && /larger than the 100000 byte limit/.test(e.message));
+  assert.equal(over.pulled, limit + 1, "read to its end so the client gets its answer");
+  const edge = body(4 * limit, 10000);
+  await assert.rejects(receiveUpload(edge.stream, response, "a.png", limit), (e) => e.status === 413);
+  assert.equal(edge.pulled, 4 * limit, "exactly four times the limit is still read to its end");
+  const runaway = body(40 * limit, 10000);
+  await assert.rejects(receiveUpload(runaway.stream, response, "a.png", limit), (e) => e.status === 413);
+  assert.ok(runaway.pulled <= 4 * limit + 100000, `a body past four times the limit is cut off (read ${runaway.pulled} of ${40 * limit})`);
+  const declared = { stream: Object.assign(new Readable({ read() {} }), { headers: { "content-length": String(4 * limit + 1) } }) };
+  let closed;
+  await assert.rejects(receiveUpload(declared.stream, { setHeader: (k, v) => (closed = [k, v]) }, "a.png", limit), (e) => e.status === 413);
+  assert.deepEqual(closed, ["Connection", "close"], "a declared size past four times the limit is refused unread");
 });
