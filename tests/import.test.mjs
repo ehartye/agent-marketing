@@ -28,6 +28,8 @@ test("a complete exported ledger imports as validated collection arrays", () => 
       decisions: [], // decisions, actions and updates likewise
       actions: [],
       updates: [],
+      assetSlots: [], // and collateral slots and assets
+      assets: [],
     },
   );
 });

@@ -8,7 +8,7 @@ import { runtimeHome } from "../scripts/runtime.mjs";
 import { readWorkspace } from "../src/store.mjs";
 import { plan, advise } from "../src/analysis.mjs";
 
-const added = ["decisions", "actions", "updates"];
+const added = ["decisions", "actions", "updates", "assetSlots", "assets"];
 const cli = (file, ...args) => {
   const r = spawnSync(process.execPath, [resolve("scripts/marketing.mjs"), ...args, "--workspace", file], { encoding: "utf8" });
   return { status: r.status, out: r.stdout ? JSON.parse(r.stdout) : null, err: r.stderr };
@@ -35,6 +35,9 @@ function checkOldFile(source) {
       plan(w, p.id);
       advise(w, p.id);
       assert.equal(cli(file, "next", p.id, "--today", "2026-10-11").status, 0);
+      const listed = cli(file, "asset", "list", "--project", p.id);
+      assert.equal(listed.status, 0);
+      assert.deepEqual([listed.out.slots, listed.out.assets], [[], []]);
     }
     assert.equal(readFileSync(file, "utf8"), bytes, "reading never rewrites the file");
     // The first write by this runtime adds the empty collections and changes nothing else.

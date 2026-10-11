@@ -11,19 +11,20 @@ import { localDate } from "./analysis.mjs";
 // `changed` is false, `update` is null and the revision does not move.
 
 const missing = (noun, id) => Object.assign(new Error(`${noun} "${id}" does not exist`), { status: 404 });
-const find = (w, collection, noun, id) => {
+export const find = (w, collection, noun, id) => {
   const record = w[collection].find((r) => r.id === id);
   if (!record) throw missing(noun, id);
   return record;
 };
-const clock = ({ now, today } = {}) => {
+export const clock = ({ now, today } = {}) => {
   const at = now ?? new Date().toISOString();
   return { at, today: today ?? (now ? now.slice(0, 10) : localDate()) };
 };
 
-// Runs `edit` on the workspace under the lock. `edit` returns { record, update?, warnings? }, the
-// update being the entry it appended, or `same(record)` when there was nothing to change.
-function write(file, revision, edit) {
+// Runs `edit` on the workspace under the lock. `edit` returns { record, update?, warnings?, extra? },
+// the update being the entry it appended and `extra` more keys for the result (the other records
+// the command touched), or `same(record)` when there was nothing to change.
+export function write(file, revision, edit) {
   let done;
   const w = mutateWorkspace(
     file,
@@ -35,13 +36,13 @@ function write(file, revision, edit) {
   );
   return done.untouched
     ? { record: done.untouched, changed: false, update: null, warnings: [], revision: w.revision }
-    : { record: done.record, changed: true, update: done.update ?? null, warnings: done.warnings ?? [], revision: w.revision };
+    : { record: done.record, changed: true, update: done.update ?? null, warnings: done.warnings ?? [], revision: w.revision, ...done.extra };
 }
-const same = (record) => ({ untouched: structuredClone(record) });
+export const same = (record) => ({ untouched: structuredClone(record) });
 
 // Appends to the progress log. IDs are u-<timestamp in base 36>-<n>, with n the first free number,
 // so two entries in the same millisecond stay distinct.
-function log(w, { projectId, initiativeId, kind, refId, text, at }) {
+export function log(w, { projectId, initiativeId, kind, refId, text, at }) {
   const stem = `u-${Date.parse(at).toString(36)}-`,
     taken = new Set(w.updates.map((u) => u.id));
   let n = 1;
@@ -55,35 +56,44 @@ function log(w, { projectId, initiativeId, kind, refId, text, at }) {
 const label = (decision, id) => decision.options.find((o) => o.id === id)?.label ?? id;
 const words = (list) => list.join(", ");
 
+// Settles decision `d` on `optionId` in the workspace `w`, in place, and returns the sentence that
+// says what happened ("Decided ..." or, when an earlier choice is kept in history, "Changed ...").
+// Shared by decide and by the commands that decide as part of another change, such as picking an
+// asset. It writes nothing and logs nothing: the caller owns the write and the update.
+export function settleDecision(d, { optionId, rationale, change = false, at }) {
+  if (d.status === "superseded") throw new Error(`Decision "${d.id}" was superseded by ${d.supersededBy}; decide that one`);
+  if (d.status === "decided" && !change)
+    throw new Error(`Decision "${d.id}" is already decided (${label(d, d.chosen)}, ${d.decidedAt}); pass change to revise it`);
+  if (!optionId) throw new Error(`Required: option (one of ${words(d.options.map((o) => o.id))})`);
+  if (!d.options.some((o) => o.id === optionId))
+    throw new Error(`"${optionId}" is not an option of decision "${d.id}" (${words(d.options.map((o) => o.id))})`);
+  const was = d.status === "decided" ? { chosen: d.chosen, rationale: d.rationale, decidedAt: d.decidedAt } : null;
+  if (was) {
+    if (was.rationale === undefined) delete was.rationale;
+    d.history = [...(d.history ?? []), was];
+  }
+  d.status = "decided";
+  d.chosen = optionId;
+  d.decidedAt = at;
+  if (rationale) d.rationale = rationale;
+  else delete d.rationale;
+  const text = was
+    ? `Changed "${d.title}" from ${label(d, was.chosen)} to ${label(d, optionId)}`
+    : `Decided "${d.title}": ${label(d, optionId)}`;
+  return rationale ? `${text} (${rationale})` : text;
+}
+
 export function decide(file, decisionId, { optionId, rationale, change = false, revision, ...time } = {}) {
   const { at } = clock(time);
   return write(file, revision, (w) => {
     const d = find(w, "decisions", "Decision", decisionId);
-    if (d.status === "superseded") throw new Error(`Decision "${d.id}" was superseded by ${d.supersededBy}; decide that one`);
-    if (d.status === "decided" && !change)
-      throw new Error(`Decision "${d.id}" is already decided (${label(d, d.chosen)}, ${d.decidedAt}); pass change to revise it`);
-    if (!optionId) throw new Error(`Required: option (one of ${words(d.options.map((o) => o.id))})`);
-    if (!d.options.some((o) => o.id === optionId))
-      throw new Error(`"${optionId}" is not an option of decision "${d.id}" (${words(d.options.map((o) => o.id))})`);
-    const was = d.status === "decided" ? { chosen: d.chosen, rationale: d.rationale, decidedAt: d.decidedAt } : null;
-    if (was) {
-      if (was.rationale === undefined) delete was.rationale;
-      d.history = [...(d.history ?? []), was];
-    }
-    d.status = "decided";
-    d.chosen = optionId;
-    d.decidedAt = at;
-    if (rationale) d.rationale = rationale;
-    else delete d.rationale;
-    const text = was
-      ? `Changed "${d.title}" from ${label(d, was.chosen)} to ${label(d, optionId)}`
-      : `Decided "${d.title}": ${label(d, optionId)}`;
+    const text = settleDecision(d, { optionId, rationale, change, at });
     const update = log(w, {
       projectId: d.projectId,
       initiativeId: d.initiativeId,
       kind: "decision",
       refId: d.id,
-      text: rationale ? `${text} (${rationale})` : text,
+      text,
       at,
     });
     return { record: structuredClone(d), update };

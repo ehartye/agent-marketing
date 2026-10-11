@@ -12,9 +12,11 @@ export const collections = [
   "decisions",
   "actions",
   "updates",
+  "assetSlots",
+  "assets",
 ];
 // Collections that workspaces saved by an earlier release do not have; they gain an empty one.
-const addedLater = ["reports", "gates", "decisions", "actions", "updates"];
+const addedLater = ["reports", "gates", "decisions", "actions", "updates", "assetSlots", "assets"];
 export const channels = [
   "youtube",
   "tiktok",
@@ -247,6 +249,124 @@ function parentCycle(records) {
     }
   }
 }
+// ---- Collateral: slots to fill and the candidate assets for each ---------------------------------
+export const assetKinds = ["image", "video", "document", "text", "link"];
+export const slotStatuses = ["open", "picked"];
+export const assetStatuses = ["candidate", "selected", "rejected", "retired"];
+// The only file types an asset may be. Each extension names one media type; the desk serves these
+// and nothing else, so there is deliberately no SVG, HTML, script or executable.
+export const assetExtensions = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
+  ".pdf": "application/pdf",
+  ".txt": "text/plain",
+  ".md": "text/markdown",
+  ".markdown": "text/markdown",
+};
+export const assetMediaTypes = [...new Set(Object.values(assetExtensions))];
+export const maxAssetBytes = 50 * 1024 * 1024;
+export const maxAssetText = 4000;
+// A path inside the assets folder, written with forward slashes: no drive, no leading slash, no
+// backslash, no empty, "." or ".." segment, and no character a Windows file name cannot hold
+// (a colon would open an alternate data stream). Returns the reason it is refused, or undefined.
+export function assetPathProblem(v) {
+  if (typeof v !== "string" || !v || v.length > 300) return "expected a relative path of at most 300 characters";
+  if (v.includes("\\")) return "must use forward slashes, not backslashes";
+  if (v.startsWith("/") || /^[a-zA-Z]:/.test(v)) return "must be relative to the assets folder, not absolute";
+  for (const segment of v.split("/")) {
+    if (segment === "..") return 'must not contain ".."';
+    if (!segment || segment === ".") return "must not contain empty or . segments";
+    if (/[\u0000-\u001f<>:"|?*\x5c]/.test(segment) || /[. ]$/.test(segment)) return "has a segment that is not a portable file name";
+  }
+}
+function assetFilePath(v, p) {
+  const problem = assetPathProblem(v);
+  if (problem) fail(p, problem);
+}
+function httpsUrl(v, p) {
+  let ok = false;
+  try {
+    const u = new URL(v);
+    ok = u.protocol === "https:" && !u.username && !u.password && v.length <= 2000;
+  } catch {}
+  if (!ok) fail(p, "expected an https URL without credentials (max 2000 characters)");
+}
+const mediaFamily = { image: /^image\//, video: /^video\//, document: /^(application\/pdf|text\/)/, text: /^text\// };
+function assetRecord(r, p, slots) {
+  const slot = slots.get(r.slotId);
+  if (!slot) fail(p + ".slotId", `"${r.slotId}" is not an asset slot`);
+  if (slot.projectId !== r.projectId) fail(p + ".slotId", `"${r.slotId}" is not an asset slot in this project`);
+  text(r.label, p + ".label");
+  one(r.kind, assetKinds, p + ".kind");
+  one(r.status, assetStatuses, p + ".status");
+  const payloads = ["file", "url", "text"].filter((k) => r[k] !== undefined);
+  if (payloads.length !== 1) fail(p, "exactly one of file, url or text is required");
+  if (r.file !== undefined) {
+    assetFilePath(r.file, p + ".file");
+    if (!["image", "video", "document", "text"].includes(r.kind)) fail(p + ".kind", "a file asset is an image, video, document or text, not a link");
+    const ext = /\.[^./]+$/.exec(r.file)?.[0].toLowerCase();
+    if (!assetExtensions[ext]) fail(p + ".file", `extension must be one of ${Object.keys(assetExtensions).join(", ")}`);
+    if (r.mediaType === undefined) fail(p + ".mediaType", "a file asset needs its media type");
+    if (assetExtensions[ext] !== r.mediaType) fail(p + ".mediaType", `"${r.mediaType}" does not match the file extension ${ext}`);
+  }
+  if (r.url !== undefined) {
+    httpsUrl(r.url, p + ".url");
+    if (r.kind !== "link") fail(p + ".kind", "an asset with a url is a link");
+  }
+  if (r.text !== undefined) {
+    if (typeof r.text !== "string" || !r.text.trim() || r.text.length > maxAssetText)
+      fail(p + ".text", `expected nonempty text (max ${maxAssetText} characters)`);
+    if (r.kind !== "text") fail(p + ".kind", "an asset with text is text");
+  }
+  if (r.mediaType !== undefined) {
+    one(r.mediaType, assetMediaTypes, p + ".mediaType");
+    if (!mediaFamily[r.kind]?.test(r.mediaType)) fail(p + ".mediaType", `"${r.mediaType}" does not fit kind ${r.kind}`);
+  }
+  if (r.bytes !== undefined) {
+    number(r.bytes, p + ".bytes", true);
+    if (r.bytes > maxAssetBytes) fail(p + ".bytes", `more than the ${maxAssetBytes} byte limit`);
+  }
+  if (r.sha256 !== undefined && !(typeof r.sha256 === "string" && /^[0-9a-f]{64}$/.test(r.sha256)))
+    fail(p + ".sha256", "expected 64 lowercase hex digits");
+  for (const key of ["width", "height"])
+    if (r[key] !== undefined) {
+      number(r[key], `${p}.${key}`, true);
+      if (r[key] < 1) fail(`${p}.${key}`, "expected a positive integer");
+    }
+  for (const key of ["rationale", "source"]) if (r[key] !== undefined) text(r[key], `${p}.${key}`);
+  timestamp(r.createdAt, p + ".createdAt");
+  if (r.decidedAt !== undefined) timestamp(r.decidedAt, p + ".decidedAt");
+  if (r.supersedes !== undefined) {
+    text(r.supersedes, p + ".supersedes");
+    if (r.supersedes === r.id) fail(p + ".supersedes", "an asset cannot supersede itself");
+  }
+}
+// Cross-record rules of a slot and its assets: at most one selected asset per slot, and a slot is
+// picked exactly when it names that asset.
+function slotRecord(r, p, assets, bySlot, decisions) {
+  text(r.name, p + ".name");
+  one(r.kind, assetKinds, p + ".kind");
+  one(r.status, slotStatuses, p + ".status");
+  for (const key of ["spec", "notes"]) if (r[key] !== undefined) text(r[key], `${p}.${key}`);
+  const selected = (bySlot.get(r.id) ?? []).filter((a) => a.status === "selected");
+  if (selected.length > 1) fail(p, `more than one selected asset (${selected.map((a) => a.id).join(", ")})`);
+  if (r.status === "picked") {
+    if (r.selectedAssetId === undefined) fail(p + ".selectedAssetId", "a picked slot needs the asset selected");
+    if (assets.get(r.selectedAssetId)?.slotId !== r.id)
+      fail(p + ".selectedAssetId", `"${r.selectedAssetId}" is not an asset in this slot`);
+    if (assets.get(r.selectedAssetId).status !== "selected")
+      fail(p + ".selectedAssetId", `"${r.selectedAssetId}" is not selected`);
+  } else {
+    if (r.selectedAssetId !== undefined) fail(p + ".selectedAssetId", "an open slot has no selected asset");
+    if (selected.length) fail(p, `an open slot has a selected asset (${selected[0].id})`);
+  }
+  reference(r, "decisionId", p, decisions, "decision");
+}
 const reportKinds = ["market-landscape", "demand", "competition", "positioning", "other"];
 const levels = ["high", "medium", "low"];
 const evidenceStatuses = [
@@ -313,6 +433,9 @@ export function validateWorkspace(w) {
     gates = new Map(w.gates.map((r) => [r.id, r])),
     decisions = new Map(w.decisions.map((r) => [r.id, r])),
     reports = new Map(w.reports.map((r) => [r.id, r])),
+    slots = new Map(w.assetSlots.map((r) => [r.id, r])),
+    assets = new Map(w.assets.map((r) => [r.id, r])),
+    bySlot = Map.groupBy(w.assets, (a) => a.slotId),
     evidence = new Map(w.evidence.map((r) => [r.id, r]));
   for (const k of collections)
     for (const r of w[k]) {
@@ -530,6 +653,16 @@ export function validateWorkspace(w) {
           // refId is not checked: the log is a history, and it must stay valid if a record it names is removed.
           if (r.refId !== undefined) t("refId");
           break;
+        case "assetSlots":
+          slotRecord(r, p, assets, bySlot, decisions);
+          break;
+        case "assets":
+          assetRecord(r, p, slots);
+          if (r.status === "selected" && slots.get(r.slotId).selectedAssetId !== r.id)
+            fail(p + ".status", `the slot "${r.slotId}" does not name this asset as its selection`);
+          if (r.supersedes !== undefined && assets.get(r.supersedes)?.slotId !== r.slotId)
+            fail(p + ".supersedes", `"${r.supersedes}" is not an asset in the same slot`);
+          break;
         case "sources":
           t("name");
           one(r.adapter, ["github", "hn"], p + ".adapter");
@@ -572,6 +705,8 @@ export const recordFields = {
   decisions: ["id", "projectId", "initiativeId", "title", "question", "status", "needBy", "defaultIfSilent", "recommendation", "options", "chosen", "rationale", "decidedAt", "reportId", "gateIds", "supersededBy", "history"],
   actions: ["id", "projectId", "initiativeId", "gateId", "decisionId", "title", "owner", "status", "due", "hours", "notes", "doneAt", "blockedBy"],
   updates: ["id", "projectId", "initiativeId", "at", "kind", "refId", "text"],
+  assetSlots: ["id", "projectId", "initiativeId", "name", "kind", "spec", "status", "selectedAssetId", "decisionId", "notes"],
+  assets: ["id", "projectId", "slotId", "label", "kind", "file", "url", "text", "mediaType", "bytes", "sha256", "width", "height", "status", "rationale", "source", "createdAt", "decidedAt", "supersedes"],
 };
 const nestedFields = {
   competitors: { claims: ["dimension", "value", "url", "checkedAt"] },

@@ -10,6 +10,7 @@ import {
 import { collections, validateWorkspace, workspaceWarnings, failOnWarnings } from "../src/schema.mjs";
 import { report, advise, plan, analyzeExperiment, attention, localDate } from "../src/analysis.mjs";
 import { decide, defer, addAction, setActionStatus, setGate, addUpdate } from "../src/progress.mjs";
+import { addSlot, addAsset, pickAsset, rejectAsset, restoreAsset, retireAsset, listAssets, listSlots } from "../src/assets.mjs";
 import { parseImport, taggedUrl, observationsCsv } from "../src/import.mjs";
 import { monitor } from "../src/collectors.mjs";
 import { recommendChannels, channelLibrary } from "../src/channels.mjs";
@@ -50,6 +51,13 @@ const help = {
     "action status <action-id> <todo|doing|done|blocked|dropped> [--note text] [--revision n]",
     "gate set <gate-id> --status <open|passed|failed|waived> [--note text] [--evidence id,id] [--revision n]",
     "update add --text text [--kind note|decision|gate|initiative|action|asset|document] [--initiative id] [--ref id] [--project id] [--revision n]",
+    "asset slot add --id id --name text --kind image|video|document|text|link [--spec text] [--initiative id] [--project id] [--note text] [--revision n]",
+    "asset add --slot id --label text (--file path | --url https-url | --text copy) [--source text] [--id id] [--supersedes asset-id] [--revision n]",
+    "asset pick <asset-or-slot-id> [--rationale text] [--revision n]",
+    "asset reject <asset-id> --rationale text [--revision n]",
+    "asset restore <asset-id> [--revision n]",
+    "asset retire <asset-id> [--rationale text] [--revision n]",
+    "asset list [--project id] [--slot id] [--status candidate|selected|rejected|retired]",
     "channels [project-id]",
     "experiment <experiment-id>",
     "utm <url> --source x --medium y --campaign z [--content c]",
@@ -103,6 +111,13 @@ try {
         "ref",
         "today",
         "status",
+        "slot",
+        "label",
+        "name",
+        "file",
+        "url",
+        "spec",
+        "supersedes",
       ].map((k) => [k, { type: "string" }]),
       ),
     },
@@ -217,7 +232,14 @@ try {
         );
     }
     result = attention(w, id, v.today ?? localDate());
-  } else if (["decide", "defer", "action", "gate", "update"].includes(command)) {
+  } else if (command === "asset" && p[0] === "list") {
+    const w = readWorkspace(file);
+    result = {
+      workspace: file,
+      slots: listSlots(w, { projectId: v.project, slotId: v.slot }),
+      assets: listAssets(w, { projectId: v.project, slotId: v.slot, status: v.status }),
+    };
+  } else if (["decide", "defer", "action", "gate", "update", "asset"].includes(command)) {
     // Progress commands print the changed record and the log entry they wrote with it.
     const revision = v.revision === undefined ? undefined : Number(v.revision),
       note = v.note;
@@ -255,6 +277,37 @@ try {
       done = addUpdate(file, {
         text: required(v.text, "--text"), kind: v.kind, initiativeId: v.initiative, refId: v.ref, projectId: v.project, revision,
       });
+    else if (command === "asset" && p[0] === "slot" && p[1] === "add")
+      done = addSlot(file, {
+        id: required(v.id, "--id"),
+        name: required(v.name, "--name"),
+        kind: required(v.kind, "--kind"),
+        spec: v.spec,
+        initiativeId: v.initiative,
+        projectId: v.project,
+        notes: note,
+        revision,
+      });
+    else if (command === "asset" && p[0] === "add")
+      done = addAsset(file, {
+        slotId: required(v.slot, "--slot"),
+        label: required(v.label, "--label"),
+        from: v.file === undefined ? undefined : resolve(v.file),
+        url: v.url,
+        text: v.text,
+        source: v.source,
+        supersedes: v.supersedes,
+        id: v.id,
+        revision,
+      });
+    else if (command === "asset" && p[0] === "pick")
+      done = pickAsset(file, required(p[1], "asset ID"), { rationale: v.rationale, revision });
+    else if (command === "asset" && p[0] === "reject")
+      done = rejectAsset(file, required(p[1], "asset ID"), { rationale: required(v.rationale, "--rationale"), revision });
+    else if (command === "asset" && p[0] === "restore")
+      done = restoreAsset(file, required(p[1], "asset ID"), { revision });
+    else if (command === "asset" && p[0] === "retire")
+      done = retireAsset(file, required(p[1], "asset ID"), { rationale: v.rationale, revision });
     else throw new Error(`Unknown ${command} command: ${p[0] ?? "(none)"}. Run help.`);
     result = { workspace: file, ...done };
   }
