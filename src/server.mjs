@@ -170,9 +170,15 @@ export async function startServer(
     if (!slotId) throw new Error("Required: slotId");
     if (!filename || !filename.trim()) throw new Error("Required: filename");
     const label = q("label")?.trim() || fileLabel(filename);
+    // The workspace this upload was started on. The body can take a while, and the person can switch
+    // workspace meanwhile; the file belongs where the guards above were checked, or nowhere.
+    const target = file,
+      targetId = currentId();
     const received = await receiveUpload(req, res, filename);
     try {
-      return addAsset(file, { slotId, label, from: received.path, source: q("source")?.trim() || undefined, revision });
+      if (file !== target || currentId() !== targetId)
+        throw Object.assign(new Error("Revision conflict: the desk switched workspace while the file was arriving; reload"), { status: 409 });
+      return addAsset(target, { slotId, label, from: received.path, source: q("source")?.trim() || undefined, revision });
     } catch (e) {
       // The module names the file it was given; the person gave it a different name.
       e.message = e.message.split(received.path).join(filename);

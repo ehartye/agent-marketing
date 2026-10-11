@@ -483,3 +483,63 @@ test("an upload picks up nothing from the request but the extension of its file 
     assert.ok(resolveAssetFile(file, r.body.record).startsWith(assetsDir(file)));
     assert.equal(read().assets.at(-1).label, "Sneaky");
   }));
+
+test("an upload that is still arriving when the desk switches workspace is refused and written nowhere", async () => {
+  for (const withId of [true, false]) {
+    const dir = mkdtempSync(join(tmpdir(), "marketing-assets-switch-"));
+    try {
+      const folder = join(dir, "workspaces");
+      mkdirSync(folder);
+      const alpha = join(dir, "alpha.json"),
+        beta = join(folder, "beta.json");
+      for (const f of [alpha, beta]) {
+        createWorkspace(f, structuredClone(ledger()));
+        addSlot(f, { id: "capsule", name: "Capsule", kind: "image", now: NOW });
+      }
+      const running = await startServer(alpha, { port: 0, catalog: { folder } });
+      try {
+        const bytes = png(40, 40, 3),
+          port = new URL(running.url).port;
+        const finished = new Promise((resolve, reject) => {
+          const req = request(
+            {
+              host: "127.0.0.1",
+              port,
+              method: "POST",
+              path: `/api/asset/upload?slotId=capsule&filename=a.png&revision=1${withId ? "&workspaceId=launch" : ""}`,
+              headers: { "Content-Type": "application/octet-stream", "Content-Length": String(bytes.length) },
+            },
+            (res) => {
+              const parts = [];
+              res.on("data", (c) => parts.push(c));
+              res.on("end", () => resolve({ status: res.statusCode, body: JSON.parse(Buffer.concat(parts).toString()) }));
+            },
+          );
+          req.on("error", reject);
+          req.write(bytes.subarray(0, 20));
+          // The desk has seen the headers and the guard has passed; now the person switches workspace.
+          setTimeout(async () => {
+            try {
+              const sel = await fetch(running.url + "/api/workspace/select", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: "ws:beta" }) });
+              assert.equal(sel.status, 200);
+              req.end(bytes.subarray(20));
+            } catch (e) {
+              reject(e);
+            }
+          }, 200);
+        });
+        const r = await finished;
+        assert.equal(r.status, 409, JSON.stringify(r.body));
+        assert.match(r.body.error, /switched workspace/);
+        assert.equal(readWorkspace(alpha).assets.length, 0, "not into the workspace the upload was started on");
+        assert.equal(readWorkspace(beta).assets.length, 0, "and not into the one the desk switched to");
+        assert.equal(readWorkspace(beta).revision, 1);
+        assert.equal(readWorkspace(alpha).revision, 1);
+      } finally {
+        await new Promise((resolve) => running.server.close(resolve));
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+});
