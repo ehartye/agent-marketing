@@ -121,6 +121,31 @@ function document(v, p) {
 }
 const reportKinds = ["market-landscape", "demand", "competition", "positioning", "other"];
 const levels = ["high", "medium", "low"];
+const evidenceStatuses = [
+  "observed",
+  "modeled-estimate",
+  "documented-rule",
+  "anecdote",
+  "hypothesis",
+  "product-fact",
+];
+// A product-fact is a verified fact about the project itself, so besides an http(s) URL (a live
+// page or build) it may cite a repository-relative path. The path is portable by construction:
+// no scheme, drive letter, leading slash, parent segment or space, so it is never a local file
+// location and the desk can show it as text without making it a link.
+function productFactSource(v, p) {
+  const portable =
+    typeof v === "string" &&
+    v.length <= 500 &&
+    /^[\w.@+~-]+(\/[\w.@+~-]+)*(#L\d+(-L\d+)?)?$/.test(v) &&
+    !v.split("#")[0].split("/").some((s) => /^\.+$/.test(s));
+  if (portable) return;
+  try {
+    url(v, p);
+  } catch {
+    fail(p, "expected http(s) URL or a repository-relative path (no scheme, leading slash or ..)");
+  }
+}
 function vaultLink(v, p) {
   try {
     if (!["http:", "https:", "obsidian:"].includes(new URL(v).protocol)) throw Error();
@@ -275,19 +300,15 @@ export function validateWorkspace(w) {
             ["primary", "secondary", "anecdote", "hypothesis"],
             p + ".strength",
           );
-          url(r.url, p + ".url");
+          if (r.status === "product-fact") productFactSource(r.url, p + ".url");
+          else url(r.url, p + ".url");
           date(r.checkedAt, p + ".checkedAt");
           if (r.publishedAt !== undefined) date(r.publishedAt, p + ".publishedAt");
           for (const key of ["dataPeriod", "denominator", "limit"])
             if (r[key] !== undefined) t(key);
           for (const key of ["credibility", "relevance"])
             if (r[key] !== undefined) one(r[key], levels, p + "." + key);
-          if (r.status !== undefined)
-            one(
-              r.status,
-              ["observed", "modeled-estimate", "documented-rule", "anecdote", "hypothesis"],
-              p + ".status",
-            );
+          if (r.status !== undefined) one(r.status, evidenceStatuses, p + ".status");
           break;
         case "reports":
           t("title");

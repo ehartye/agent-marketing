@@ -18,7 +18,7 @@ For each material claim, retain the exact source URL, author/organization, publi
 |---|---|
 | Source credibility | Is this primary, method-transparent and independently corroborated? Is it sponsored or promotional? |
 | Relevance | Does it cover this genre, platform, price and buyer cohort, during a useful period? |
-| Claim status | Is it an observed result, a modeled estimate, a firsthand anecdote, or our untested hypothesis? |
+| Claim status | Is it an observed result, a modeled estimate, a documented platform rule, a verified fact about our own product, a firsthand anecdote, or our untested hypothesis? |
 | Capture fidelity | Did we inspect the actual text/chart, or only an abstract, excerpt or degraded extraction? |
 
 Use high/medium/low credibility with reasons, not invented confidence percentages. A high-credibility platform document can have low relevance to willingness to pay. Contradictory results and unavailable evidence stay visible. Report counts with their denominators and report absolute volume alongside percentage growth when available.

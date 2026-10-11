@@ -1,4 +1,4 @@
-import { $, esc, num, pct, empty, link, projectLabel, refLinks as references } from "../shared.js";
+import { $, esc, num, pct, empty, sourceLink, projectLabel, refLinks as references } from "../shared.js";
 import { documentCard } from "../documents.js";
 
 export function renderCampaign({ workspace, data, actions, channels, refs, selection }) {
@@ -17,7 +17,7 @@ export function renderCampaign({ workspace, data, actions, channels, refs, selec
             workspace.observations.find((x) => x.id === id) ||
             workspace.reactions.find((x) => x.id === id) ||
             workspace.evidence.find((x) => x.id === id);
-          return o ? link(o.url, id) : esc(id);
+          return o ? sourceLink(o.url, id) : esc(id);
         })
         .join(
           " · ",

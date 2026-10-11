@@ -282,7 +282,9 @@ export function advise(w, projectId, filter = {}) {
           e.projectId === projectId &&
           e.dimension === d &&
           e.strength === "primary" &&
-          e.result === "supports",
+          e.result === "supports" &&
+          // A product-fact describes the project, not its audience, so it fills no demand gap.
+          e.status !== "product-fact",
       ),
   );
   actions.push({
