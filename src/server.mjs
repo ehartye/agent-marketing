@@ -80,12 +80,14 @@ export async function startServer(
           res.writeHead(204);
           return res.end();
         }
-        if (u.pathname === "/analysis.js") {
+        // The one src module the page imports. It has no imports of its own; analysis.mjs, which
+        // pulls in the advice code, is not served.
+        if (u.pathname === "/chart-key.js") {
           res.writeHead(200, {
             "Content-Type": "text/javascript; charset=utf-8",
           });
           return res.end(
-            readFileSync(new URL("./analysis.mjs", import.meta.url)),
+            readFileSync(new URL("./chart-key.mjs", import.meta.url)),
           );
         }
         if (u.pathname === "/api/ping") return send({ ok: true });

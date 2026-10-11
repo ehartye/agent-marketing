@@ -607,19 +607,4 @@ export function sentimentSuggestion(text) {
       "Small English keyword heuristic; review negation, sarcasm, context and other languages manually.",
   };
 }
-export function chartKey(o) {
-  return JSON.stringify([
-    o.projectId,
-    o.initiativeId || "",
-    o.channel,
-    o.metric,
-    o.definition,
-    o.kind,
-    o.series || "",
-    o.currency || "",
-    o.cohort || "",
-  ]);
-}
-export function chartLabel(o) {
-  return `${o.channel} · ${o.definition} · ${o.kind}${o.currency ? " · " + o.currency : ""}${o.cohort ? " · cohort " + o.cohort : ""}${o.series ? " · " + o.series : ""}`;
-}
+export { chartKey, chartLabel } from "./chart-key.mjs";

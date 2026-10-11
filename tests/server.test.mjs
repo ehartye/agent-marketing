@@ -121,3 +121,51 @@ test("report downloads return exact Markdown, reports reach the workspace API, a
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// The browser follows every import from /app.js. A module the server does not route fails the whole
+// graph silently (the page stays on "Loading"), and no API test notices, so walk it the way a
+// browser does: each specifier resolves against its importer's URL and must come back as JavaScript.
+test("every module the desk page imports is served as JavaScript, and none is server-side advice code", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "marketing-ui-graph-")),
+    file = join(dir, "w.json");
+  createWorkspace(file, ledger());
+  let running;
+  try {
+    running = await startServer(file, { port: 0 });
+    const base = running.url,
+      importsOf = (source) => [
+        ...source.matchAll(/(?:^|[\s;}])(?:import|export)\s+(?:[^"'`;()]*?\s+from\s+)?["']([^"']+)["']/g),
+        ...source.matchAll(/\bimport\(\s*["']([^"']+)["']\s*\)/g),
+      ].map((m) => m[1]),
+      seen = new Map(),
+      queue = [new URL("/app.js", base).href];
+    const html = await (await fetch(base + "/")).text();
+    for (const m of html.matchAll(/<script[^>]*\ssrc="([^"]+)"/g)) queue.push(new URL(m[1], base).href);
+    assert.ok(queue.length > 1, "index.html loads a script");
+    while (queue.length) {
+      const href = queue.shift();
+      if (seen.has(href)) continue;
+      const response = await fetch(href),
+        source = await response.text();
+      assert.equal(response.status, 200, `${href} is served`);
+      assert.match(response.headers.get("content-type"), /javascript/, `${href} is JavaScript`);
+      seen.set(href, source);
+      for (const specifier of importsOf(source)) {
+        assert.ok(
+          /^(\.{1,2}\/|\/)/.test(specifier),
+          `${href} imports "${specifier}", which a browser cannot resolve (node: and bare specifiers fail)`,
+        );
+        const next = new URL(specifier, href);
+        assert.equal(next.origin, new URL(base).origin, `${href} imports ${specifier} from another origin`);
+        queue.push(next.href);
+      }
+    }
+    assert.ok(seen.size >= 14, `walked ${seen.size} modules`);
+    assert.ok(seen.has(base + "/chart.js"), "the chart module is in the graph");
+    for (const [href, source] of seen)
+      assert.doesNotMatch(source, /export function (advise|plan|report)\b/, `${href} ships server-side advice code`);
+  } finally {
+    if (running) await new Promise((resolve) => running.server.close(resolve));
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
