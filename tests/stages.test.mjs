@@ -324,6 +324,30 @@ test("a store page for a game says to test free first and to wait for the gates,
   assert.doesNotMatch(tool, /free web release/i);
 });
 
+test("each channel result cites the rules behind its stage and paid-entry score terms", () => {
+  const known = new Set(rules.map((r) => r.id));
+  const ids = (project, id) => card(project, id).ruleIds;
+  // A paid store for a game before launch: the stage term, the free-first term and the gates the rationale names.
+  assert.deepEqual(ids(players("beta"), "steam"), ["stage-sets-the-next-test", "free-web-before-store-page", "store-page-after-gates"]);
+  // A free venue is scored on the stage term only; so is a paid store once the game has launched.
+  assert.deepEqual(ids(players("prototype"), "itch"), ["stage-sets-the-next-test"]);
+  assert.deepEqual(ids(players("launched"), "steam"), ["stage-sets-the-next-test"]);
+  // An app is not held to the games ordering.
+  assert.deepEqual(ids({ ...players("beta", "app"), audience: ["learners"] }, "apple-app-store"), ["stage-sets-the-next-test"]);
+  // No usable stage means no stage term and nothing to cite.
+  const old = { audience: ["developers"], category: "tool", weeklyHours: 3 };
+  for (const c of recommendChannels(old)) assert.deepEqual(c.ruleIds, [], c.id);
+  // Whatever is cited exists in craft/rules.json, for every stage and category.
+  for (const stage of [...STAGES, undefined])
+    for (const category of ["game", "app", "tool"])
+      for (const c of recommendChannels({ ...players(stage, category), stage })) {
+        assert.ok(Array.isArray(c.ruleIds), `${stage}/${category}/${c.id}`);
+        for (const id of c.ruleIds) assert.ok(known.has(id), `${c.id} cites unknown rule ${id}`);
+      }
+  // The rules the stage terms cite say what the score does with them.
+  assert.match(flat("docs/CLI.md"), /each channel result carries `ruleIds`/i);
+});
+
 test("an app is not penalised for the paid-store ordering that applies to games", () => {
   const app = { ...players("beta", "app"), audience: ["learners"] };
   // The paid-store-first penalty is for games only; an app keeps the original three terms plus its stage term.

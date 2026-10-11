@@ -47,6 +47,12 @@ export function recommendChannels(project) {
               ]
             : []),
         ],
+        // The rules behind the score terms that depend on the stage (craft/rules.json). The
+        // category, audience and hours terms predate stages and cite none.
+        ruleIds: [
+          ...(suits === null ? [] : ["stage-sets-the-next-test"]),
+          ...(paidFirst ? ["free-web-before-store-page", "store-page-after-gates"] : []),
+        ],
         scoreMeaning:
           "House planning heuristic, not a reach or conversion forecast; verify policies when using the plan",
       };
