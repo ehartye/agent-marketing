@@ -192,19 +192,24 @@ const evidenceStatuses = [
 ];
 // A product-fact is a verified fact about the project itself, so besides an http(s) URL (a live
 // page or build) it may cite a repository-relative path. The path is portable by construction:
-// no scheme, drive letter, leading slash, parent segment or space, so it is never a local file
-// location and the desk can show it as text without making it a link.
+// no scheme, drive letter, leading slash, parent segment, space or home directory (a name that
+// starts with ~), so it is never a local file location and the desk can show it as text without
+// making it a link. Names may use letters and digits of any script.
+const portablePath = /^(?!~)[\p{L}\p{N}\p{M}_.@+~-]+(\/(?!~)[\p{L}\p{N}\p{M}_.@+~-]+)*(#L\d+(-L\d+)?)?$/u;
 function productFactSource(v, p) {
   const portable =
     typeof v === "string" &&
     v.length <= 500 &&
-    /^[\w.@+~-]+(\/[\w.@+~-]+)*(#L\d+(-L\d+)?)?$/.test(v) &&
+    portablePath.test(v) &&
     !v.split("#")[0].split("/").some((s) => /^\.+$/.test(s));
   if (portable) return;
   try {
     url(v, p);
   } catch {
-    fail(p, "expected http(s) URL or a repository-relative path (no scheme, leading slash or ..)");
+    fail(
+      p,
+      "expected http(s) URL or a repository-relative path of letters, digits and . _ - @ + ~ separated by /, optionally ending #L10 or #L10-L20 (no scheme, no drive letter, no leading slash, no spaces, no .. and no name starting with ~, which is a home directory)",
+    );
   }
 }
 function vaultLink(v, p) {

@@ -41,8 +41,30 @@ test("a product-fact may cite a live page, a build, or a repository path", () =>
     "public/concepts/habitat-interiors.prompt.json",
     "README.md#L10-L20",
     "ehartye/space2grow/src/panel-data.mjs",
+    // Letters of any script are ordinary file names, and a ~ inside or at the end of one is too.
+    "docs/é.md",
+    "docs/日本語/概要.md",
+    "docs/café.md",
+    "notes/draft~1.md",
+    "notes/backup.md~",
   ])
     validateWorkspace(withEvidence(evidence({ status: "product-fact", url })));
+});
+
+test("a product-fact path never starts at a home directory, and the error names the allowed characters", () => {
+  for (const url of ["~/.ssh/id_rsa", "~", "~root/x", "src/~/x", "src/~backup/x", "docs/~$draft.md"])
+    assert.throws(
+      () => validateWorkspace(withEvidence(evidence({ status: "product-fact", url }))),
+      /evidence\.e1\.url: expected http\(s\) URL or a repository-relative path/,
+      JSON.stringify(url),
+    );
+  // A refusal says what to change, whichever rule the path broke.
+  for (const url of ["docs/my file.md", "docs/a;b.md", "docs/emoji-\u{1F600}.md", "docs/x‮y.md"])
+    assert.throws(
+      () => validateWorkspace(withEvidence(evidence({ status: "product-fact", url }))),
+      /letters, digits and \. _ - @ \+ ~.*no spaces.*home directory/,
+      JSON.stringify(url),
+    );
 });
 
 test("a product-fact path must be portable: no scheme, no absolute or parent path, no spaces", () => {
