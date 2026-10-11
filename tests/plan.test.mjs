@@ -527,3 +527,38 @@ test("the desk serves the plan for a project and nothing without one", async () 
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("docs/CLI.md documents the plan command, the gate and initiative fields and how weekly hours are computed", async () => {
+  const { readFileSync } = await import("node:fs");
+  const doc = readFileSync("docs/CLI.md", "utf8").replace(/\s+/g, " ");
+  assert.match(doc, /marketing plan <project-id> --workspace <file>/);
+  assert.match(doc, /## Gates, dependencies and weekly hours/);
+  assert.match(doc, /\| gates \| projectId, name, criteria[^|]*status \(`open\/passed\/failed\/waived`\)/);
+  assert.match(doc, /optional brief document, hours \(nonnegative number/);
+  assert.match(doc, /dependsOn \(array of gate or initiative IDs in the same project/);
+  assert.match(doc, /spread evenly over the days from its `start` to its `end`, both included/);
+  assert.match(doc, /Monday to Sunday/);
+  assert.match(doc, /An initiative without `hours` is unknown, not zero/);
+  assert.match(doc, /empty `gates` collection and need no migration/);
+  assert.match(doc, /older runtime refuses a ledger that holds gates/);
+  assert.doesNotMatch(doc, /such as `dependsOn`, `hours` or `targets`/);
+});
+
+test("the discover, strategy and campaign skills and the README tell an agent to record gates, hours and dependencies and run plan", async () => {
+  const { readFileSync } = await import("node:fs");
+  const read = (path) => readFileSync(path, "utf8").replace(/\s+/g, " ");
+  assert.match(read("skills/market-discover/SKILL.md"), /name its readiness gates/);
+  assert.match(read("skills/market-discover/SKILL.md"), /`gates` record with `marketing put gates <gate.json>`/);
+  assert.match(read("skills/market-discover/SKILL.md"), /`criteria` that can be checked with a number/);
+  assert.match(read("skills/market-discover/SKILL.md"), /Never record a gate as `passed` without an evidence record/);
+  for (const skill of ["market-strategy", "market-campaign"]) {
+    const text = read(`skills/${skill}/SKILL.md`);
+    assert.match(text, /`hours`/, skill);
+    assert.match(text, /`dependsOn`/, skill);
+    assert.match(text, /marketing plan <project-id>/, skill);
+    assert.match(text, /`weeklyHours`/, skill);
+  }
+  assert.match(read("skills/market-campaign/SKILL.md"), /If the initiative is blocked, do not start it|if the initiative is blocked, do not start it/i);
+  assert.match(read("README.md"), /`plan`/);
+  assert.match(read("README.md"), /docs\/CLI\.md#gates-dependencies-and-weekly-hours/);
+});

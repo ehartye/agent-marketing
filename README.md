@@ -48,10 +48,10 @@ Setup installs a content-verified runtime under `~/.agent-marketing/releases/` a
 | Skill | Outcome |
 |---|---|
 | market-setup | Install/check the managed runtime |
-| market-discover | Audience, value, readiness and evidence brief |
-| market-strategy | Channel choice with effort, risk and maintenance tradeoffs |
+| market-discover | Audience, value, readiness gates and evidence brief |
+| market-strategy | Channel choice with effort, risk and maintenance tradeoffs, sequenced behind gates and checked against the weekly hours |
 | market-research | Paying demand, underserved/language markets, alternatives and a sourced decision report |
-| market-campaign | Testable campaign, CTA, tagged links and review plan |
+| market-campaign | Testable campaign, CTA, tagged links, hours, dependencies and review plan |
 | market-collateral | Actual reviewable copy, demo/asset brief or creator kit |
 | market-monitor | Supported API collection, export imports and local desk |
 | market-insights | Reach/reception/viability review and a bounded next action |
@@ -61,9 +61,11 @@ The `.claude-plugin` manifest follows the sibling agent projects. The plugin is 
 
 ## What the tools do
 
-`init`, `demo`, `validate`, `import`, `put`, `document`, `report`, `advise`, `channels`, `experiment`, `utm`, `monitor`, `serve`, `export`, `rules`, `help`. See the [complete CLI and record contract](docs/CLI.md), [example ledger](examples/studio.json) and [CSV example](examples/observations.csv).
+`init`, `demo`, `validate`, `import`, `put`, `document`, `report`, `advise`, `plan`, `channels`, `experiment`, `utm`, `monitor`, `serve`, `export`, `rules`, `help`. See the [complete CLI and record contract](docs/CLI.md), [example ledger](examples/studio.json) and [CSV example](examples/observations.csv).
 
 Strategy and campaign skills save their full Markdown briefs inside the workspace: strategy on the project, campaign brief on each initiative. Reopen or download them in **Decide & plan**, or use `document show/export`. Full JSON backups include these documents. Existing ledgers remain readable; external assets and document history are not bundled. `validate`, `put` and `import` warn about a field no record defines, suggesting the intended name for a typo, and `--strict` turns those warnings into errors.
+
+A launch that waits on things (a name decision, a truth sheet, a pinned build, an outside playtest, store assets) can say so. A `gates` record is a pass condition with a status (open, passed, failed or waived), an initiative lists the gates and initiatives it waits on in `dependsOn` and its planned maker-hours in `hours`, and `plan <project-id>` reports what is blocked and by what, the hours each calendar week carries against the project's weekly cap, and the budget roll-up. `advise` mentions blocked work and over-cap weeks when they exist, and the desk shows the same under **Decide & plan**. The demo workspace includes a small gated game launch, Lantern Harbor. See [gates, dependencies and weekly hours](docs/CLI.md#gates-dependencies-and-weekly-hours).
 
 Monitoring reads public GitHub stars, optional repository traffic with an appropriately scoped `GITHUB_TOKEN`, and public HN threads through official APIs. Other platform results use authorized JSON/CSV exports normalized to the documented observation schema. Collection errors preserve previous readings; repeated snapshots do not inflate totals. Monitoring is one-shot; an owner-chosen scheduler can call it periodically. No social posting, outreach, ad spending or scheduler is installed.
 

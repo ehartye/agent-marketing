@@ -13,8 +13,10 @@ Verify the current official rules for channels you actually recommend, including
 
 Do not infer a community's platform or posting permission from generic rules. If its platform or access is unverified, keep that option conditional outside the ledger; use a separately verified channel for a runnable plan. The narrative, source and recorded `channel` must agree.
 
+Order the work behind the project's readiness gates. Read them with `marketing plan <project-id>`. An initiative that needs a gate or earlier work lists it in `dependsOn` (gate or initiative IDs in the same project), and each initiative records its planned `hours`: the maker effort for its whole window, never audience time, left unset when you cannot estimate it. Keep the busiest week within the project's `weeklyHours`. Run `marketing plan <project-id>` before delivering, fix every week it marks over the cap by moving, shortening or dropping work or by asking the owner about the cap, and check the budget roll-up against the project budget. Never recommend starting work that waits on an open or failed gate; name the gate to settle first and its pass condition.
+
 Deliver an audience → message → asset → CTA → measurement → review plan. Name the result that would change the channel choice. Record planned initiatives with owner, dates, budget and hypothesis. Do not spend, publish or contact anyone unless the owner instructed that action.
 
 Save the full Markdown rationale, source links, assumptions, tradeoffs and next test with `marketing document save strategy <project-id> <strategy.md> --workspace <ledger> --revision <current-revision>`. Follow the CLI contract's conflict handling and read the saved document back. Updating initiatives alone does not preserve the strategy.
 
-Finish when the rationale and tradeoffs are source-backed, the initiative validates, the saved strategy has been verified, and the owner has one feasible next action with a decision date. Report the workspace and project ID and where to reopen it: Decide & plan → Project strategy.
+Finish when the rationale and tradeoffs are source-backed, the initiative validates, `marketing plan` shows no week over the cap, the saved strategy has been verified, and the owner has one feasible next action with a decision date. Report the workspace and project ID and where to reopen it: Decide & plan → Project strategy.

@@ -13,4 +13,6 @@ Use four separate questions as a **house rubric**:
 
 Record supporting and contradictory evidence with sample context and date. One person's compliment is an anecdote. A failed test should change the plan, not disappear from it. Camuffo's [four-trial replication](https://doi.org/10.1002/smj.3580) supports hypothesis-led entrepreneurial learning; its training context does not prove a particular acquisition channel works for this family.
 
+Readiness is a fifth, separate question: is the project fit to be seen yet? Record what must be true before public work as **gates** with a pass condition that carries a number (an outside playtest in which at least 5 of 8 players finish the first chapter in one session, not "the playtest went well"). A passed gate cites the evidence that passed it; a waived one says why. Where no threshold is known, call it an owner decision rather than inventing a figure.
+
 A next experiment names an uncertainty, an observation that would resolve it, the smallest credible sample or qualitative probe, a time/spend cap, and a decision date. For low-traffic projects, three observed first-use sessions can uncover repeated friction; three is a practical cap, not statistical proof. Do not launch paid promotion simply because a view count looks large.

@@ -18,6 +18,7 @@ marketing document show report <report-id> --workspace <file>
 marketing document export report <report-id> --workspace <file> [--out report.md]
 marketing report --workspace <file> [--project id --initiative id --from YYYY-MM-DD --to YYYY-MM-DD]
 marketing advise <project-id> --workspace <file>
+marketing plan <project-id> --workspace <file>
 marketing channels [project-id] --workspace <file>
 marketing experiment <experiment-id> --workspace <file>
 marketing utm <url> --source youtube --medium organic-video --campaign launch --content clip-a
@@ -82,7 +83,8 @@ The example [studio.json](../examples/studio.json) is a fully validated ledger. 
 | Collection | Required fields beyond `id` |
 |---|---|
 | projects | name, audience (nonempty text array), category (`tool/app/game/creative/education`), problem, promise, stage (`idea/prototype/beta/launched`), objective, weeklyHours, budget, currency; optional strategy document |
-| initiatives | projectId, name, channel, hypothesis, cta, status (`planned/running/paused/complete`), start, end, budget, owner; optional brief document |
+| initiatives | projectId, name, channel, hypothesis, cta, status (`planned/running/paused/complete`), start, end, budget, owner; optional brief document, hours (nonnegative number: total planned maker-hours), dependsOn (array of gate or initiative IDs in the same project; see [Gates, dependencies and weekly hours](#gates-dependencies-and-weekly-hours)) |
+| gates | projectId, name, criteria (the pass condition, with a number where one exists), status (`open/passed/failed/waived`); optional checkedAt (`YYYY-MM-DD`), evidenceIds (evidence IDs of the same project), notes |
 | observations | projectId, channel, metric, value, start, end, kind (`period/snapshot`), definition, url, collectedAt; optional initiativeId, cohort; snapshot requires series; cost/revenue require currency |
 | reactions | projectId, text, url, collectedAt, sentiment (`positive/negative/neutral/mixed/unknown`), reviewed (boolean), theme; optional initiativeId, channel |
 | competitors | projectId, name, kind (`direct/substitute/do-nothing`), positioning, url, checkedAt, claims (array of `{dimension,value,url,checkedAt}`) |
@@ -101,9 +103,41 @@ A game needs a few more names than a web page, and the ledger keeps them to coun
 - **Ratings.** `ratings` is the number of ratings or reviews players posted in the window (stars, likes and dislikes, written reviews), never their average or a platform score. Keep the average in `definition`, and keep votes on a post under `votes`.
 - **Rates are not metrics.** The ledger stores no percentages, so `returns` of 0.31 is refused. A day-1 or day-7 return rate is returns divided by starts for the same project, channel, cohort and window. Record `starts` (the size of the cohort) and `returns` (those of that cohort who came back on day 1 or day 7, with "day 1 return" or "day 7 return" in `definition`), both with the same `cohort` and the same start and end (the window of the cohort's first sessions; the follow-up day goes in `definition`), then read `returnRates` in `report`. Each entry shows the two counts, their definitions and the rate, and the rate is withheld when the cohort or window differs, two starts definitions match, returns exceed starts or readings overlap. Without a cohort the ratio may count people who started before the window. A dashboard that shows only a percentage (a day-1 retention of 12%) is recorded as the counts it implies, with "derived: 12% of 400 players" in `definition`; expect rounding error.
 
+## Gates, dependencies and weekly hours
+
+A launch is a gated sequence under a weekly time cap, and the ledger can say so. Three fields carry it.
+
+- **Gates.** A `gates` record is a pass condition the project must meet before some work starts: `{ id, projectId, name, criteria, status, checkedAt?, evidenceIds?, notes? }`. Write `criteria` as the test, with a number wherever there is one ("at least 5 of 8 outside players finish chapter one in one session", not "the playtest goes well"). `status` is `open` (not checked), `passed`, `failed` (checked and not met) or `waived` (the owner decided to go on without it; say why in `notes`). `checkedAt` is the date of the last check, and `evidenceIds` names evidence records of the same project that show the result, so a passed gate points at what passed it. A gate ID may not equal an initiative ID in the same project, so a dependency never names two things.
+- **Dependencies.** An initiative's optional `dependsOn` lists the gate or initiative IDs in its own project that it waits on. Every ID must exist, and an initiative cannot depend on itself, list an ID twice or sit on a cycle. A gate's `evidenceIds` must be evidence of its own project. Any breach, like any dangling reference in another collection, rejects the whole write and leaves the file untouched.
+- **Hours.** An initiative's optional `hours` is its total planned maker-hours, a nonnegative decimal: the effort to do the work, never audience time (that is the `hours` observation metric). An initiative without `hours` is unknown, not zero; use `0` only for work that really takes none.
+
+An initiative is **blocked** while it has an unmet dependency: a gate that is `open` or `failed` (`passed` and `waived` are met) or an initiative that is not `complete`. A `complete` initiative is never blocked. Workspaces saved before gates existed gain an empty `gates` collection and need no migration, and initiatives without `hours` or `dependsOn` behave as before. Gates travel in JSON exports and imports like every other collection. An older runtime refuses a ledger that holds gates as an unknown collection, so update the installed runtime before recording the first gate.
+
+```text
+marketing plan <project-id> --workspace <file>
+```
+
+`plan` checks one project and prints JSON; it reads the ledger and writes nothing.
+
+- `gates`: each gate with `status`, `criteria`, `checkedAt`, `evidenceIds`, `notes` and `requiredBy` (the initiatives that list it).
+- `initiatives`: each with `status`, `start`, `end`, `hours` (`null` when unset), `budget`, `dependsOn`, `blocked`, `blockedBy` (the unmet dependencies, each `{ id, kind, name, status }` with `kind` `gate`, `initiative` or `missing`) and `overCapWeeks` (the over-cap weeks it adds hours to). `blockedBy` lists direct dependencies only, so a chain shows one link at each step.
+- `load`: the maker hours per calendar week, with `method`, `weeklyHours`, `totalHours`, `capacityHours` (the cap times the number of weeks), `unknownHours` (initiatives with no hours) and `weeks`, each `{ start, end, hours, cap, overCap, overBy, initiatives, unknownHours }`. Weeks run without a gap from the Monday of the earliest start to the Sunday of the latest end.
+- `budget`: `{ currency, cap, planned, remaining, overBudget, overBy }`, comparing the sum of the project's initiative budgets with its `budget`.
+- `summary`: gate counts by status, the number of blocked initiatives and over-cap weeks, the `peakWeek` and how many initiatives have no hours.
+- `warnings`: running or complete work whose dependency is unmet, an initiative that starts before an unfinished dependency ends (a same-day handoff is allowed), a `passed` gate with no `evidenceIds`, a `waived` gate with no `notes`, and initiatives without hours.
+
+**How weekly hours are computed.** An initiative's `hours` are spread evenly over the days from its `start` to its `end`, both included, and weekends count. A calendar week (Monday to Sunday) receives the hours times the days of the initiative that fall in it, divided by its total days: 14 hours over Monday to the Sunday after is 7 and 7, and 4 hours over a Sunday and the Monday after is 2 and 2. Initiatives of every status are included, since the ledger records plans, not time spent. Totals are rounded to two decimals after a week is summed, and a week is over the cap when its rounded total exceeds the project's `weeklyHours`, so floating-point noise cannot flag it. Maker hours are never converted to money, because the ledger has no hourly rate; `budget` rolls up initiative budgets only, and recorded spending is read in `report`. The plan is even spreading, not a schedule: it does not move work or suggest a start date.
+
+`advise` reads the same plan. It adds a `readiness` action when running work waits on an unmet dependency (priority 1) or planned work is held by an open or failed gate (priority 2, naming the gate that holds the earliest start and its pass condition), and a `capacity` action when weeks are over the cap (priority 2, naming up to three weeks). A ledger with no gates, dependencies or hours gets the advice it always did. The desk shows the same plan under **Decide & plan** for a project that records any of the three: **Readiness gates** with status chips, **Weekly maker hours** with one column per week against the cap, and Blocked and Over cap chips on the initiatives. The panels are read-only; change a gate with `marketing put gates`.
+
+```powershell
+marketing put gates playtest-gate.json --workspace <ledger>
+marketing plan <project-id> --workspace <ledger>
+```
+
 ## Unknown fields
 
-`validate`, `put` and `import` warn about a field that no record type defines; `put` and `import` still save the record. A warning names the record and the field and, for a near-miss by edit distance (about one typo per four letters, ignoring case, and never a field the record already has), suggests the field you probably meant: `evidence.e1: unknown field "credibilty"; did you mean "credibility"?`. A field with no close match, such as `dependsOn`, `hours` or `targets` on an initiative, reads `unknown field "dependsOn"; nothing reads it`: it is stored, but no command or desk view uses it. The same field on many records is one warning that names the first three, so a CSV with a stray vendor column prints one line.
+`validate`, `put` and `import` warn about a field that no record type defines; `put` and `import` still save the record. A warning names the record and the field and, for a near-miss by edit distance (about one typo per four letters, ignoring case, and never a field the record already has), suggests the field you probably meant: `evidence.e1: unknown field "credibilty"; did you mean "credibility"?`. A field with no close match, such as `targets` or `platforms` on an initiative, reads `unknown field "targets"; nothing reads it`: it is stored, but no command or desk view uses it. The same field on many records is one warning that names the first three, so a CSV with a stray vendor column prints one line.
 
 `validate` returns `warnings` for the whole workspace. `import` and `put` print the workspace followed by `warnings` for the records they wrote (that printout still imports like an export), and the desk's `/api/import` and `/api/record` responses carry the same array; the desk's import message shows the first three. Warnings never reject a write or change a saved record, so every existing workspace keeps validating. `--strict` (or `"strict": true` in the body of those two desk requests) turns the warnings into an error before anything is written. Every record type is checked, and so are a competitor's `claims` and an experiment's `arms`. The accepted fields are `recordFields` in `src/schema.mjs`, and a feature that adds a field must add it there.
 
