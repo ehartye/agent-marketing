@@ -240,6 +240,16 @@ Every write command takes `--workspace` or `--studio` and `--revision n`, append
 
 `next` lists open slots with two or more candidates under `picks`; see [What needs the owner now](#what-needs-the-owner-now).
 
+### Collateral in the desk
+
+The desk's **Collateral** tab shows each slot with its pick and the alternates, and compares candidates in a lightbox (one at a time or side by side, at actual pixels, with a "keep pixels sharp" switch) before a pick, reject, restore or retire. It uses these routes. Writes are JSON with `workspaceId` and `revision` like every other desk write (a stale or missing revision is `409`; an unknown ID is `404`; a value of the wrong type or a module refusal is `400` with the module's own message), and each answers with the command's result shape.
+
+- `GET /assets/<assetId>` serves a file asset's bytes: the stored type (Markdown as `text/plain`), `nosniff`, `Content-Disposition: inline`, `ETag` from the sha256 with `304`, and one `Range` (`206`, `416`) for video. The file is found through `resolveAssetFile` in the workspace the desk is showing, so an ID of another workspace, a link, a text variant or a missing file is `404`. The page policy allows `img-src 'self'` and `media-src 'self'` and nothing else new.
+- `POST /api/asset/pick` `{ assetId, rationale? }`, `/api/asset/reject` `{ assetId, rationale }`, `/api/asset/restore` `{ assetId }`, `/api/asset/retire` `{ assetId, rationale? }`.
+- `POST /api/asset/slot` `{ id, name, kind, spec?, projectId?, initiativeId? }`, `/api/asset/link` `{ slotId, label, url, source? }` (an https link such as an artifact), `/api/asset/text` `{ slotId, label, text, source? }`.
+- `POST /api/asset/upload?slotId=&filename=&revision=&workspaceId=&label=&source=` with the raw file as the body (`application/octet-stream`). Only the extension of `filename` is used; the content is checked against it, a body over the size limit is `413` and is never stored, and the temporary copy is always removed.
+- `GET /api/asset-limits` gives `{ maxBytes, maxText, extensions, kinds }` for the add forms. Slots and assets themselves come with `GET /api/workspace`.
+
 ## Stage-aware advice and channels
 
 A project's `stage` (`idea`, `prototype`, `beta`, `launched`) is read by `advise` and `channels`, so a live game is no longer told to collect the viability evidence an idea needs. The stage playbook is a house planning inference built on the discovery rubric. Every piece of advice cites the rules it rests on, and `marketing rules stage` and `marketing rules games` print them with their kind (`external`, `heuristic` or `derived`), the working in `reason` and their references; `marketing rules` without a topic still prints every rule.
