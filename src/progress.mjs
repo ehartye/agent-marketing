@@ -21,8 +21,9 @@ export const clock = ({ now, today } = {}) => {
   return { at, today: today ?? (now ? now.slice(0, 10) : localDate()) };
 };
 
-// Runs `edit` on the workspace under the lock. `edit` returns { record, update?, warnings? }, the
-// update being the entry it appended, or `same(record)` when there was nothing to change.
+// Runs `edit` on the workspace under the lock. `edit` returns { record, update?, warnings?, extra? },
+// the update being the entry it appended and `extra` more keys for the result (the other records
+// the command touched), or `same(record)` when there was nothing to change.
 export function write(file, revision, edit) {
   let done;
   const w = mutateWorkspace(
@@ -35,7 +36,7 @@ export function write(file, revision, edit) {
   );
   return done.untouched
     ? { record: done.untouched, changed: false, update: null, warnings: [], revision: w.revision }
-    : { record: done.record, changed: true, update: done.update ?? null, warnings: done.warnings ?? [], revision: w.revision };
+    : { record: done.record, changed: true, update: done.update ?? null, warnings: done.warnings ?? [], revision: w.revision, ...done.extra };
 }
 export const same = (record) => ({ untouched: structuredClone(record) });
 
