@@ -660,6 +660,15 @@ export function attention(w, projectId, today) {
         blocker: i.blockedBy[0],
       }))
       .toSorted((a, b) => a.start.localeCompare(b.start) || a.id.localeCompare(b.id)),
+    // Collateral to choose between: an open slot with two or more live candidates. One candidate is
+    // nothing to choose, and a rejected or retired one is out of the running.
+    live = Map.groupBy(mine(w.assets).filter((a) => a.status === "candidate"), (a) => a.slotId),
+    picks = mine(w.assetSlots)
+      .filter((s) => s.status === "open")
+      .map((s) => ({ s, ids: (live.get(s.id) ?? []).map((a) => a.id) }))
+      .filter(({ ids }) => ids.length >= 2)
+      .map(({ s, ids }) => ({ slotId: s.id, name: s.name, candidates: ids.length, candidateIds: ids, initiativeId: s.initiativeId ?? null }))
+      .toSorted((a, b) => a.name.localeCompare(b.name) || a.slotId.localeCompare(b.slotId)),
     stale = decisions
       .filter((d) => d.status === "open" && d.daysLeft !== null && d.daysLeft < -STALE_DAYS)
       .map((d) => ({ id: d.id, title: d.title, needBy: d.needBy, daysOverdue: -d.daysLeft }))
@@ -677,6 +686,7 @@ export function attention(w, projectId, today) {
     actions,
     gates,
     blockedInitiatives,
+    picks,
     stale,
     recent,
     summary: {
@@ -687,8 +697,9 @@ export function attention(w, projectId, today) {
       gates: gates.length,
       overdueGates: gates.filter((g) => g.overdue).length,
       blockedInitiatives: blockedInitiatives.length,
+      picks: picks.length,
       stale: stale.length,
-      total: decisions.length + actions.length + gates.length + blockedInitiatives.length,
+      total: decisions.length + actions.length + gates.length + blockedInitiatives.length + picks.length,
     },
   };
 }

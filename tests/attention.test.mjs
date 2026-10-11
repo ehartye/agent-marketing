@@ -39,10 +39,80 @@ test("an empty ledger needs nothing from the owner", () => {
     actions: [],
     gates: [],
     blockedInitiatives: [],
+    picks: [],
     stale: [],
     recent: [],
-    summary: { decisions: 0, overdueDecisions: 0, actions: 0, overdueActions: 0, gates: 0, overdueGates: 0, blockedInitiatives: 0, stale: 0, total: 0 },
+    summary: { decisions: 0, overdueDecisions: 0, actions: 0, overdueActions: 0, gates: 0, overdueGates: 0, blockedInitiatives: 0, picks: 0, stale: 0, total: 0 },
   });
+});
+
+const SL = (id, over = {}) => ({ id, projectId: "game", name: `Slot ${id}`, kind: "image", status: "open", ...over });
+const AS = (id, slotId, over = {}) => ({
+  id,
+  projectId: "game",
+  slotId,
+  label: `Asset ${id}`,
+  kind: "link",
+  url: `https://example.com/${id}`,
+  status: "candidate",
+  createdAt: "2026-10-10T09:00:00.000Z",
+  ...over,
+});
+
+test("an open slot with two or more candidates and no pick is something to pick", () => {
+  const w = W({
+    initiatives: [I("launch")],
+    assetSlots: [
+      SL("capsule", { name: "Steam main capsule", initiativeId: "launch" }),
+      SL("banner", { name: "Banner" }),
+      SL("lonely", { name: "One candidate only" }),
+      SL("empty", { name: "No candidates" }),
+      SL("done", { name: "Already picked", status: "picked", selectedAssetId: "d1" }),
+      SL("rejected", { name: "Only rejected candidates" }),
+    ],
+    assets: [
+      AS("c1", "capsule"),
+      AS("c2", "capsule"),
+      AS("c3", "capsule", { status: "rejected", rationale: "no" }),
+      AS("c4", "capsule", { status: "retired" }),
+      AS("b1", "banner"),
+      AS("b2", "banner"),
+      AS("b3", "banner"),
+      AS("l1", "lonely"),
+      AS("d1", "done", { status: "selected" }),
+      AS("d2", "done"),
+      AS("d3", "done"),
+      AS("r1", "rejected", { status: "rejected", rationale: "no" }),
+      AS("r2", "rejected", { status: "rejected", rationale: "no" }),
+    ],
+  });
+  const a = attention(w, "game", TODAY);
+  assert.deepEqual(a.picks, [
+    { slotId: "banner", name: "Banner", candidates: 3, candidateIds: ["b1", "b2", "b3"], initiativeId: null },
+    { slotId: "capsule", name: "Steam main capsule", candidates: 2, candidateIds: ["c1", "c2"], initiativeId: "launch" },
+  ]);
+  assert.equal(a.summary.picks, 2);
+  assert.equal(a.summary.total, 2, "a pick is something the owner has to do");
+});
+
+test("picks count toward the total beside decisions, and belong to their own project", () => {
+  const w = W({
+    decisions: [D("one")],
+    assetSlots: [SL("capsule"), SL("theirs", { projectId: "other" })],
+    assets: [AS("c1", "capsule"), AS("c2", "capsule"), AS("t1", "theirs", { projectId: "other" }), AS("t2", "theirs", { projectId: "other" })],
+    projects: [{ ...baseProject, weeklyHours: 40 }, { ...baseProject, id: "other", weeklyHours: 40 }],
+  });
+  const a = attention(w, "game", TODAY);
+  assert.equal(a.picks.length, 1);
+  assert.equal(a.summary.total, 2);
+  assert.equal(attention(w, "other", TODAY).picks[0].slotId, "theirs");
+});
+
+test("a ledger from before collateral has no picks", () => {
+  const w = W();
+  delete w.assetSlots;
+  delete w.assets;
+  assert.deepEqual(attention(w, "game", TODAY).picks, []);
 });
 
 test("open decisions come by need-by date, soonest first, undated last, with the days left", () => {
