@@ -63,7 +63,7 @@ The `.claude-plugin` manifest follows the sibling agent projects. The plugin is 
 
 `init`, `demo`, `validate`, `import`, `put`, `document`, `report`, `advise`, `channels`, `experiment`, `utm`, `monitor`, `serve`, `export`, `rules`, `help`. See the [complete CLI and record contract](docs/CLI.md), [example ledger](examples/studio.json) and [CSV example](examples/observations.csv).
 
-Strategy and campaign skills save their full Markdown briefs inside the workspace: strategy on the project, campaign brief on each initiative. Reopen or download them in **Decide & plan**, or use `document show/export`. Full JSON backups include these documents. Existing ledgers remain readable; external assets and document history are not bundled.
+Strategy and campaign skills save their full Markdown briefs inside the workspace: strategy on the project, campaign brief on each initiative. Reopen or download them in **Decide & plan**, or use `document show/export`. Full JSON backups include these documents. Existing ledgers remain readable; external assets and document history are not bundled. `validate`, `put` and `import` warn about a field no record defines, suggesting the intended name for a typo, and `--strict` turns those warnings into errors.
 
 Monitoring reads public GitHub stars, optional repository traffic with an appropriately scoped `GITHUB_TOKEN`, and public HN threads through official APIs. Other platform results use authorized JSON/CSV exports normalized to the documented observation schema. Collection errors preserve previous readings; repeated snapshots do not inflate totals. Monitoring is one-shot; an owner-chosen scheduler can call it periodically. No social posting, outreach, ad spending or scheduler is installed.
 

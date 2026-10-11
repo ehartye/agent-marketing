@@ -7,7 +7,7 @@ import {
   readWorkspace,
   importRecords,
 } from "../src/store.mjs";
-import { collections, validateWorkspace } from "../src/schema.mjs";
+import { collections, validateWorkspace, workspaceWarnings, failOnWarnings } from "../src/schema.mjs";
 import { report, advise, analyzeExperiment } from "../src/analysis.mjs";
 import { parseImport, taggedUrl, observationsCsv } from "../src/import.mjs";
 import { monitor } from "../src/collectors.mjs";
@@ -32,9 +32,9 @@ const help = {
   commands: [
     "init",
     "demo",
-    "validate",
-    "import <json-or-csv>",
-    "put <collection> <record.json>",
+    "validate [--strict]",
+    "import <json-or-csv> [--strict]",
+    "put <collection> <record.json> [--strict]",
     "document save <strategy|campaign> <record-id> <brief.md> --revision n",
     "document save report <report-id> <report.md> --title t --revision n [--project id --kind k --vault-url u]",
     "document show <strategy|campaign|report> <record-id>",
@@ -57,6 +57,7 @@ try {
     allowPositionals: true,
     options: {
       studio: { type: "boolean" },
+      strict: { type: "boolean" },
       ...Object.fromEntries(
       [
         "workspace",
@@ -110,11 +111,14 @@ try {
       ),
     );
   else if (command === "validate") {
-    const w = validateWorkspace(readWorkspace(file));
+    const w = validateWorkspace(readWorkspace(file)),
+      warnings = workspaceWarnings(w);
+    if (v.strict) failOnWarnings(warnings);
     result = {
       ok: true,
       revision: w.revision,
       records: Object.fromEntries(collections.map((k) => [k, w[k].length])),
+      warnings,
     };
   } else if (command === "import") {
     const input = required(p[0], "import file");
@@ -125,6 +129,7 @@ try {
         extname(input).toLowerCase() === ".csv" ? "csv" : "json",
       ),
       v.revision === undefined ? undefined : Number(v.revision),
+      { strict: v.strict },
     );
   } else if (command === "put") {
     const collection = required(p[0], "collection");
@@ -138,6 +143,7 @@ try {
         ],
       },
       v.revision === undefined ? undefined : Number(v.revision),
+      { strict: v.strict },
     );
   } else if (command === "document") {
     const [action, kind, id, input] = p;

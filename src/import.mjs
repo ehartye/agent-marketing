@@ -3,6 +3,8 @@ export function parseImport(body, format = "json") {
   if (format === "json") {
     const value = JSON.parse(body);
     if (value?.schema !== undefined) {
+      // The printout of import and put is a workspace followed by its warnings; it restores like an export.
+      if (Array.isArray(value.warnings)) delete value.warnings;
       validateWorkspace(value);
       return Object.fromEntries(collections.map((k) => [k, value[k]]));
     }

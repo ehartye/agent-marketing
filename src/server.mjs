@@ -178,6 +178,7 @@ export async function startServer(
               file,
               { [data.collection]: [data.record] },
               data.revision,
+              { strict: data.strict === true },
             ),
           );
         if (u.pathname === "/api/import")
@@ -186,6 +187,7 @@ export async function startServer(
               file,
               parseImport(data.text, data.format),
               data.revision,
+              { strict: data.strict === true },
             ),
           );
         if (u.pathname === "/api/monitor") {

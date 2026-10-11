@@ -20,6 +20,15 @@ export async function api(path, body) {
   return value;
 }
 
+// What the desk says after an import: the first warnings about fields no record defines, then a count.
+export function importMessage(result) {
+  const base = "Results imported. Records with matching IDs were updated.",
+    warnings = result?.warnings || [];
+  if (!warnings.length) return base;
+  const more = warnings.length - 3;
+  return `${base} ${warnings.length} warning${warnings.length === 1 ? "" : "s"}: ${warnings.slice(0, 3).join(" | ")}${more > 0 ? `; and ${more} more` : ""}`;
+}
+
 // Publish one complete snapshot; superseded requests never replace current data.
 export function createDeskClient(request = api) {
   let generation = 0, snapshot, references;

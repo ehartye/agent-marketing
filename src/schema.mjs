@@ -335,3 +335,91 @@ export function validateWorkspace(w) {
     }
   return w;
 }
+
+// The fields each record type defines (docs/CLI.md). validateWorkspace keeps accepting anything
+// else so older files still load; patchWarnings reports it, so a misspelled optional field
+// (credibilty) or an unsupported one (dependsOn) is seen instead of silently kept and ignored.
+// A field that a new feature reads must be added here.
+export const recordFields = {
+  projects: ["id", "name", "audience", "category", "problem", "promise", "stage", "objective", "weeklyHours", "budget", "currency", "strategy"],
+  initiatives: ["id", "projectId", "name", "channel", "hypothesis", "cta", "status", "start", "end", "budget", "owner", "brief"],
+  observations: ["id", "projectId", "initiativeId", "channel", "metric", "value", "start", "end", "kind", "series", "definition", "url", "collectedAt", "currency", "cohort"],
+  reactions: ["id", "projectId", "initiativeId", "channel", "text", "url", "collectedAt", "sentiment", "reviewed", "theme"],
+  competitors: ["id", "projectId", "initiativeId", "name", "kind", "positioning", "url", "checkedAt", "claims"],
+  experiments: ["id", "projectId", "initiativeId", "name", "hypothesis", "primaryMetric", "stoppingRule", "targetPerArm", "randomized", "arms"],
+  evidence: ["id", "projectId", "initiativeId", "claim", "dimension", "result", "strength", "url", "checkedAt", "publishedAt", "dataPeriod", "denominator", "limit", "credibility", "relevance", "status"],
+  sources: ["id", "projectId", "initiativeId", "name", "adapter", "channel", "target", "traffic", "lastCheckedAt", "lastError"],
+  reports: ["id", "projectId", "title", "markdown", "updatedAt", "kind", "vaultUrl"],
+};
+const nestedFields = {
+  competitors: { claims: ["dimension", "value", "url", "checkedAt"] },
+  experiments: { arms: ["name", "trials", "successes"] },
+};
+// Optimal string alignment distance: insert, delete, substitute or swap two neighbours.
+function distance(a, b) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++)
+    for (let j = 1; j <= b.length; j++) {
+      d[i][j] = Math.min(
+        d[i - 1][j] + 1,
+        d[i][j - 1] + 1,
+        d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1])
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+    }
+  return d[a.length][b.length];
+}
+// The closest field the record does not already have, if it is about one typo per four letters
+// away (never more than two), ignoring case.
+function closest(key, known, record) {
+  const lower = key.toLowerCase();
+  let best,
+    nearest = Infinity;
+  for (const field of known) {
+    if (field in record) continue;
+    const d = distance(lower, field.toLowerCase());
+    if (d < nearest) [best, nearest] = [field, d];
+  }
+  return nearest <= Math.min(2, Math.max(1, Math.floor(lower.length / 4))) ? best : undefined;
+}
+// Non-fatal warnings for fields no record type defines, for an object of collection arrays.
+// The same field on many records is one warning that names the first few, so a CSV with a
+// stray column does not print a line per row.
+export function patchWarnings(patch) {
+  const groups = new Map();
+  const note = (collection, id, where, key, known, record) => {
+    const group = `${collection}\0${where}\0${key}`;
+    if (!groups.has(group))
+      groups.set(group, { collection, where, key, hint: closest(key, known, record), ids: new Set() });
+    groups.get(group).ids.add(id);
+  };
+  for (const [collection, rows] of Object.entries(patch ?? {})) {
+    if (!recordFields[collection] || !Array.isArray(rows)) continue;
+    for (const r of rows) {
+      if (!r || typeof r !== "object" || Array.isArray(r)) continue;
+      const id = typeof r.id === "string" && r.id ? r.id : "(no id)";
+      for (const key of Object.keys(r))
+        if (!recordFields[collection].includes(key)) note(collection, id, "", key, recordFields[collection], r);
+      for (const [name, fields] of Object.entries(nestedFields[collection] ?? {}))
+        for (const item of Array.isArray(r[name]) ? r[name] : [])
+          if (item && typeof item === "object" && !Array.isArray(item))
+            for (const key of Object.keys(item))
+              if (!fields.includes(key)) note(collection, id, "." + name, key, fields, item);
+    }
+  }
+  return [...groups.values()].map(({ collection, where, key, hint, ids }) => {
+    const all = [...ids],
+      named = all.slice(0, 3).join(", ") + (all.length > 3 ? ` and ${all.length - 3} more` : "");
+    return `${collection}.${named}${where}: unknown field "${key}"; ${hint ? `did you mean "${hint}"?` : "nothing reads it"}`;
+  });
+}
+export function workspaceWarnings(w) {
+  return patchWarnings(Object.fromEntries(collections.map((k) => [k, w[k]])));
+}
+// --strict: warnings become an error, raised before anything is written.
+export function failOnWarnings(warnings) {
+  if (warnings.length)
+    throw Object.assign(new Error("Strict mode: " + warnings.join(" | ")), { status: 400 });
+}

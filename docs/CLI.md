@@ -7,9 +7,9 @@ Every command prints JSON except CSV and Markdown export; errors print a JSON er
 ```text
 marketing init --workspace <file>
 marketing demo --workspace <different-file>
-marketing validate --workspace <file>
-marketing import <patch.json-or-observations.csv> --workspace <file> [--revision n]
-marketing put <collection> <record.json> --workspace <file> [--revision n]
+marketing validate --workspace <file> [--strict]
+marketing import <patch.json-or-observations.csv> --workspace <file> [--revision n] [--strict]
+marketing put <collection> <record.json> --workspace <file> [--revision n] [--strict]
 marketing document save <strategy|campaign> <record-id> <brief.md> --workspace <file> --revision n
 marketing document show <strategy|campaign> <record-id> --workspace <file>
 marketing document export <strategy|campaign> <record-id> --workspace <file> [--out brief.md]
@@ -28,7 +28,7 @@ marketing rules [topic]
 marketing help
 ```
 
-`init` creates an empty ledger. `demo` creates a complete synthetic studio. Neither overwrites an existing file. `put` upserts a full record; `import` merges an object of collection arrays such as `{"observations":[...]}`. A whole exported workspace is validated and its collection arrays are merged into an existing ledger; the destination revision remains local. Record IDs are stable within each collection. Reimporting the same ID replaces that record, including all its fields. Duplicate incoming IDs, dangling references and invalid values reject the whole transaction. Revisions prevent stale UI/CLI writes; reload and reconcile on conflict.
+`init` creates an empty ledger. `demo` creates a complete synthetic studio. Neither overwrites an existing file. `put` upserts a full record; `import` merges an object of collection arrays such as `{"observations":[...]}`. A whole exported workspace is validated and its collection arrays are merged into an existing ledger; the destination revision remains local. Record IDs are stable within each collection. Reimporting the same ID replaces that record, including all its fields. Duplicate incoming IDs, dangling references and invalid values reject the whole transaction; unknown fields only produce [warnings](#unknown-fields). Revisions prevent stale UI/CLI writes; reload and reconcile on conflict.
 
 ## Saved strategy and campaign briefs
 
@@ -100,6 +100,12 @@ A game needs a few more names than a web page, and the ledger keeps them to coun
 - **Playtime.** There is no separate playtime or watch-time metric. `hours` is time your audience spent watching or playing, in hours with decimals allowed, never the maker's own effort (that is the project's `weeklyHours`). Platforms usually report an average playtime, which cannot be added up: put the average in `definition`, or record the total as `hours` only when you can compute it for the same window (average minutes × plays ÷ 60) and say that it is derived.
 - **Ratings.** `ratings` is the number of ratings or reviews players posted in the window (stars, likes and dislikes, written reviews), never their average or a platform score. Keep the average in `definition`, and keep votes on a post under `votes`.
 - **Rates are not metrics.** The ledger stores no percentages, so `returns` of 0.31 is refused. A day-1 or day-7 return rate is returns divided by starts for the same project, channel, cohort and window. Record `starts` (the size of the cohort) and `returns` (those of that cohort who came back on day 1 or day 7, with "day 1 return" or "day 7 return" in `definition`), both with the same `cohort` and the same start and end (the window of the cohort's first sessions; the follow-up day goes in `definition`), then read `returnRates` in `report`. Each entry shows the two counts, their definitions and the rate, and the rate is withheld when the cohort or window differs, two starts definitions match, returns exceed starts or readings overlap. Without a cohort the ratio may count people who started before the window. A dashboard that shows only a percentage (a day-1 retention of 12%) is recorded as the counts it implies, with "derived: 12% of 400 players" in `definition`; expect rounding error.
+
+## Unknown fields
+
+`validate`, `put` and `import` warn about a field that no record type defines; `put` and `import` still save the record. A warning names the record and the field and, for a near-miss by edit distance (about one typo per four letters, ignoring case, and never a field the record already has), suggests the field you probably meant: `evidence.e1: unknown field "credibilty"; did you mean "credibility"?`. A field with no close match, such as `dependsOn`, `hours` or `targets` on an initiative, reads `unknown field "dependsOn"; nothing reads it`: it is stored, but no command or desk view uses it. The same field on many records is one warning that names the first three, so a CSV with a stray vendor column prints one line.
+
+`validate` returns `warnings` for the whole workspace. `import` and `put` print the workspace followed by `warnings` for the records they wrote (that printout still imports like an export), and the desk's `/api/import` and `/api/record` responses carry the same array; the desk's import message shows the first three. Warnings never reject a write or change a saved record, so every existing workspace keeps validating. `--strict` (or `"strict": true` in the body of those two desk requests) turns the warnings into an error before anything is written. Every record type is checked, and so are a competitor's `claims` and an experiment's `arms`. The accepted fields are `recordFields` in `src/schema.mjs`, and a feature that adds a field must add it there.
 
 ## Monitoring example
 

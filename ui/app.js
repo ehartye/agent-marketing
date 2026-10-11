@@ -1,5 +1,5 @@
 import { $, esc, num, restoreFocus } from "./shared.js";
-import { api, createDeskClient, reviewDrafts } from "./state.js";
+import { api, createDeskClient, reviewDrafts, importMessage } from "./state.js";
 import { renderActivity, drawChart } from "./chart.js";
 import { renderCampaign } from "./views/campaign.js";
 import { renderReception } from "./views/reception.js";
@@ -216,7 +216,7 @@ $("upload").onchange = event => {
   if (file.size > 2 * 1024 * 1024) return message("Import exceeds 2 MB. Split it into smaller files and choose the file again.", true);
   save(async () => api("/api/import", { workspaceId,
     text: await file.text(), format: file.name.toLowerCase().endsWith(".csv") ? "csv" : "json", revision: client.snapshot.workspace.revision,
-  }), "Results imported. Records with matching IDs were updated.", "#import");
+  }), importMessage, "#import");
 };
 $("collect").onclick = () => save(() => api("/api/monitor", { workspaceId, revision: client.snapshot.workspace.revision }), result => {
   const errors = result.sources.flatMap(s => s.errors);

@@ -11,7 +11,13 @@ import {
 } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
-import { emptyWorkspace, validateWorkspace, collections } from "./schema.mjs";
+import {
+  emptyWorkspace,
+  validateWorkspace,
+  collections,
+  patchWarnings,
+  failOnWarnings,
+} from "./schema.mjs";
 function locked(file, action) {
   file = resolve(file);
   mkdirSync(dirname(file), { recursive: true });
@@ -75,13 +81,17 @@ export function mutateWorkspace(file, action, expectedRevision) {
     return writeAtomic(path, w);
   });
 }
-export function importRecords(file, patch, expectedRevision) {
+// Returns the written workspace plus `warnings` for fields no record type defines. With
+// { strict: true } those warnings refuse the whole import before anything is written.
+export function importRecords(file, patch, expectedRevision, { strict = false } = {}) {
   if (!patch || typeof patch !== "object" || Array.isArray(patch))
     throw new Error("Import must be an object of collection arrays");
   for (const k of Object.keys(patch))
     if (!collections.includes(k))
       throw new Error(`Cannot import ${k}; import collection arrays only`);
-  return mutateWorkspace(
+  const warnings = patchWarnings(patch);
+  if (strict) failOnWarnings(warnings);
+  const written = mutateWorkspace(
     file,
     (w) => {
       for (const [k, rows] of Object.entries(patch)) {
@@ -104,4 +114,5 @@ export function importRecords(file, patch, expectedRevision) {
     },
     expectedRevision,
   );
+  return { ...written, warnings };
 }
