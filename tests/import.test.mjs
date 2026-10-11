@@ -24,6 +24,7 @@ test("a complete exported ledger imports as validated collection arrays", () => 
         Object.entries(w).filter(([k]) => !["schema", "revision"].includes(k)),
       ),
       reports: [], // ledgers saved before reports existed gain an empty collection
+      gates: [], // and so do ledgers saved before gates existed
     },
   );
 });

@@ -8,6 +8,7 @@ export const collections = [
   "evidence",
   "sources",
   "reports",
+  "gates",
 ];
 export const channels = [
   "youtube",
@@ -119,6 +120,51 @@ function document(v, p) {
     fail(p + ".markdown", "expected nonempty Markdown (max 100000 characters)");
   timestamp(v.updatedAt, p + ".updatedAt");
 }
+const gateStatuses = ["open", "passed", "failed", "waived"];
+// An initiative lists the gates and initiatives it waits on by ID, all in its own project.
+function dependencies(r, p, gates, initiatives) {
+  const where = p + ".dependsOn";
+  if (!Array.isArray(r.dependsOn)) fail(where, "expected an array of gate or initiative IDs");
+  const seen = new Set();
+  for (const id of r.dependsOn) {
+    if (typeof id !== "string" || !id) fail(where, "expected an array of gate or initiative IDs");
+    if (id === r.id) fail(where, "an initiative cannot depend on itself");
+    if (seen.has(id)) fail(where, `duplicate dependency "${id}"`);
+    seen.add(id);
+    if (gates.get(id)?.projectId !== r.projectId && initiatives.get(id)?.projectId !== r.projectId)
+      fail(where, `"${id}" is not a gate or initiative in this project`);
+  }
+}
+// A gate depends on nothing, so a cycle can only run through initiatives. Depth-first with an
+// explicit stack, so a long chain cannot exhaust the call stack. Returns the first cycle found
+// in record order, as a list of IDs that starts and ends on the same initiative.
+function dependencyCycle(records) {
+  const byId = new Map(records.map((r) => [r.id, r])),
+    done = new Set();
+  for (const first of records) {
+    if (done.has(first.id)) continue;
+    const path = [first.id],
+      cursor = [0];
+    while (path.length) {
+      const id = path.at(-1),
+        from = byId.get(id),
+        deps = from.dependsOn ?? [],
+        i = cursor[cursor.length - 1]++;
+      if (i >= deps.length) {
+        done.add(id);
+        path.pop();
+        cursor.pop();
+        continue;
+      }
+      const to = byId.get(deps[i]);
+      if (!to || to.projectId !== from.projectId || done.has(to.id)) continue;
+      const at = path.indexOf(to.id);
+      if (at >= 0) return [...path.slice(at), to.id];
+      path.push(to.id);
+      cursor.push(0);
+    }
+  }
+}
 const reportKinds = ["market-landscape", "demand", "competition", "positioning", "other"];
 const levels = ["high", "medium", "low"];
 const evidenceStatuses = [
@@ -156,8 +202,8 @@ function vaultLink(v, p) {
 export function validateWorkspace(w) {
   if (!w || w.schema !== "marketing/workspace@1")
     fail("schema", "expected marketing/workspace@1");
-  // Workspaces saved before reports existed have no collection; they gain an empty one.
-  if (w.reports === undefined) w.reports = [];
+  // Workspaces saved before reports or gates existed have no such collection; they gain an empty one.
+  for (const k of ["reports", "gates"]) if (w[k] === undefined) w[k] = [];
   number(w.revision, "revision", true);
   for (const k of Object.keys(w))
     if (!["schema", "revision", ...collections].includes(k))
@@ -176,7 +222,9 @@ export function validateWorkspace(w) {
     }
   }
   const projects = new Map(w.projects.map((r) => [r.id, r])),
-    initiatives = new Map(w.initiatives.map((r) => [r.id, r]));
+    initiatives = new Map(w.initiatives.map((r) => [r.id, r])),
+    gates = new Map(w.gates.map((r) => [r.id, r])),
+    evidence = new Map(w.evidence.map((r) => [r.id, r]));
   for (const k of collections)
     for (const r of w[k]) {
       const p = `${k}.${r.id}`,
@@ -223,6 +271,27 @@ export function validateWorkspace(w) {
           date(r.end, p + ".end");
           if (r.end < r.start) fail(p, "end precedes start");
           n("budget");
+          if (r.hours !== undefined) n("hours");
+          if (r.dependsOn !== undefined) dependencies(r, p, gates, initiatives);
+          break;
+        case "gates":
+          for (const key of ["name", "criteria"]) t(key);
+          one(r.status, gateStatuses, p + ".status");
+          if (r.checkedAt !== undefined) date(r.checkedAt, p + ".checkedAt");
+          if (r.notes !== undefined) t("notes");
+          if (initiatives.get(r.id)?.projectId === r.projectId)
+            fail(p, "ID is also an initiative in this project; a dependency must name one or the other");
+          if (r.evidenceIds !== undefined) {
+            if (!Array.isArray(r.evidenceIds)) fail(p + ".evidenceIds", "expected an array of evidence IDs");
+            const seen = new Set();
+            for (const id of r.evidenceIds) {
+              if (typeof id !== "string" || !id) fail(p + ".evidenceIds", "expected an array of evidence IDs");
+              if (seen.has(id)) fail(p + ".evidenceIds", `duplicate evidence "${id}"`);
+              seen.add(id);
+              if (evidence.get(id)?.projectId !== r.projectId)
+                fail(p + ".evidenceIds", `"${id}" is not evidence in this project`);
+            }
+          }
           break;
         case "observations":
           one(r.channel, channels, p + ".channel");
@@ -333,6 +402,8 @@ export function validateWorkspace(w) {
           break;
       }
     }
+  const cycle = dependencyCycle(w.initiatives);
+  if (cycle) fail(`initiatives.${cycle[0]}.dependsOn`, "dependency cycle " + cycle.join(" -> "));
   return w;
 }
 
@@ -342,7 +413,7 @@ export function validateWorkspace(w) {
 // A field that a new feature reads must be added here.
 export const recordFields = {
   projects: ["id", "name", "audience", "category", "problem", "promise", "stage", "objective", "weeklyHours", "budget", "currency", "strategy"],
-  initiatives: ["id", "projectId", "name", "channel", "hypothesis", "cta", "status", "start", "end", "budget", "owner", "brief"],
+  initiatives: ["id", "projectId", "name", "channel", "hypothesis", "cta", "status", "start", "end", "budget", "owner", "brief", "hours", "dependsOn"],
   observations: ["id", "projectId", "initiativeId", "channel", "metric", "value", "start", "end", "kind", "series", "definition", "url", "collectedAt", "currency", "cohort"],
   reactions: ["id", "projectId", "initiativeId", "channel", "text", "url", "collectedAt", "sentiment", "reviewed", "theme"],
   competitors: ["id", "projectId", "initiativeId", "name", "kind", "positioning", "url", "checkedAt", "claims"],
@@ -350,6 +421,7 @@ export const recordFields = {
   evidence: ["id", "projectId", "initiativeId", "claim", "dimension", "result", "strength", "url", "checkedAt", "publishedAt", "dataPeriod", "denominator", "limit", "credibility", "relevance", "status"],
   sources: ["id", "projectId", "initiativeId", "name", "adapter", "channel", "target", "traffic", "lastCheckedAt", "lastError"],
   reports: ["id", "projectId", "title", "markdown", "updatedAt", "kind", "vaultUrl"],
+  gates: ["id", "projectId", "name", "criteria", "status", "checkedAt", "evidenceIds", "notes"],
 };
 const nestedFields = {
   competitors: { claims: ["dimension", "value", "url", "checkedAt"] },

@@ -32,13 +32,20 @@ test("a misspelled optional field is reported with a did-you-mean, and the ledge
 
 test("unsupported fields are reported without a guess", () => {
   const w = ledger();
-  w.initiatives = [{ ...w.initiatives[0], dependsOn: ["video"], hours: 4, targets: { wishlists: 270 } }];
+  // hours and dependsOn were unsupported until gates and the plan check read them; targets still is.
+  w.initiatives = [{ ...w.initiatives[0], platforms: ["web"], targets: { wishlists: 270 } }];
   const warnings = workspaceWarnings(w);
   assert.deepEqual(warnings, [
-    'initiatives.video: unknown field "dependsOn"; nothing reads it',
-    'initiatives.video: unknown field "hours"; nothing reads it',
+    'initiatives.video: unknown field "platforms"; nothing reads it',
     'initiatives.video: unknown field "targets"; nothing reads it',
   ]);
+});
+
+test("hours and dependsOn on an initiative are fields the plan check reads, so they raise no warning", () => {
+  const w = ledger();
+  w.gates = [{ id: "g1", projectId: "game", name: "Playtest", criteria: "5 of 8 finish", status: "open" }];
+  w.initiatives = [{ ...w.initiatives[0], hours: 4, dependsOn: ["g1"] }];
+  assert.deepEqual(workspaceWarnings(w), []);
 });
 
 test("every record type reports unknown fields", () => {
