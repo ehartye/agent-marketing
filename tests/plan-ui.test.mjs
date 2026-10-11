@@ -204,3 +204,41 @@ test("the desk serves its plan module and the page has a place for the panel", (
     assert.ok(html.includes(`id="${id}"`), id);
   assert.ok(readFileSync("src/server.mjs", "utf8").includes('"views/plan.js"'));
 });
+
+// WCAG 2.x: 4.5:1 is the minimum for text under 18.66px bold or 24px, and a chip's 11px label is small text.
+const luminance = (hex) => {
+  const h = hex.length === 4 ? [...hex.slice(1)].map((c) => c + c).join("") : hex.slice(1),
+    [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const contrast = (a, b) => {
+  const [hi, lo] = [luminance(a), luminance(b)].toSorted((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+// The declarations of the rule whose selector is exactly `selector` (the first one in the file).
+const ruleBody = (css, selector) => {
+  const at = css.search(new RegExp(String.raw`(^|\n)` + selector.replace(/[[\]().]/g, String.raw`\$&`) + String.raw`\s*\{`)),
+    open = css.indexOf("{", at);
+  return at < 0 ? "" : css.slice(open + 1, css.indexOf("}", open));
+};
+const tokensIn = (css, selector) =>
+  Object.fromEntries(
+    [...ruleBody(css, selector).matchAll(/(--[\w-]+)\s*:\s*(#[0-9a-fA-F]{3,6})\s*;/g)].map((m) => [m[1], m[2]]),
+  );
+
+test("every gate chip and positive pill reads at 4.5:1 or better against its pill background in both themes", () => {
+  const css = readFileSync("ui/style.css", "utf8"),
+    dark = tokensIn(css, ":root"),
+    themes = { dark, light: { ...dark, ...tokensIn(css, ':root[data-theme="light"]') } },
+    pill = ruleBody(css, ".pill").match(/background:\s*var\((--[\w-]+)\)/)?.[1];
+  assert.equal(pill, "--paper", "the chip sits on the pill background");
+  for (const selector of [".gate-chip.open", ".gate-chip.passed", ".gate-chip.failed", ".gate-chip.waived", ".pill.positive"]) {
+    const colour = ruleBody(css, selector).match(/(?:^|[\s;])color:\s*var\((--[\w-]+)\)/)?.[1];
+    assert.ok(colour, `${selector} sets a text colour from a token`);
+    for (const [name, tokens] of Object.entries(themes))
+      assert.ok(
+        contrast(tokens[colour], tokens[pill]) >= 4.5,
+        `${selector} in the ${name} theme: ${tokens[colour]} on ${tokens[pill]} is ${contrast(tokens[colour], tokens[pill]).toFixed(2)}:1`,
+      );
+  }
+});

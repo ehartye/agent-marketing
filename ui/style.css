@@ -33,7 +33,7 @@
   --muted: #50677f;
   --blue: #2459a8;
   --citrus: #f3ca52;
-  --teal: #147d78;
+  --teal: #0f6f6a; /* text on --paper at 5.4:1; the earlier #147d78 was 4.43:1 */
   --alert: #ac4355;
   --range: #a9c5e7;
   --chrome: #172c46;
