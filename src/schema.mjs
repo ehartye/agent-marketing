@@ -97,13 +97,26 @@ function number(v, p, integer = false) {
 function one(v, items, p) {
   if (!items.includes(v)) fail(p, `expected one of ${items.join(", ")}`);
 }
+const isDate = (v) =>
+  typeof v === "string" &&
+  /^\d{4}-\d{2}-\d{2}$/.test(v) &&
+  Number.isFinite(Date.parse(v)) &&
+  new Date(v).toISOString().slice(0, 10) === v;
 function date(v, p) {
-  if (
-    typeof v !== "string" ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(v) ||
-    new Date(v).toISOString().slice(0, 10) !== v
-  )
-    fail(p, "expected a real YYYY-MM-DD date");
+  if (!isDate(v)) fail(p, "expected a real YYYY-MM-DD date");
+}
+// These fields were free text in a ledger written before the release that gave them a meaning (0.11).
+// A value that does not fit is refused as any wrong value is, but the message names the record, the
+// field, what was found and what is expected, and says the field is typed now, so the owner can see
+// it is the field that changed and not the file that is damaged.
+const typedSince = "0.11";
+const shown = (v) => {
+  const t = JSON.stringify(v) ?? String(v);
+  return t.length > 40 ? t.slice(0, 40) + "…" : t;
+};
+function typed(record, key, p, ok, expected) {
+  if (!ok)
+    fail(`${p}.${key}`, `${shown(record[key])} is not ${expected}; ${key} is a typed field since ${typedSince} (if it holds something else, rename that field)`);
 }
 function timestamp(v, p) {
   if (
@@ -360,6 +373,8 @@ function slotRecord(r, p, assets, bySlot, decisions) {
   one(r.kind, assetKinds, p + ".kind");
   one(r.status, slotStatuses, p + ".status");
   for (const key of ["spec", "notes"]) if (r[key] !== undefined) text(r[key], `${p}.${key}`);
+  if (r.waitingOn !== undefined && (typeof r.waitingOn !== "string" || !r.waitingOn.trim() || r.waitingOn.length > 200))
+    fail(p + ".waitingOn", "expected nonempty text of at most 200 characters");
   const selected = (bySlot.get(r.id) ?? []).filter((a) => a.status === "selected");
   if (selected.length > 1) fail(p, `more than one selected asset (${selected.map((a) => a.id).join(", ")})`);
   if (r.status === "picked") {
@@ -423,8 +438,10 @@ export function validateWorkspace(w) {
     if (!["schema", "revision", ...collections].includes(k))
       fail(k, "unknown workspace collection");
   for (const k of collections) {
-    if (!Array.isArray(w[k]) || w[k].length > 50000)
-      fail(k, "expected array (max 50000 records)");
+    // The progress log grows with every command, so it has the most room; no entry is ever dropped.
+    const most = k === "updates" ? 200000 : 50000;
+    if (!Array.isArray(w[k]) || w[k].length > most)
+      fail(k, `expected array (max ${most} records)`);
     const ids = new Set();
     for (const r of w[k]) {
       if (!r || typeof r !== "object" || Array.isArray(r))
@@ -492,11 +509,11 @@ export function validateWorkspace(w) {
           n("budget");
           if (r.hours !== undefined) plannedHours(r.hours, p + ".hours");
           if (r.dependsOn !== undefined) dependencies(r, p, gates, initiatives);
-          if (r.note !== undefined) t("note");
+          if (r.note !== undefined)
+            typed(r, "note", p, typeof r.note === "string" && r.note.trim() && r.note.length <= 20000, "nonempty text (at most 20000 characters)");
           if (r.parentId !== undefined) {
             if (r.parentId === r.id) fail(p + ".parentId", "an initiative cannot be its own parent");
-            if (initiatives.get(r.parentId)?.projectId !== r.projectId)
-              fail(p + ".parentId", `"${r.parentId}" is not an initiative in this project`);
+            typed(r, "parentId", p, initiatives.get(r.parentId)?.projectId === r.projectId, "an initiative in this project");
           }
           break;
         case "gates":
@@ -504,8 +521,8 @@ export function validateWorkspace(w) {
           one(r.status, gateStatuses, p + ".status");
           if (r.checkedAt !== undefined) date(r.checkedAt, p + ".checkedAt");
           if (r.notes !== undefined) t("notes");
-          if (r.due !== undefined) date(r.due, p + ".due");
-          if (r.hours !== undefined) plannedHours(r.hours, p + ".hours");
+          if (r.due !== undefined) typed(r, "due", p, isDate(r.due), "a YYYY-MM-DD date");
+          if (r.hours !== undefined) typed(r, "hours", p, Number.isFinite(r.hours) && r.hours >= 0, "a nonnegative number of maker-hours");
           if (initiatives.get(r.id)?.projectId === r.projectId)
             fail(p, "ID is also an initiative in this project; a dependency must name one or the other");
           if (r.evidenceIds !== undefined) {
@@ -611,8 +628,8 @@ export function validateWorkspace(w) {
           document({ markdown: r.markdown, updatedAt: r.updatedAt }, p);
           if (r.kind !== undefined) one(r.kind, reportKinds, p + ".kind");
           if (r.vaultUrl !== undefined) vaultLink(r.vaultUrl, p + ".vaultUrl");
-          reference(r, "gateId", p, gates, "gate");
-          reference(r, "decisionId", p, decisions, "decision");
+          if (r.gateId !== undefined) typed(r, "gateId", p, gates.get(r.gateId)?.projectId === r.projectId, "a gate in this project");
+          if (r.decisionId !== undefined) typed(r, "decisionId", p, decisions.get(r.decisionId)?.projectId === r.projectId, "a decision in this project");
           break;
         case "decisions": {
           for (const key of ["title", "question"]) t(key);
@@ -622,6 +639,8 @@ export function validateWorkspace(w) {
           options(r, p);
           if (r.chosen !== undefined && !r.options.some((o) => o.id === r.chosen))
             fail(p + ".chosen", `"${r.chosen}" is not one of the options`);
+          if (r.recommendedOptionId !== undefined && !r.options.some((o) => o.id === r.recommendedOptionId))
+            fail(p + ".recommendedOptionId", `${shown(r.recommendedOptionId)} is not one of the options (the recommendation text goes in recommendation)`);
           if (r.status === "decided") {
             if (r.chosen === undefined) fail(p + ".chosen", "a decided decision needs the option chosen");
             if (r.decidedAt === undefined) fail(p + ".decidedAt", "a decided decision needs the time it was decided");
@@ -709,10 +728,10 @@ export const recordFields = {
   sources: ["id", "projectId", "initiativeId", "name", "adapter", "channel", "target", "traffic", "lastCheckedAt", "lastError"],
   reports: ["id", "projectId", "title", "markdown", "updatedAt", "kind", "vaultUrl", "initiativeId", "gateId", "decisionId"],
   gates: ["id", "projectId", "name", "criteria", "status", "checkedAt", "evidenceIds", "notes", "due", "hours", "initiativeId"],
-  decisions: ["id", "projectId", "initiativeId", "title", "question", "status", "needBy", "defaultIfSilent", "recommendation", "options", "chosen", "rationale", "decidedAt", "reportId", "gateIds", "supersededBy", "history"],
+  decisions: ["id", "projectId", "initiativeId", "title", "question", "status", "needBy", "defaultIfSilent", "recommendation", "recommendedOptionId", "options", "chosen", "rationale", "decidedAt", "reportId", "gateIds", "supersededBy", "history"],
   actions: ["id", "projectId", "initiativeId", "gateId", "decisionId", "title", "owner", "status", "due", "hours", "notes", "doneAt", "blockedBy"],
   updates: ["id", "projectId", "initiativeId", "at", "kind", "refId", "text"],
-  assetSlots: ["id", "projectId", "initiativeId", "name", "kind", "spec", "status", "selectedAssetId", "decisionId", "notes"],
+  assetSlots: ["id", "projectId", "initiativeId", "name", "kind", "spec", "status", "selectedAssetId", "decisionId", "notes", "waitingOn"],
   assets: ["id", "projectId", "slotId", "label", "kind", "file", "url", "text", "mediaType", "bytes", "sha256", "width", "height", "status", "rationale", "source", "createdAt", "decidedAt", "supersedes"],
 };
 const nestedFields = {

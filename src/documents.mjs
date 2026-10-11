@@ -45,7 +45,9 @@ export function saveReport(file, { id, title, markdown, projectId, kind, vaultUr
   const workspace = mutateWorkspace(file, w => {
     const at = new Date().toISOString(), before = (w.reports || []).find(r => r.id === id);
     const record = { id, title, markdown, updatedAt: at };
-    if (projectId) record.projectId = projectId;
+    // A save replaces the record, so a project the caller does not restate is kept too.
+    const project = projectId || before?.projectId;
+    if (project) record.projectId = project;
     if (kind) record.kind = kind;
     if (vaultUrl) record.vaultUrl = vaultUrl;
     // A save replaces the record, so a parent the caller does not restate is kept, not dropped.
