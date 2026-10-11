@@ -47,13 +47,14 @@ export function createDeskClient(request = api) {
         selection.initiativeId = "";
       const query = new URLSearchParams(Object.entries(selection).filter(([,value]) => value)).toString();
       const suffix = query ? "?" + query : "";
-      const [data, actions, channels, refs] = await Promise.all([
+      const [data, actions, channels, refs, plan] = await Promise.all([
         request("/api/report" + suffix), request("/api/advise" + suffix),
         request("/api/channels" + suffix), references || request("/api/references"),
+        request("/api/plan" + suffix),
       ]);
       if (current !== generation) return null;
       references = refs;
-      snapshot = { workspace, selection, data, actions, channels, refs };
+      snapshot = { workspace, selection, data, actions, channels, refs, plan };
       return snapshot;
     },
   };

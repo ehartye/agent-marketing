@@ -147,7 +147,7 @@ export async function startServer(
           "/theme.js": ["theme.js", "text/javascript"],
           ...Object.fromEntries([
             "state.js", "shared.js", "chart.js", "documents.js", "markdown.js", "views/campaign.js",
-            "views/reception.js", "views/research.js", "views/reports.js", "views/experiments.js", "views/results.js",
+            "views/reception.js", "views/research.js", "views/reports.js", "views/experiments.js", "views/results.js", "views/plan.js",
           ].map(name => ["/" + name, [name, "text/javascript"]])),
         };
         if (assets[u.pathname]) {

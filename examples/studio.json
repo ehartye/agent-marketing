@@ -31,6 +31,19 @@
       "weeklyHours": 2,
       "budget": 50,
       "currency": "USD"
+    },
+    {
+      "id": "harbor",
+      "name": "Lantern Harbor · demo",
+      "audience": ["cozy game players", "browser game fans"],
+      "category": "game",
+      "problem": "A calm half hour of harbor-town tending that needs no install",
+      "promise": "Light a harbor town one lantern at a time, free in your browser",
+      "stage": "beta",
+      "objective": "Open a Steam coming-soon page only after 5 of 8 outside players finish chapter one",
+      "weeklyHours": 6,
+      "budget": 100,
+      "currency": "USD"
     }
   ],
   "initiatives": [
@@ -74,6 +87,93 @@
       "status": "running",
       "start": "2026-10-01",
       "end": "2026-10-14",
+      "budget": 0,
+      "owner": "Family studio"
+    },
+    {
+      "id": "harbor-assets",
+      "projectId": "harbor",
+      "name": "Capsule art and five screenshots",
+      "channel": "direct",
+      "hypothesis": "Store assets cut from the pinned build, with no added text, pass the store checks the first time",
+      "cta": "Not public: internal prerequisite",
+      "status": "running",
+      "start": "2026-10-12",
+      "end": "2026-10-18",
+      "budget": 0,
+      "owner": "Family studio",
+      "hours": 4
+    },
+    {
+      "id": "harbor-playtest",
+      "projectId": "harbor",
+      "name": "Outside playtest of the web build",
+      "channel": "direct",
+      "hypothesis": "At least half of eight outside players finish chapter one in one session and say they would play again",
+      "cta": "Play chapter one and tell us where you stopped",
+      "status": "running",
+      "start": "2026-10-12",
+      "end": "2026-10-25",
+      "budget": 0,
+      "owner": "Family studio",
+      "hours": 6,
+      "dependsOn": ["harbor-gate-truth"]
+    },
+    {
+      "id": "harbor-itch",
+      "projectId": "harbor",
+      "name": "Free browser page on itch.io",
+      "channel": "itch",
+      "hypothesis": "A readable page with the browser build earns plays and a first set of public comments at no cost, before any Steam fee",
+      "cta": "Play free in your browser",
+      "status": "planned",
+      "start": "2026-10-26",
+      "end": "2026-11-15",
+      "budget": 0,
+      "owner": "Family studio",
+      "hours": 9,
+      "dependsOn": ["harbor-gate-playtest", "harbor-gate-assets"]
+    },
+    {
+      "id": "harbor-trailer",
+      "projectId": "harbor",
+      "name": "Gameplay trailer and three clips",
+      "channel": "youtube",
+      "hypothesis": "A trailer that shows play in the first five seconds sends tagged visits to the itch.io page",
+      "cta": "Play free in your browser",
+      "status": "planned",
+      "start": "2026-10-26",
+      "end": "2026-11-22",
+      "budget": 0,
+      "owner": "Family studio",
+      "hours": 12,
+      "dependsOn": ["harbor-gate-assets"]
+    },
+    {
+      "id": "harbor-steam",
+      "projectId": "harbor",
+      "name": "Steam coming-soon page, 14-day wishlist test",
+      "channel": "steam",
+      "hypothesis": "A coming-soon page with one capsule and tagged links reaches 150 wishlists in its first 14 days; fewer after one revision stops the Steam plan",
+      "cta": "Wishlist on Steam",
+      "status": "planned",
+      "start": "2026-11-16",
+      "end": "2026-12-13",
+      "budget": 100,
+      "owner": "Family studio",
+      "hours": 16,
+      "dependsOn": ["harbor-itch", "harbor-gate-playtest", "harbor-gate-name"]
+    },
+    {
+      "id": "harbor-devlog",
+      "projectId": "harbor",
+      "name": "Weekly devlog posts",
+      "channel": "bluesky",
+      "hypothesis": "Short weekly posts with a clip and one tagged link build a small following to tell about the pages",
+      "cta": "Play free in your browser",
+      "status": "planned",
+      "start": "2026-10-26",
+      "end": "2026-12-13",
       "budget": 0,
       "owner": "Family studio"
     }
@@ -481,7 +581,66 @@
       "strength": "primary",
       "url": "https://example.com/demo-evidence",
       "checkedAt": "2026-10-08"
+    },
+    {
+      "id": "harbor-truth-sheet",
+      "projectId": "harbor",
+      "dimension": "activation",
+      "claim": "The pinned build ships seven chapters and a 62 MB offline pack, and the README now says so",
+      "result": "supports",
+      "strength": "primary",
+      "url": "README.md#L10-L20",
+      "checkedAt": "2026-10-08",
+      "status": "product-fact"
+    },
+    {
+      "id": "harbor-capsule-check",
+      "projectId": "harbor",
+      "dimension": "channel",
+      "claim": "The draft capsule still shows the tagline and menu buttons that the store's capsule rules do not allow",
+      "result": "contradicts",
+      "strength": "secondary",
+      "url": "https://example.com/demo-capsule-rules",
+      "checkedAt": "2026-10-09",
+      "status": "documented-rule"
     }
   ],
-  "sources": []
+  "sources": [],
+  "gates": [
+    {
+      "id": "harbor-gate-name",
+      "projectId": "harbor",
+      "name": "Name is clear to use",
+      "criteria": "A search of Steam, itch.io and the trademark register finds 0 live same-name game listings or registrations, and the result is written down",
+      "status": "waived",
+      "checkedAt": "2026-10-05",
+      "notes": "Keep the name for the web build only; decide again before any store page is registered"
+    },
+    {
+      "id": "harbor-gate-truth",
+      "projectId": "harbor",
+      "name": "Truth sheet matches the build",
+      "criteria": "README, About page and store copy state the same chapter count (7) and download size (62 MB) as the pinned build",
+      "status": "passed",
+      "checkedAt": "2026-10-08",
+      "evidenceIds": ["harbor-truth-sheet"]
+    },
+    {
+      "id": "harbor-gate-playtest",
+      "projectId": "harbor",
+      "name": "Outside playtest",
+      "criteria": "At least 5 of 8 outside players finish chapter one in one session",
+      "status": "open"
+    },
+    {
+      "id": "harbor-gate-assets",
+      "projectId": "harbor",
+      "name": "Store assets conform",
+      "criteria": "5 gameplay screenshots at 1920x1080 and a capsule with the logo only, no tagline or buttons",
+      "status": "failed",
+      "checkedAt": "2026-10-09",
+      "evidenceIds": ["harbor-capsule-check"],
+      "notes": "The capsule still shows the tagline; redo it from the pinned build"
+    }
+  ]
 }
