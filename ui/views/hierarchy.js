@@ -2,6 +2,7 @@ import { $, esc, empty, num } from "../shared.js";
 import { documentCard } from "../documents.js";
 import { openAttr, draftAttr, draftValue, plural, statusChip, gotoButton } from "../hub-shared.js";
 import { initiativeFlags, gateChip } from "./plan.js";
+import { collateralCounts } from "./collateral.js";
 
 // Initiatives as the hierarchy they are: a parent holds the children below it, with the status,
 // dates and hours rolled up from them, how far gates and actions have come, a one-line note the
@@ -63,6 +64,15 @@ function linked(i, workspace) {
   return docs + detail;
 }
 
+// The slots and assets of an initiative and the parts under it, with the way to the Collateral tab.
+export function collateralLine(node, workspace) {
+  const i = node.initiative,
+    c = collateralCounts(workspace, new Set([i.id, ...flatten(node.children).map((x) => x.id)]));
+  if (!c.slots) return "";
+  const text = [plural(c.slots, "slot"), plural(c.assets, "asset"), c.toPick && `${c.toPick} to pick`, c.picked && `${c.picked} picked`].filter(Boolean).join(" · ");
+  return `<p class="docs"><span class="label">Collateral</span><button type="button" class="link-button" data-collateral-for="${esc(i.id)}" aria-label="Open the Collateral tab for ${esc(i.name)}: ${esc(text)}">${esc(text)}</button></p>`;
+}
+
 export function initiativeNode(node, ctx) {
   const { initiative: i, children } = node,
     { workspace, planFor } = ctx,
@@ -85,6 +95,7 @@ export function initiativeNode(node, ctx) {
       ${flags.notes}
       ${progress ? `<div class="meters">${meter("Gates passed", progress.gatesPassed, progress.gatesTotal, "No gates")}${meter("Actions done", progress.actionsDone, progress.actionsTotal, "No actions")}</div>` : ""}
       ${noteForm(i)}
+      ${collateralLine(node, workspace)}
       ${linked(i, workspace)}
       ${documentCard(i, "campaign")}
     </article>

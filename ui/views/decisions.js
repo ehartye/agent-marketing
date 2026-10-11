@@ -89,6 +89,7 @@ export function decisionBody(d, { workspace, today }) {
       d.initiativeId && "Initiative: " + gotoButton("initiative", d.initiativeId, initiativeName(workspace, d.initiativeId)),
       ...memos.map((r) => "Memo: " + gotoButton("report", r.id, r.title)),
       ...gates.map((g) => "Affects gate: " + gotoButton("gate", g.id, g.name)),
+      ...(workspace.assetSlots ?? []).filter((s) => s.decisionId === d.id).map((s) => "Collateral slot: " + gotoButton("slot", s.id, s.name)),
     ].filter(Boolean);
   const facts = [
     d.recommendation && `<p class="callout"><span class="label">Recommended</span>${esc(d.recommendation)}</p>`,

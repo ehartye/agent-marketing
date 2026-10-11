@@ -13,6 +13,7 @@ export function needsHeadline(a) {
     part(s.actions, "action", "actions", [s.overdueActions && `${s.overdueActions} overdue`]),
     part(s.gates, "gate due", "gates due", [s.overdueGates && `${s.overdueGates} overdue`]),
     part(s.blockedInitiatives, "blocked initiative", "blocked initiatives"),
+    part(s.picks, "collateral pick", "collateral picks"),
   ].filter(Boolean);
   return `${s.total} ${s.total === 1 ? "thing needs" : "things need"} you: ${parts.join(" · ")}`;
 }
@@ -73,7 +74,16 @@ export function needsBody(a, { workspace, plan }) {
          <p class="caption waiting"><strong>Waits on</strong> ${esc(i.blocker.name)} (${esc(i.blocker.kind)}, ${esc(i.blocker.status)})</p>`,
         i.blocker.kind === "gate" ? gotoButton("gate", i.blocker.id, "Open the gate", "primary-link") : gotoButton("initiative", i.id, "Open the initiative", "primary-link"),
       ));
-  return group("Decisions to make", decisions) + group("Your actions", actions) + group("Gates due", gates) + group("Blocked work", blocked);
+    // An open slot with two or more candidates is a choice only the owner can make.
+  const picks = (a.picks ?? []).map((p) =>
+      row(
+        "pick:" + p.slotId,
+        `<div class="chips"><span class="pill kind asset"><span aria-hidden="true">▤</span> Collateral</span></div>
+         <strong>Pick the ${esc(p.name)}</strong>
+         <p class="caption">${plural(p.candidates, "candidate")} waiting${p.initiativeId ? ` · for ${gotoButton("initiative", p.initiativeId, initiativeName(workspace, p.initiativeId))}` : ""}</p>`,
+        `<button type="button" class="primary" data-collateral-pick="${esc(p.slotId)}" aria-label="Compare ${p.candidates} candidates and pick: ${esc(p.name)}">Compare and pick</button>`,
+      ));
+  return group("Decisions to make", decisions) + group("Collateral to pick", picks) + group("Your actions", actions) + group("Gates due", gates) + group("Blocked work", blocked);
 }
 
 export function renderNeeds({ workspace, selection, attention, plan }) {

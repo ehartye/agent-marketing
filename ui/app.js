@@ -1,9 +1,11 @@
 import { $, esc, num, restoreFocus } from "./shared.js";
-import { api, createDeskClient, reviewDrafts, importMessage } from "./state.js";
+import { api, uploadFile, createDeskClient, reviewDrafts, importMessage } from "./state.js";
 import { renderActivity, drawChart } from "./chart.js";
 import { renderCampaign } from "./views/campaign.js";
 import { renderPlan } from "./views/plan.js";
 import { renderHub, bindHub } from "./views/hub.js";
+import { renderCollateral } from "./views/collateral.js";
+import { renderViewer, bindCollateral } from "./views/collateral-viewer.js";
 import { renderReception } from "./views/reception.js";
 import { renderResearch } from "./views/research.js";
 import { renderReports } from "./views/reports.js";
@@ -64,6 +66,8 @@ function render(snapshot) {
   $("data-scope").textContent = `${workspace.sources.length} registered sources across the workspace. Collection and downloads include every project; filters only change this view.`;
   renderCampaign(snapshot);
   renderHub(snapshot);
+  renderCollateral(snapshot);
+  renderViewer(snapshot);
   metricKey = renderActivity(workspace, data, metricKey);
   renderReception(snapshot, drafts);
   renderResearch(snapshot);
@@ -192,7 +196,16 @@ bindHub({
   write: (path, data) => api(path, { workspaceId, revision: client.snapshot.workspace.revision, ...data }),
   snapshot: () => client.snapshot,
   save, setView, say: text => message(text),
-  rerender: () => renderHub(client.snapshot),
+  rerender: () => { renderHub(client.snapshot); renderCollateral(client.snapshot); },
+});
+bindCollateral({
+  root: $("views"),
+  write: (path, data) => api(path, { workspaceId, revision: client.snapshot.workspace.revision, ...data }),
+  upload: (query, file, onProgress) => uploadFile({ workspaceId, ...query }, file, onProgress),
+  snapshot: () => client.snapshot,
+  save, setView, say: text => message(text),
+  rerender: () => { renderHub(client.snapshot); renderCollateral(client.snapshot); },
+  fetchJson: path => api(path),
 });
 $("dismiss").onclick = () => { $("notice").hidden = true; };
 $("refresh").onclick = $("retry").onclick = () => reload();

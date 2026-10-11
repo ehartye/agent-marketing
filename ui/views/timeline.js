@@ -17,9 +17,10 @@ export const kindBadge = (kind) =>
 export function updateTarget(u, workspace) {
   const by = {
     decision: ["decision", workspace.decisions], action: ["action", workspace.actions], gate: ["gate", workspace.gates],
-    initiative: ["initiative", workspace.initiatives], document: ["report", workspace.reports], asset: ["report", workspace.reports],
+    initiative: ["initiative", workspace.initiatives], document: ["report", workspace.reports], asset: ["asset", workspace.assets ?? []],
   };
-  const tries = u.kind in by ? [by[u.kind]] : [];
+  // An asset update names the asset, or, when a slot was added, the slot.
+  const tries = u.kind === "asset" ? [by.asset, ["slot", workspace.assetSlots ?? []]] : u.kind in by ? [by[u.kind]] : [];
   if (u.refId) for (const pair of [...tries, ["decision", workspace.decisions], ["action", workspace.actions], ["gate", workspace.gates], ["initiative", workspace.initiatives], ["report", workspace.reports]])
     if (pair[1].some((r) => r.id === u.refId)) return { kind: pair[0], id: u.refId, record: pair[1].find((r) => r.id === u.refId) };
   return null;
@@ -46,7 +47,7 @@ function entry(u, workspace, showProject) {
   const target = updateTarget(u, workspace),
     time = new Date(u.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     initiative = u.initiativeId && workspace.initiatives.find((i) => i.id === u.initiativeId),
-    label = target ? (target.record.title ?? target.record.name) : null;
+    label = target ? (target.record.title ?? target.record.name ?? target.record.label) : null;
   return `<li class="tl-entry" data-update="${esc(u.id)}">
     <div class="tl-head">${kindBadge(u.kind)}<time datetime="${esc(u.at)}" class="meta">${esc(time)}</time>${showProject ? `<span class="meta">${esc(workspace.projects.find((p) => p.id === u.projectId)?.name ?? u.projectId)}</span>` : ""}</div>
     <p>${esc(u.text)}</p>

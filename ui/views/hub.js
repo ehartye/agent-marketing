@@ -5,6 +5,7 @@ import { renderDecisions, setDecisionFilter } from "./decisions.js";
 import { renderActions, slug } from "./actions.js";
 import { renderTimeline, resetTimeline, showMoreTimeline } from "./timeline.js";
 import { renderHierarchy, treeOrder, subtreeIds } from "./hierarchy.js";
+import { resetCollateralView } from "./collateral.js";
 
 // The progress half of Decide & plan: what needs the owner, decisions, actions, the timeline and
 // the initiative hierarchy. renderHub draws them from one snapshot; bindHub wires the controls to
@@ -25,7 +26,7 @@ export function renderHub(snapshot) {
   renderHierarchy(ctx);
 }
 
-const TAB = { decision: "campaign", action: "campaign", gate: "campaign", initiative: "campaign", report: "market" };
+const TAB = { decision: "campaign", action: "campaign", gate: "campaign", initiative: "campaign", report: "market", slot: "collateral", asset: "collateral" };
 const find = (kind, id) => {
   const q = CSS.escape(id);
   return document.querySelector({
@@ -34,6 +35,8 @@ const find = (kind, id) => {
     gate: `[data-gate="${q}"]`,
     initiative: `[data-initiative-card="${q}"]`,
     report: `[data-report="${q}"]`,
+    slot: `[data-slot-card="${q}"]`,
+    asset: `[data-asset-card="${q}"]`,
   }[kind]);
 };
 
@@ -50,6 +53,7 @@ export function bindHub({ root, write, snapshot, save, setView, say, rerender })
     let el = find(kind, id);
     if (!el && kind === "decision") { setDecisionFilter("all"); rerender(); el = find(kind, id); }
     if (!el && kind === "action") { setOpen("actions-closed", true); rerender(); el = find(kind, id); }
+    if (!el && (kind === "slot" || kind === "asset")) { resetCollateralView(); rerender(); el = find(kind, id); }
     if (!el) return say("That record is not shown for the current selection. Choose its project, or clear the initiative filter.");
     if (kind === "decision" && !el.open) el.open = true;
     if (kind === "report") el.querySelector("details")?.setAttribute("open", "");

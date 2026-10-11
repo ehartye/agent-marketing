@@ -38,7 +38,7 @@ export function dueBadge(daysLeft, date) {
   return `<span class="pill due${daysLeft <= 3 ? " soon" : ""}">Due in ${plural(daysLeft, "day")}${when}</span>`;
 }
 
-const GLYPH = { open: "○", decided: "✓", deferred: "…", superseded: "↷", todo: "○", doing: "◐", done: "✓", blocked: "✕", dropped: "↷", passed: "✓", failed: "✕", waived: "↷" };
+const GLYPH = { open: "○", decided: "✓", deferred: "…", superseded: "↷", todo: "○", doing: "◐", done: "✓", blocked: "✕", dropped: "↷", passed: "✓", failed: "✕", waived: "↷", picked: "✓", candidate: "○", selected: "★", rejected: "✕", retired: "↷" };
 // A status is a word and a shape as well as a colour.
 export const statusChip = (status) =>
   `<span class="pill status-chip ${esc(status)}"><span aria-hidden="true">${GLYPH[status] ?? "•"}</span> ${esc(status)}</span>`;

@@ -70,6 +70,7 @@
       <p id="scope-summary" class="caption scope-summary"></p>
       <nav class="tabs" role="tablist" aria-label="Desk views">
         <button id="tab-campaign" role="tab" data-tab="campaign" aria-controls="campaign" aria-selected="true">Decide &amp; plan</button>
+        <button id="tab-collateral" role="tab" data-tab="collateral" aria-controls="collateral" aria-selected="false" tabindex="-1">Collateral</button>
         <button id="tab-reception" role="tab" data-tab="reception" aria-controls="reception" aria-selected="false" tabindex="-1">Review feedback</button>
         <button id="tab-market" role="tab" data-tab="market" aria-controls="market" aria-selected="false" tabindex="-1">Research fit</button>
         <button id="tab-experiments" role="tab" data-tab="experiments" aria-controls="experiments" aria-selected="false" tabindex="-1">Compare tests</button>
@@ -160,6 +161,20 @@
             <div id="channels"></div>
           </section>
         </div>
+      </section>
+      <section id="collateral" class="view" role="tabpanel" aria-labelledby="tab-collateral" tabindex="0" hidden>
+        <section class="panel" aria-labelledby="collateral-heading">
+          <div class="section-head">
+            <h2 id="collateral-heading" tabindex="-1">Collateral</h2>
+            <span id="collateral-summary" class="meta"></span>
+          </div>
+          <p class="caption">Banners, thumbnails, trailers and copy: the candidates for each place they go, the one picked and why, and the ones passed over, kept for reference. Linking to an artifact is fine; the choice is recorded here.</p>
+          <div id="collateral-filters" class="segmented" role="group" aria-label="Show slots that are"></div>
+          <div id="collateral-focus"></div>
+          <div id="collateral-new"></div>
+          <div id="collateral-body" class="slot-grid"></div>
+        </section>
+        <dialog id="lightbox" class="lightbox" aria-labelledby="lightbox-title"><div id="lightbox-inner"></div></dialog>
       </section>
       <section id="reception" class="view" role="tabpanel" aria-labelledby="tab-reception" tabindex="0" hidden>
         <div class="section-head">
