@@ -1228,3 +1228,56 @@ progress::-moz-progress-bar { background: var(--teal); }
   .lb-chip { min-width: 9rem; }
 }
 @media print { .lightbox, .add-asset, .new-slot, .alt .restore { display: none; } }
+
+/* ---- Decide & plan: a jump bar, sections that fold, and the lists that stay short. ---- */
+/* A chip's glyph is a box of its own, so a fallback font cannot make one chip taller than the next. */
+.pill > [aria-hidden="true"] { display: inline-block; line-height: 1; font-style: normal; font-weight: 400; vertical-align: baseline; }
+.status-chip.open, .status-chip.picked { line-height: normal; }
+.jumpbar {
+  position: sticky; top: 0; z-index: 20; display: flex; gap: 4px; margin: 0 0 16px; padding: 6px 8px; overflow-x: auto;
+  background: color-mix(in srgb, var(--paper) 94%, transparent); backdrop-filter: blur(6px);
+  border: 1px solid var(--line); border-radius: var(--radius); scrollbar-width: thin;
+}
+.jumpbar a {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 4px 12px; border-bottom: 2px solid transparent; border-radius: 3px;
+  color: var(--muted); font: 600 12px var(--utility-font); letter-spacing: 1px; text-transform: uppercase; text-decoration: none; white-space: nowrap;
+}
+.jumpbar a:hover { color: var(--ink); background: var(--tint); }
+.jumpbar a[aria-current="location"] { color: var(--blue); border-bottom-color: var(--blue); background: color-mix(in srgb, var(--blue) 12%, var(--white)); }
+.jumpbar .count { margin: 0; }
+.jumpbar .count:empty { display: none; }
+.fold-panel { scroll-margin-top: 64px; }
+.fold > summary { list-style: none; cursor: pointer; min-height: var(--control-height); }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary.section-head { margin-bottom: 0; }
+.fold[open] > summary.section-head { margin-bottom: 14px; }
+.fold > summary h2::before { content: "\25B8"; display: inline-block; width: 1.2em; color: var(--muted); }
+.fold[open] > summary h2::before { content: "\25BE"; }
+.fold > summary h2 { display: flex; align-items: center; }
+.decided-fold { margin-top: 16px; }
+.decided-fold > summary { display: flex; align-items: center; gap: 6px; min-height: var(--control-height); color: var(--blue); font-weight: 600; cursor: pointer; }
+.acted-banner { margin: 0 0 6px; padding: 8px 12px; border: 1px solid var(--teal); border-left-width: 3px; border-radius: var(--radius); color: var(--teal); background: color-mix(in srgb, var(--teal) 10%, transparent); font-size: 13px; }
+.acted-banner .meta { color: var(--muted); }
+.dcard.acted { border-left: 3px solid var(--teal); }
+.need-group.quiet h3 { opacity: 0.85; }
+.need-group.quiet .need { opacity: 0.92; }
+.need-more { margin-top: 6px; }
+.need-group > .caption { margin: 0 0 4px; }
+.need-projects { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); gap: 12px; margin-top: 12px; }
+.need-project { border: 1px solid var(--line); border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 12px 14px; min-width: 0; }
+.need-project-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px; }
+.need-project-head h3 { margin: 0; }
+.need-project > .caption { margin: 6px 0 0; }
+.need-top { list-style: none; margin: 8px 0 0; padding: 0; }
+.need-top-item { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; }
+.need-top-item .pill { margin: 0; }
+.waiting-cta p { margin: 0 0 8px; }
+/* The sections inside Plan details are quiet blocks, not panels of their own. */
+#plan-details .panel { margin-bottom: 16px; padding: 16px; background: transparent; }
+#plan-details .panel::before, #plan-details .panel::after { display: none; }
+#plan-details .panel > h3, #plan-details .section-head > h3 { margin: 0 0 8px; font: 700 15px var(--display-font); letter-spacing: 0.5px; text-transform: uppercase; }
+#plan-details .section-head > h3 { margin: 0; }
+.decision h3 { font-size: 25px; margin: 8px 0; }
+@media (prefers-reduced-motion: no-preference) { .jumpbar a { transition: background 0.12s, color 0.12s; } }
+@media (max-width: 640px) { .jumpbar { margin-left: -4px; margin-right: -4px; } .fold-panel { scroll-margin-top: 60px; } }
+@media print { .jumpbar { display: none; } }

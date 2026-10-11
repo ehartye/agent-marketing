@@ -145,7 +145,13 @@ export function planSummary(plan) {
 export function renderPlan({ workspace, plan }) {
   const show = hasPlanData(plan);
   $("plan-view").hidden = !show;
-  if (!show) return;
+  if (!show) {
+    // Nothing to show: leave nothing behind either, or the last project's cards stay in the hidden view and a
+    // jump to one of them would land on something nobody can see.
+    for (const id of ["gates", "load"]) $(id).innerHTML = "";
+    for (const id of ["gate-summary", "load-summary"]) $(id).textContent = "";
+    return;
+  }
   const summary = planSummary(plan),
     { load, budget } = plan;
   $("gate-summary").textContent = summary.gates;

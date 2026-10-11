@@ -11,7 +11,7 @@ export function renderCampaign({ workspace, data, actions, channels, refs, selec
     `<article>${!selection.projectId ? `<h3>${esc(project.name)}</h3>` : ""}${documentCard(project, "strategy")}</article>`).join("")
     : empty("Create a project first, then use market-strategy to save the audience, channel choices and rationale.");
   $("decision").innerHTML = a
-    ? `<div class="decision"><div><span class="label">EVIDENCE</span><h2>${esc(a.title)}</h2><p>${esc(a.reason)}</p>${a.evidence
+    ? `<div class="decision"><div><span class="label">EVIDENCE</span><h3>${esc(a.title)}</h3><p>${esc(a.reason)}</p>${a.evidence
         .map((id) => {
           const o =
             workspace.observations.find((x) => x.id === id) ||

@@ -68,21 +68,26 @@ export function createDeskClient(request = api) {
         selection.initiativeId = "";
       const query = new URLSearchParams(Object.entries(selection).filter(([,value]) => value)).toString();
       const suffix = query ? "?" + query : "";
-      // What needs the owner is read for the one project in view; the hierarchy needs a plan for
-      // every project it shows, so with no project chosen each gets its own.
-      const [data, actions, channels, refs, plan, attention, plans] = await Promise.all([
+      // What needs the owner is read for the project in view, or for every project when none is; the
+      // hierarchy needs a plan for every project it shows, so with no project chosen each gets its own.
+      const each = (path) => Promise.all(workspace.projects.map(p => request(path + encodeURIComponent(p.id))));
+      const [data, actions, channels, refs, plan, attention, plans, attentionList] = await Promise.all([
         request("/api/report" + suffix), request("/api/advise" + suffix),
         request("/api/channels" + suffix), references || request("/api/references"),
         request("/api/plan" + suffix),
         selection.projectId ? request("/api/attention?projectId=" + encodeURIComponent(selection.projectId)) : null,
-        selection.projectId ? null : Promise.all(workspace.projects.map(p => request("/api/plan?projectId=" + encodeURIComponent(p.id)))),
+        selection.projectId ? null : each("/api/plan?projectId="),
+        selection.projectId ? null : each("/api/attention?projectId="),
       ]);
       if (current !== generation) return null;
       references = refs;
       const byProject = selection.projectId
         ? { [selection.projectId]: plan }
         : Object.fromEntries(workspace.projects.map((p, n) => [p.id, plans[n]]));
-      snapshot = { workspace, selection, data, actions, channels, refs, plan, plans: byProject, attention };
+      const attentions = selection.projectId
+        ? (attention ? { [selection.projectId]: attention } : {})
+        : Object.fromEntries(workspace.projects.map((p, n) => [p.id, attentionList[n]]).filter(([, a]) => a));
+      snapshot = { workspace, selection, data, actions, channels, refs, plan, plans: byProject, attention, attentions };
       return snapshot;
     },
   };

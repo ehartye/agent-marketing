@@ -1,9 +1,11 @@
-import { $, esc, num, restoreFocus } from "./shared.js";
+import { $, esc, num, restoreFocus, keepsDisabled } from "./shared.js";
+import { hasDrafts } from "./hub-shared.js";
 import { api, uploadFile, createDeskClient, reviewDrafts, importMessage } from "./state.js";
 import { renderActivity, drawChart } from "./chart.js";
 import { renderCampaign } from "./views/campaign.js";
 import { renderPlan } from "./views/plan.js";
-import { renderHub, bindHub } from "./views/hub.js";
+import { renderHub, bindHub, resetDeskState } from "./views/hub.js";
+import { clearActed } from "./views/decisions.js";
 import { renderCollateral } from "./views/collateral.js";
 import { renderViewer, bindCollateral } from "./views/collateral-viewer.js";
 import { renderReception } from "./views/reception.js";
@@ -13,15 +15,19 @@ import { renderExperiments } from "./views/experiments.js";
 import { renderResults } from "./views/results.js";
 
 const client = createDeskClient(), drafts = reviewDrafts();
-let metricKey = "", loading = true, writing = false, failed = false, generation = 0, workspaceId = "", workspaceLabel = "";
+let metricKey = "", loading = true, writing = false, failed = false, generation = 0, workspaceId = "", workspaceLabel = "", currentTab = "", again = null;
 const filterIds = { projectId: "project", initiativeId: "initiative", from: "from", to: "to" };
 const selection = () => Object.fromEntries(Object.entries(filterIds).map(([key, id]) => [key, $(id).value]));
 const tabs = [...document.querySelectorAll("[role=tab]")];
 
-function message(text, error = false, retry = false) {
+// `retry` shows the button beside the message. It refreshes the page, or, when `retryNow` is given,
+// makes the change that was refused again.
+function message(text, error = false, retry = false, retryNow = null) {
   $("status").textContent = text;
   $("notice").hidden = !text;
   $("notice").classList.toggle("error", error);
+  again = retryNow;
+  $("retry").textContent = retryNow ? "Save again" : "Refresh evidence";
   $("retry").hidden = !retry;
 }
 function syncControls() {
@@ -30,11 +36,15 @@ function syncControls() {
   $("import").disabled = writing || loading || failed;
   $("collect").title = client.snapshot?.workspace.sources.length ? "Collect every registered source in this workspace" : "Register a source with market-monitor to enable collection";
   $("filters").querySelectorAll("input, select, button").forEach(el => { el.disabled = writing; });
-  $("views").querySelectorAll("button, input, select, textarea").forEach(el => { el.disabled = writing || loading || failed; });
+  // A control the page disabled on purpose (the standing choice in "Change to") stays disabled.
+  $("views").querySelectorAll("button, input, select, textarea").forEach(el => { el.disabled = keepsDisabled(el) || writing || loading || failed; });
   $("collect").disabled = writing || loading || failed || !client.snapshot?.workspace.sources.length;
 }
 function setView(id, focus = false) {
   const active = tabs.find(tab => tab.dataset.tab === id) || tabs[0];
+  // Leaving the tab lets go of the decision that was held in view after it was answered.
+  if (currentTab && active.dataset.tab !== currentTab) clearActed();
+  currentTab = active.dataset.tab;
   for (const tab of tabs) {
     const selected = tab === active;
     tab.setAttribute("aria-selected", String(selected));
@@ -123,8 +133,13 @@ async function reload(initial = false) {
 }
 // `focusKey` is a selector, or a list of them: focus returns to the first that is still on screen after the
 // redraw, because the control that was used may have moved or gone (a decided question leaves "Open").
-async function save(action, success, focusKey) {
-  if (writing || loading || failed || !client.snapshot) return;
+// Returns false when the desk would not take the save at all (busy, still loading, or no data), so a caller
+// that promised something to the owner can take it back; true once it has been tried.
+// A conflict (409) means the file changed under the page: the page is reloaded at once, what was typed is
+// kept, and the owner is told plainly that the change was NOT saved. `retry: false` is for a save that cannot
+// be run twice from the same closure (a batch of files).
+async function save(action, success, focusKey, { retry = true } = {}) {
+  if (writing || loading || failed || !client.snapshot) return false;
   writing = true;
   syncControls();
   let committed = false;
@@ -135,15 +150,27 @@ async function save(action, success, focusKey) {
     await load(false, true);
     message(typeof success === "function" ? success(result) : success);
   } catch (error) {
-    message((committed ? "Saved, but the display could not refresh. " : "") + error.message, true, committed || error.status === 409);
-    if (!committed) document.querySelectorAll("[data-initiative]").forEach(el => {
-      el.value = client.snapshot.workspace.initiatives.find(i => i.id === el.dataset.initiative).status;
-    });
+    if (!committed && error.status === 409) {
+      const again = retry ? () => save(action, success, focusKey, { retry }) : null,
+        told = "Your change was NOT saved: the workspace changed while you were working. ";
+      try {
+        await load(false, true);
+        message(told + "The page now shows the latest records and keeps what you typed. Check them, then " + (again ? "use Save again." : "make the change again."), true, Boolean(again), again);
+      } catch (loadError) {
+        message(told + "The page could not refresh either: " + loadError.message, true, true);
+      }
+    } else {
+      message((committed ? "Saved, but the display could not refresh. " : "") + error.message, true, committed);
+      if (!committed) document.querySelectorAll("[data-initiative]").forEach(el => {
+        el.value = client.snapshot.workspace.initiatives.find(i => i.id === el.dataset.initiative)?.status ?? el.value;
+      });
+    }
   } finally {
     writing = false;
     syncControls();
     if (!loading && !failed) restoreFocus([].concat(focusKey).find(key => key && document.querySelector(key)?.checkVisibility?.() !== false && document.querySelector(key)) ?? "#sentiment-filter");
   }
+  return true;
 }
 
 tabs.forEach((tab, index) => {
@@ -161,13 +188,21 @@ document.addEventListener("click", event => {
     renderReception(client.snapshot, drafts);
     $("sentiment-filter").focus();
   }
+  // "Open <project>" in the all-projects Needs panel: choose that project and look at its list.
+  const pick = event.target.closest("[data-select-project]");
+  if (pick) {
+    $("project").value = pick.dataset.selectProject;
+    $("initiative").value = "";
+    reload().then(() => $("needs-heading").focus({ preventScroll: true }));
+  }
 });
 $("workspace").onchange = async () => {
   const chosen = $("workspace").value;
-  if (drafts.size && !confirm("Unsaved review edits in this tab will be discarded. Switch workspace?")) { $("workspace").value = workspaceId; return; }
+  if ((drafts.size || hasDrafts()) && !confirm("Unsaved edits in this tab will be discarded. Switch workspace?")) { $("workspace").value = workspaceId; return; }
   try {
     await api("/api/workspace/select", { id: chosen });
     drafts.clear();
+    resetDeskState();
     for (const id of Object.values(filterIds)) $(id).value = "";
     history.replaceState(null, "", location.pathname + "#" + (location.hash.slice(1) || "campaign"));
     await reload(true);
@@ -195,26 +230,29 @@ bindHub({
   root: $("views"),
   write: (path, data) => api(path, { workspaceId, revision: client.snapshot.workspace.revision, ...data }),
   snapshot: () => client.snapshot,
-  save, setView, say: text => message(text),
+  save, setView, say: (text, error = false) => message(text, error),
   rerender: () => { renderHub(client.snapshot); renderCollateral(client.snapshot); },
+  redraw: () => { if (client.snapshot) renderPlan(client.snapshot); },
 });
 bindCollateral({
   root: $("views"),
   write: (path, data) => api(path, { workspaceId, revision: client.snapshot.workspace.revision, ...data }),
   upload: (query, file, onProgress) => uploadFile({ workspaceId, ...query }, file, onProgress),
   snapshot: () => client.snapshot,
-  save, setView, say: text => message(text),
+  save, setView, say: (text, error = false) => message(text, error),
   rerender: () => { renderHub(client.snapshot); renderCollateral(client.snapshot); },
   fetchJson: path => api(path),
+  busy: () => writing || loading || failed || !client.snapshot,
 });
 $("dismiss").onclick = () => { $("notice").hidden = true; };
-$("refresh").onclick = $("retry").onclick = () => reload();
+$("refresh").onclick = () => reload();
+$("retry").onclick = () => (again ? again() : reload());
 $("clear").onclick = () => { $("from").value = $("to").value = ""; reload(); };
 $("filters").onsubmit = event => event.preventDefault();
 for (const id of Object.values(filterIds)) $(id).onchange = () => reload();
 $("metric").onchange = () => { metricKey = $("metric").value; drawChart(client.snapshot.data, metricKey); };
 $("sentiment-filter").onchange = () => { if (client.snapshot) renderReception(client.snapshot, drafts); };
-$("initiatives").onchange = event => {
+$("initiatives-list").onchange = event => {
   const id = event.target.dataset.initiative;
   if (!id) return;
   const record = { ...client.snapshot.workspace.initiatives.find(i => i.id === id), status: event.target.value };

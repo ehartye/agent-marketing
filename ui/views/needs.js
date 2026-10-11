@@ -1,6 +1,7 @@
 import { $, esc } from "../shared.js";
-import { plural, daysFrom, dueBadge, gotoButton, initiativeName } from "../hub-shared.js";
+import { plural, daysFrom, dueBadge, gotoButton, initiativeName, hoursText } from "../hub-shared.js";
 import { actionControls } from "./actions.js";
+import { kindBadge } from "./timeline.js";
 
 // "Needs you now": the first thing on the Decide & plan page. Everything here comes from
 // attention(), so the desk and `marketing next` always agree on what is waiting for the owner.
@@ -31,66 +32,149 @@ export function nextDated(workspace, plan, projectId, today) {
   return found.toSorted((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id))[0] ?? null;
 }
 
-const group = (title, items) => items.length ? `<section class="need-group"><h3>${esc(title)} <span class="count">${items.length}</span></h3><ul class="need-list">${items.join("")}</ul></section>` : "";
+// A long list buries the urgent things, so each group shows a few rows and a button for the rest, and
+// whatever is overdue, from any group, leads in a short group of its own.
+const CAP = 5;
+const expanded = new Set();
+export const toggleNeedGroup = (key) => { if (!expanded.delete(key)) expanded.add(key); };
+export const resetNeeds = () => { expanded.clear(); };
+
+const isOverdue = (x) => x.overdue ?? (x.daysLeft !== null && x.daysLeft !== undefined && x.daysLeft < 0);
+
+function group(key, title, items, { quiet = false, note = "" } = {}) {
+  if (!items.length) return "";
+  const open = expanded.has(key),
+    shown = open ? items : items.slice(0, CAP),
+    more = items.length > CAP
+      ? `<button type="button" class="link-button need-more" data-need-more="${key}" aria-expanded="${open}">${open ? "Show fewer" : `Show all ${items.length}`}</button>`
+      : "";
+  return `<section class="need-group${quiet ? " quiet" : ""}" data-need-group="${key}"><h3>${esc(title)} <span class="count">${items.length}</span></h3>${note}<ul class="need-list">${shown.join("")}</ul>${more}</section>`;
+}
 const row = (key, main, controls) => `<li class="need" data-need="${esc(key)}"><div class="need-main">${main}</div><div class="need-controls">${controls}</div></li>`;
 
-export function needsBody(a, { workspace, plan }) {
+// Every item of the list as { kind, overdue, daysLeft, build(lead) }. `lead` is a chip put in front of
+// the others: it names the kind when the item is shown under Overdue, away from the heading that would.
+function needItems(a, { workspace }) {
   const staleIds = new Set(a.stale.map((s) => s.id)),
-    decisions = a.decisions.map((d) =>
-      row(
-        "decision:" + d.id,
-        `<div class="chips">${dueBadge(d.daysLeft, d.needBy)}${staleIds.has(d.id) ? `<span class="pill due overdue">Stale: ${plural(a.stale.find((s) => s.id === d.id).daysOverdue, "day")} unanswered</span>` : ""}${d.status === "deferred" ? '<span class="pill">deferred, back again</span>' : ""}</div>
-         <strong>${esc(d.title)}</strong>
-         <p class="caption">${esc(d.question)}</p>
-         ${d.recommendation ? `<p class="caption"><span class="label">Recommended</span>${esc(d.recommendation)}</p>` : ""}
-         ${d.defaultIfSilent ? `<p class="caption"><span class="label">If you stay silent</span>${esc(d.defaultIfSilent)}</p>` : ""}`,
-        `<button type="button" class="primary" data-goto="decision:${esc(d.id)}" aria-label="Compare the ${d.optionCount} options and decide: ${esc(d.title)}">${d.optionCount ? `Compare ${plural(d.optionCount, "option")} and decide` : "Open the question"}</button>`,
-      )),
-    actions = a.actions.map((x) => {
-      const full = workspace.actions.find((w) => w.id === x.id);
-      return row(
-        "action:" + x.id,
-        `<div class="chips">${x.reason === "blocked" ? '<span class="pill due overdue">Blocked</span>' : dueBadge(x.daysLeft, x.due)}${x.hours !== null ? `<span class="meta">${x.hours} h</span>` : ""}</div>
-         <strong>${esc(x.title)}</strong>
-         ${x.blockedBy ? `<p class="caption waiting"><strong>Blocked by</strong> ${esc(x.blockedBy)}</p>` : ""}
-         ${x.initiativeId ? `<p class="caption">For ${gotoButton("initiative", x.initiativeId, initiativeName(workspace, x.initiativeId))}</p>` : ""}`,
-        full ? actionControls(full) : "",
-      );
-    }),
-    gates = a.gates.map((g) =>
-      row(
-        "gate:" + g.id,
-        `<div class="chips">${dueBadge(g.daysLeft, g.due)}<span class="pill gate-chip ${esc(g.status)}">${esc(g.status)}</span>${g.hours !== null ? `<span class="meta">${g.hours} h</span>` : ""}</div>
-         <strong>${esc(g.name)}</strong>
-         <p class="caption"><span class="label">Pass when</span>${esc(g.criteria)}</p>
-         ${g.blocks.length ? `<p class="caption waiting"><strong>Holding up</strong> ${g.blocks.map((b) => esc(b.name)).join(", ")}</p>` : ""}`,
-        gotoButton("gate", g.id, "Open the gate", "primary-link"),
-      )),
-    blocked = a.blockedInitiatives.map((i) =>
-      row(
-        "initiative:" + i.id,
-        `<div class="chips"><span class="pill due overdue">Blocked</span><span class="meta">${i.status === "running" ? "running" : `starts ${esc(i.start)}`}</span></div>
-         <strong>${esc(i.name)}</strong>
-         <p class="caption waiting"><strong>Waits on</strong> ${esc(i.blocker.name)} (${esc(i.blocker.kind)}, ${esc(i.blocker.status)})</p>`,
-        i.blocker.kind === "gate" ? gotoButton("gate", i.blocker.id, "Open the gate", "primary-link") : gotoButton("initiative", i.id, "Open the initiative", "primary-link"),
-      ));
-    // An open slot with two or more candidates is a choice only the owner can make.
-  const picks = (a.picks ?? []).map((p) =>
-      row(
-        "pick:" + p.slotId,
-        `<div class="chips"><span class="pill kind asset"><span aria-hidden="true">▤</span> Collateral</span></div>
-         <strong>Pick the ${esc(p.name)}</strong>
-         <p class="caption">${plural(p.candidates, "candidate")} waiting${p.initiativeId ? ` · for ${gotoButton("initiative", p.initiativeId, initiativeName(workspace, p.initiativeId))}` : ""}</p>`,
-        `<button type="button" class="primary" data-collateral-pick="${esc(p.slotId)}" aria-label="Compare ${p.candidates} candidates and pick: ${esc(p.name)}">Compare and pick</button>`,
-      ));
-  return group("Decisions to make", decisions) + group("Collateral to pick", picks) + group("Your actions", actions) + group("Gates due", gates) + group("Blocked work", blocked);
+    hours = (h) => (h !== null && h !== undefined ? `<span class="meta">${hoursText(h)}</span>` : "");
+  const decisions = a.decisions.map((d) => ({ kind: "decision", overdue: isOverdue(d), daysLeft: d.daysLeft, build: (lead) => row(
+    "decision:" + d.id,
+    `<div class="chips">${lead}${dueBadge(d.daysLeft, d.needBy)}${staleIds.has(d.id) ? `<span class="pill due overdue">Stale: ${plural(a.stale.find((s) => s.id === d.id).daysOverdue, "day")} unanswered</span>` : ""}${d.status === "deferred" ? '<span class="pill">deferred, back again</span>' : ""}</div>
+     <strong>${esc(d.title)}</strong>
+     <p class="caption">${esc(d.question)}</p>
+     ${d.recommendation ? `<p class="caption"><span class="label">Recommended</span>${esc(d.recommendation)}</p>` : ""}
+     ${d.defaultIfSilent ? `<p class="caption"><span class="label">If you stay silent</span>${esc(d.defaultIfSilent)}</p>` : ""}`,
+    `<button type="button" class="primary" data-goto="decision:${esc(d.id)}" aria-label="Compare the ${d.optionCount} options and decide: ${esc(d.title)}">${d.optionCount ? `Compare ${plural(d.optionCount, "option")} and decide` : "Open the question"}</button>`,
+  ) }));
+  const actions = a.actions.map((x) => ({ kind: "action", overdue: isOverdue(x), daysLeft: x.daysLeft, build: (lead) => {
+    const full = workspace.actions.find((w) => w.id === x.id);
+    return row(
+      "action:" + x.id,
+      `<div class="chips">${lead}${x.reason === "blocked" ? '<span class="pill due overdue">Blocked</span>' : dueBadge(x.daysLeft, x.due)}${hours(x.hours)}</div>
+       <strong>${esc(x.title)}</strong>
+       ${x.blockedBy ? `<p class="caption waiting"><strong>Blocked by</strong> ${esc(x.blockedBy)}</p>` : ""}
+       ${x.initiativeId ? `<p class="caption">For ${gotoButton("initiative", x.initiativeId, initiativeName(workspace, x.initiativeId))}</p>` : ""}`,
+      full ? actionControls(full) : "",
+    );
+  } }));
+  const gates = a.gates.map((g) => ({ kind: "gate", overdue: isOverdue(g), daysLeft: g.daysLeft, build: (lead) => row(
+    "gate:" + g.id,
+    `<div class="chips">${lead}${dueBadge(g.daysLeft, g.due)}<span class="pill gate-chip ${esc(g.status)}">${esc(g.status)}</span>${hours(g.hours)}</div>
+     <strong>${esc(g.name)}</strong>
+     <p class="caption"><span class="label">Pass when</span>${esc(g.criteria)}</p>
+     ${g.blocks.length ? `<p class="caption waiting"><strong>Holding up</strong> ${g.blocks.map((b) => esc(b.name)).join(", ")}</p>` : ""}`,
+    gotoButton("gate", g.id, "Open the gate", "primary-link"),
+  ) }));
+  const blocked = a.blockedInitiatives.map((i) => ({ kind: "initiative", overdue: false, daysLeft: null, build: (lead) => row(
+    "initiative:" + i.id,
+    `<div class="chips">${lead}<span class="pill due overdue">Blocked</span><span class="meta">${i.status === "running" ? "running" : `starts ${esc(i.start)}`}</span></div>
+     <strong>${esc(i.name)}</strong>
+     <p class="caption waiting"><strong>Waits on</strong> ${esc(i.blocker.name)} (${esc(i.blocker.kind)}, ${esc(i.blocker.status)})</p>`,
+    i.blocker.kind === "gate" ? gotoButton("gate", i.blocker.id, "Open the gate", "primary-link") : gotoButton("initiative", i.id, "Open the initiative", "primary-link"),
+  ) }));
+  // An open slot with two or more candidates is a choice only the owner can make.
+  const picks = (a.picks ?? []).map((p) => ({ kind: "asset", overdue: false, daysLeft: null, build: (lead) => row(
+    "pick:" + p.slotId,
+    `<div class="chips">${lead}<span class="pill kind asset"><span aria-hidden="true">▤</span> Collateral</span></div>
+     <strong>Pick the ${esc(p.name)}</strong>
+     <p class="caption">${plural(p.candidates, "candidate")} waiting${p.initiativeId ? ` · for ${gotoButton("initiative", p.initiativeId, initiativeName(workspace, p.initiativeId))}` : ""}</p>`,
+    `<button type="button" class="primary" data-collateral-pick="${esc(p.slotId)}" aria-label="Compare ${p.candidates} candidates and pick: ${esc(p.name)}">Compare and pick</button>`,
+  ) }));
+  return { decisions, actions, gates, blocked, picks };
 }
 
-export function renderNeeds({ workspace, selection, attention, plan }) {
+// Slots that wait on someone else (the artist, a render) are not the owner's to act on: they are listed
+// quietly and are not in the count.
+function waitingRows(a, { workspace }) {
+  const waiting = a.waiting ?? (workspace.assetSlots ?? [])
+    .filter((s) => s.projectId === a.projectId && s.status === "open" && s.waitingOn)
+    .map((s) => ({ slotId: s.id, name: s.name, waitingOn: s.waitingOn, candidates: (workspace.assets ?? []).filter((x) => x.slotId === s.id && x.status === "candidate").length, initiativeId: s.initiativeId ?? null }));
+  return waiting.map((w) => row(
+    "waiting:" + w.slotId,
+    `<div class="chips"><span class="pill kind asset"><span aria-hidden="true">▤</span> Collateral</span></div>
+     <strong>${esc(w.name)}</strong>
+     <p class="caption waiting"><strong>Waiting on</strong> ${esc(w.waitingOn)}${w.candidates ? " · " + plural(w.candidates, "candidate") + " so far" : ""}${w.initiativeId ? ` · for ${gotoButton("initiative", w.initiativeId, initiativeName(workspace, w.initiativeId))}` : ""}</p>`,
+    `<button type="button" data-collateral-pick="${esc(w.slotId)}" aria-label="Open the slot: ${esc(w.name)}">Open the slot</button>`,
+  ));
+}
+
+// Groups in the order the owner should meet them: what is late, then decisions, actions, gates, blocked
+// work and, below those, collateral picks (there can be hundreds); what waits on others comes last.
+export function needsBody(a, ctx) {
+  const items = needItems(a, ctx),
+    late = Object.values(items).flat().filter((i) => i.overdue).toSorted((x, y) => x.daysLeft - y.daysLeft),
+    moved = (list) => {
+      const n = list.filter((i) => i.overdue).length;
+      return n ? `<p class="caption">${plural(n, "other item is", "other items are")} overdue, shown above under Overdue.</p>` : "";
+    },
+    section = (key, title, list) => group(key, title, list.filter((i) => !i.overdue).map((i) => i.build("")), { note: moved(list) });
+  return group("overdue", "Overdue", late.map((i) => i.build(kindBadge(i.kind))))
+    + section("decisions", "Decisions to make", items.decisions)
+    + section("actions", "Your actions", items.actions)
+    + section("gates", "Gates due", items.gates)
+    + section("blocked", "Blocked work", items.blocked)
+    + section("picks", "Collateral to pick", items.picks)
+    + group("waiting", "Waiting on someone else", waitingRows(a, ctx), { quiet: true });
+}
+
+// The few items that say why a project is on the list: overdue first, then decisions, actions, gates,
+// blocked work and picks.
+export function topNeeds(a, n = 3) {
+  const all = [
+    ...a.decisions.map((d) => ({ kind: "decision", id: d.id, title: d.title, daysLeft: d.daysLeft, due: d.needBy, overdue: isOverdue(d) })),
+    ...a.actions.map((x) => ({ kind: "action", id: x.id, title: x.title, daysLeft: x.daysLeft, due: x.due, overdue: isOverdue(x) })),
+    ...a.gates.map((g) => ({ kind: "gate", id: g.id, title: g.name, daysLeft: g.daysLeft, due: g.due, overdue: isOverdue(g) })),
+    ...a.blockedInitiatives.map((i) => ({ kind: "initiative", id: i.id, title: i.name + " (blocked)", daysLeft: null, due: null, overdue: false })),
+    ...(a.picks ?? []).map((p) => ({ kind: "asset", id: p.slotId, title: "Pick the " + p.name, daysLeft: null, due: null, overdue: false })),
+  ];
+  return [...all.filter((x) => x.overdue).toSorted((x, y) => x.daysLeft - y.daysLeft), ...all.filter((x) => !x.overdue)].slice(0, n);
+}
+
+// With every project in view there is no one list to act on, so each project gets a short block: how much
+// waits there, the top of it, and a button that opens that project.
+export function needsOverview(attentions, workspace) {
+  const projects = workspace.projects.filter((p) => attentions?.[p.id]);
+  if (!projects.length) return '<div class="empty"><p>This workspace has nothing to report yet.</p></div>';
+  const total = projects.reduce((n, p) => n + attentions[p.id].summary.total, 0),
+    headline = total ? `${total} ${total === 1 ? "thing needs" : "things need"} you across ${plural(projects.length, "project")}` : "Nothing needs you right now in any project";
+  const block = (p) => {
+    const a = attentions[p.id], top = topNeeds(a, 3), rest = a.summary.total - top.length,
+      item = (t) => `<li class="need-top-item">${kindBadge(t.kind)} <strong>${esc(t.title)}</strong> ${t.due || (t.daysLeft !== null && t.daysLeft !== undefined) ? dueBadge(t.daysLeft, t.due) : ""}</li>`;
+    return `<article class="need-project" data-need-project="${esc(p.id)}">
+      <div class="need-project-head"><h3>${esc(p.name)} <span class="count">${a.summary.total}</span></h3>
+        <button type="button" data-select-project="${esc(p.id)}" aria-label="Open ${esc(p.name)} to see everything that needs you there">Open ${esc(p.name)}</button></div>
+      <p class="caption">${esc(needsHeadline(a))}${a.waiting?.length ? " · " + a.waiting.length + " waiting on someone else" : ""}</p>
+      ${top.length ? `<ul class="need-top">${top.map(item).join("")}</ul>${rest > 0 ? `<p class="caption">and ${rest} more</p>` : ""}` : ""}
+    </article>`;
+  };
+  return `<p class="headline">${esc(headline)}</p><div class="need-projects">${projects.map(block).join("")}</div>`;
+}
+
+export function renderNeeds({ workspace, selection, attention, attentions, plan }) {
   const body = $("needs-body"), head = $("needs-summary");
   if (!selection.projectId) {
-    head.textContent = "";
-    body.innerHTML = '<div class="empty"><p>Choose a project above to see what needs you now.</p></div>';
+    head.textContent = attentions ? "as of " + (Object.values(attentions)[0]?.today ?? "today") : "";
+    body.innerHTML = attentions ? needsOverview(attentions, workspace) : '<div class="empty"><p>Choose a project above to see what needs you now.</p></div>';
     return;
   }
   if (!attention) {
@@ -101,9 +185,10 @@ export function renderNeeds({ workspace, selection, attention, plan }) {
   head.textContent = `as of ${attention.today}`;
   const headline = needsHeadline(attention);
   if (!attention.summary.total) {
-    const next = nextDated(workspace, plan, selection.projectId, attention.today);
+    const next = nextDated(workspace, plan, selection.projectId, attention.today),
+      waiting = group("waiting", "Waiting on someone else", waitingRows(attention, { workspace }), { quiet: true });
     body.innerHTML = `<div class="needs-clear"><p class="headline"><span aria-hidden="true">✓</span> ${esc(headline)}</p>
-      <p class="caption">${next ? `Next: ${esc(next.text)} on ${esc(next.date)}, in ${plural(daysFrom(attention.today, next.date), "day")}. ${gotoButton(next.kind, next.id, "Open it")}` : "Nothing is dated ahead either."}</p></div>`;
+      <p class="caption">${next ? `Next: ${esc(next.text)} on ${esc(next.date)}, in ${plural(daysFrom(attention.today, next.date), "day")}. ${gotoButton(next.kind, next.id, "Open it")}` : "Nothing is dated ahead either."}</p></div>${waiting}`;
     return;
   }
   body.innerHTML = `<p class="headline">${esc(headline)}</p>${needsBody(attention, { workspace, plan })}`;

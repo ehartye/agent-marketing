@@ -74,15 +74,11 @@ test("with nothing owed, the next dated thing is named", () => {
   assert.equal(nextDated(ws(), null, "p", "2026-10-11"), null);
 });
 
-test("a recommendation marks the option it names, and nothing when it is unclear", () => {
-  const d = (recommendation, options) => decision({ recommendation, options });
+test("a recommendation marks the option the decision names by id, and nothing otherwise", () => {
   const opts = [option("a", { label: "Dusk" }), option("moon", { label: "Moonlit" })];
-  assert.equal(recommendedOption(d("Moonlit: best contrast", opts)), "moon");
-  assert.equal(recommendedOption(d("Take moon, it costs less", opts)), "moon");
-  assert.equal(recommendedOption(d("A better look is worth it", opts)), null, "a lone letter id is not trusted mid-sentence");
-  assert.equal(recommendedOption(d("a: the cheap one", opts)), "a");
-  assert.equal(recommendedOption(d("Dusk first, Moonlit later", opts)), "a", "the first named wins");
-  assert.equal(recommendedOption(d("whichever", opts)), null);
+  assert.equal(recommendedOption(decision({ options: opts, recommendedOptionId: "moon" })), "moon");
+  assert.equal(recommendedOption(decision({ options: opts, recommendation: "Moonlit: best contrast" })), null, "prose is never read for a guess");
+  assert.equal(recommendedOption(decision({ options: opts, recommendedOptionId: "gone" })), null);
   assert.equal(recommendedOption(decision()), null);
 });
 
@@ -123,7 +119,7 @@ test("a decided decision shows the choice, why, the history, and a change contro
   assert.match(html, /Option alpha[^]*First thought/);
   assert.match(html, /Change decision/);
   assert.match(html, /data-change="true"/);
-  assert.match(html, /<button type="submit" name="option" value="beta" disabled>/, "the standing choice is not offered as a change");
+  assert.match(html, /<button type="submit" name="option" value="beta" disabled data-keep-disabled>/, "the standing choice is not offered as a change");
   assert.doesNotMatch(html, /data-defer/);
 });
 
@@ -216,20 +212,4 @@ test("gate cards show due date, hours and a form to record a check; weekly hours
   assert.match(html, /name="evidenceIds"/);
   assert.match(gateForm(g, p, w), /<option selected>open<\/option>/);
   assert.match(weeksTable(p, w), /Gate: Outside playtest[^<]* 3 h/);
-});
-
-test("the desk client loads attention for the chosen project and a plan for each project otherwise", async () => {
-  const urls = [], workspace = { revision: 1, projects: [{ id: "a" }, { id: "b" }], initiatives: [] };
-  const client = createDeskClient(async (url) => {
-    urls.push(url);
-    return url === "/api/workspace" ? workspace : url.startsWith("/api/plan") ? { projectId: url.split("=")[1] } : [];
-  });
-  const one = await client.load({ projectId: "a", initiativeId: "" });
-  assert.ok(urls.includes("/api/attention?projectId=a"));
-  assert.deepEqual(Object.keys(one.plans), ["a"]);
-  urls.length = 0;
-  const all = await client.load({ projectId: "", initiativeId: "" });
-  assert.equal(all.attention, null);
-  assert.ok(!urls.some((u) => u.startsWith("/api/attention")));
-  assert.deepEqual(all.plans, { a: { projectId: "a" }, b: { projectId: "b" } });
 });

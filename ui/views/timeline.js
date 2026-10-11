@@ -1,11 +1,12 @@
 import { $, esc, empty } from "../shared.js";
-import { draftAttr, draftValue, plural, localDay, gotoButton } from "../hub-shared.js";
+import { draftAttr, draftValue, plural, localDay, gotoButton, selectedIf } from "../hub-shared.js";
 
 // The timeline: every update, newest first, grouped by the day it happened.
-const PAGE = 25;
+// Five entries to start with, so the page stays short; one button shows the rest.
+const PAGE = 5;
 let shown = PAGE;
 export const resetTimeline = () => { shown = PAGE; };
-export const showMoreTimeline = () => { shown += PAGE; };
+export const showMoreTimeline = () => { shown = Infinity; };
 
 const KINDS = { decision: "Decision", gate: "Gate", initiative: "Initiative", action: "Action", asset: "Asset", document: "Document", note: "Note" };
 const KIND_GLYPH = { decision: "◆", gate: "▣", initiative: "◈", action: "✓", asset: "▤", document: "▤", note: "✎" };
@@ -55,15 +56,18 @@ function entry(u, workspace, showProject) {
   </li>`;
 }
 
-function logForm({ workspace, selection }) {
+// Drafts are keyed by project, so a half-typed note never turns up under another project.
+export function logForm({ workspace, selection }) {
   if (!selection.projectId && workspace.projects.length > 1) return '<p class="caption">Choose a project above to log a note on it.</p>';
   const project = selection.projectId || workspace.projects[0]?.id;
   if (!project) return "";
-  const initiatives = workspace.initiatives.filter((i) => i.projectId === project);
+  const initiatives = workspace.initiatives.filter((i) => i.projectId === project),
+    key = (name) => `log:${project}:${name}`,
+    about = initiatives.some((i) => i.id === draftValue(key("initiativeId"))) ? draftValue(key("initiativeId")) : "";
   return `<form class="stack-form log-form" data-log="${esc(project)}">
-    <label>Log a note<textarea name="text" rows="2" required maxlength="1000" ${draftAttr("log:text")} placeholder="What happened, or what was learned">${esc(draftValue("log:text"))}</textarea></label>
+    <label>Log a note<textarea name="text" rows="2" required maxlength="1000" ${draftAttr(key("text"))} placeholder="What happened, or what was learned">${esc(draftValue(key("text")))}</textarea></label>
     <div class="form-row">
-      <label>About<select name="initiativeId"><option value="">The whole project</option>${initiatives.map((i) => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join("")}</select></label>
+      <label>About<select name="initiativeId" ${draftAttr(key("initiativeId"))}><option value=""${selectedIf("", about)}>The whole project</option>${initiatives.map((i) => `<option value="${esc(i.id)}"${selectedIf(i.id, about)}>${esc(i.name)}</option>`).join("")}</select></label>
       <button type="submit">Log note</button>
     </div>
   </form>`;
@@ -82,5 +86,5 @@ export function renderTimeline({ workspace, selection, inScope, today }) {
   }).join("");
   const hidden = mine.length - Math.min(mine.length, shown);
   $("timeline-list").innerHTML = logForm({ workspace, selection })
-    + (mine.length ? html + (hidden > 0 ? `<button type="button" data-timeline-more>Show ${Math.min(PAGE, hidden)} more (${hidden} older)</button>` : "") : empty("Nothing has been logged yet. Decisions, action changes, gate checks and notes appear here as they happen."));
+    + (mine.length ? html + (hidden > 0 ? `<button type="button" data-timeline-more>Show all ${mine.length} entries</button>` : mine.length > PAGE ? `<button type="button" data-timeline-less>Show only the latest ${PAGE}</button>` : "") : empty("Nothing has been logged yet. Decisions, action changes, gate checks and notes appear here as they happen."));
 }

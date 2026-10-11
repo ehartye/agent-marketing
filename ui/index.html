@@ -84,83 +84,107 @@
           <p>Use market-discover to save your audience and goal, then market-campaign to record the first small test. Return here to review results and choose the next action.</p>
           <button data-open-view="results">Import an existing workspace</button>
         </div>
-        <section id="needs" class="panel needs" aria-labelledby="needs-heading">
-          <div class="section-head">
-            <h2 id="needs-heading" tabindex="-1">Needs you now</h2>
-            <span id="needs-summary" class="meta"></span>
-          </div>
-          <div id="needs-body"></div>
+        <nav id="jumpbar" class="jumpbar" aria-label="Jump to a section of Decide &amp; plan">
+          <a href="#needs" data-jump="needs" aria-current="location">Needs you now <span id="jump-needs" class="count"></span></a>
+          <a href="#decisions" data-jump="decisions">Decisions <span id="jump-decisions" class="count"></span></a>
+          <a href="#actions" data-jump="actions">Actions <span id="jump-actions" class="count"></span></a>
+          <a href="#timeline" data-jump="timeline">Timeline</a>
+          <a href="#initiatives" data-jump="initiatives">Initiatives</a>
+          <a href="#plan-details" data-jump="plan-details">Plan details</a>
+        </nav>
+        <section id="needs" class="panel needs fold-panel" aria-labelledby="needs-heading">
+          <details class="fold" data-key="section:needs" open>
+            <summary class="section-head">
+              <h2 id="needs-heading" tabindex="-1">Needs you now</h2>
+              <span id="needs-summary" class="meta"></span>
+            </summary>
+            <div id="needs-body"></div>
+          </details>
         </section>
-        <section id="decisions" class="panel" aria-labelledby="decisions-heading">
-          <div class="section-head">
-            <h2 id="decisions-heading" tabindex="-1">Decisions</h2>
-            <span id="decisions-summary" class="meta"></span>
-          </div>
-          <div id="decision-filters" class="segmented" role="group" aria-label="Show decisions that are"></div>
-          <div id="decisions-list"></div>
+        <section id="decisions" class="panel fold-panel" aria-labelledby="decisions-heading">
+          <details class="fold" data-key="section:decisions" open>
+            <summary class="section-head">
+              <h2 id="decisions-heading" tabindex="-1">Decisions</h2>
+              <span id="decisions-summary" class="meta"></span>
+            </summary>
+            <div id="decision-filters" class="segmented" role="group" aria-label="Show decisions that are"></div>
+            <div id="decisions-list"></div>
+          </details>
         </section>
-        <div class="desk-grid hub-grid">
-          <section id="actions" class="panel" aria-labelledby="actions-heading">
-            <div class="section-head">
+        <section id="actions" class="panel fold-panel" aria-labelledby="actions-heading">
+          <details class="fold" data-key="section:actions" open>
+            <summary class="section-head">
               <h2 id="actions-heading" tabindex="-1">Actions</h2>
               <span id="actions-summary" class="meta"></span>
-            </div>
+            </summary>
             <div id="actions-list"></div>
-          </section>
-          <section id="timeline" class="panel" aria-labelledby="timeline-heading">
-            <div class="section-head">
+          </details>
+        </section>
+        <section id="timeline" class="panel fold-panel" aria-labelledby="timeline-heading">
+          <details class="fold" data-key="section:timeline" open>
+            <summary class="section-head">
               <h2 id="timeline-heading" tabindex="-1">Timeline</h2>
               <span id="timeline-summary" class="meta"></span>
-            </div>
+            </summary>
             <div id="timeline-list"></div>
-          </section>
-        </div>
-        <div id="decision"></div>
-        <section class="panel">
-          <div class="section-head">
-            <h2>Initiatives</h2>
-            <span class="meta">Parents hold their children. One hypothesis each.</span>
-          </div>
-          <div id="initiatives"></div>
+          </details>
         </section>
-        <div id="plan-view" class="desk-grid plan-view" hidden>
-          <section class="panel" aria-labelledby="gates-heading">
-            <div class="section-head">
-              <h2 id="gates-heading">Readiness gates</h2>
-              <span id="gate-summary" class="meta"></span>
+        <section id="initiatives" class="panel fold-panel" aria-labelledby="initiatives-heading">
+          <details class="fold" data-key="section:initiatives" open>
+            <summary class="section-head">
+              <h2 id="initiatives-heading" tabindex="-1">Initiatives</h2>
+              <span class="meta">Parents hold their children. One hypothesis each.</span>
+            </summary>
+            <div id="initiatives-list"></div>
+          </details>
+        </section>
+        <section id="plan-details" class="panel fold-panel" aria-labelledby="plan-details-heading">
+          <details class="fold" data-key="section:plan-details">
+            <summary class="section-head">
+              <h2 id="plan-details-heading" tabindex="-1">Plan details</h2>
+              <span class="meta">Next test · readiness gates · weekly hours · strategy · channels</span>
+            </summary>
+            <div id="decision"></div>
+            <div id="plan-view" class="desk-grid plan-view" hidden>
+              <section class="panel" aria-labelledby="gates-heading">
+                <div class="section-head">
+                  <h3 id="gates-heading">Readiness gates</h3>
+                  <span id="gate-summary" class="meta"></span>
+                </div>
+                <div id="gates"></div>
+              </section>
+              <section class="panel" aria-labelledby="load-heading">
+                <div class="section-head">
+                  <h3 id="load-heading">Weekly maker hours</h3>
+                  <span id="load-summary" class="meta"></span>
+                </div>
+                <div id="load"></div>
+              </section>
             </div>
-            <div id="gates"></div>
-          </section>
-          <section class="panel" aria-labelledby="load-heading">
-            <div class="section-head">
-              <h2 id="load-heading">Weekly maker hours</h2>
-              <span id="load-summary" class="meta"></span>
+            <section class="panel"><h3>Project strategy</h3><div id="strategy"></div></section>
+            <div class="desk-grid">
+              <section class="panel">
+                <div class="section-head"><h3>From visit to first use</h3></div>
+                <div id="funnels"></div>
+              </section>
+              <section class="panel activity">
+                <div class="section-head">
+                  <h3>Activity over time</h3>
+                  <label class="compact">Metric<select id="metric"></select></label>
+                </div>
+                <div id="chart"></div>
+              </section>
+              <section class="panel">
+                <h3>Channel choices</h3>
+                <p class="caption">
+                  Audience and effort guide these planning heuristics. They do not
+                  predict reach.
+                </p>
+                <div id="channels"></div>
+              </section>
             </div>
-            <div id="load"></div>
-          </section>
-        </div>
-        <section class="panel"><h2>Project strategy</h2><div id="strategy"></div></section>
-        <div class="desk-grid">
-          <section class="panel">
-            <div class="section-head"><h2>From visit to first use</h2></div>
-            <div id="funnels"></div>
-          </section>
-          <section class="panel activity">
-            <div class="section-head">
-              <h2>Activity over time</h2>
-              <label class="compact">Metric<select id="metric"></select></label>
-            </div>
-            <div id="chart"></div>
-          </section>
-          <section class="panel">
-            <h2>Channel choices</h2>
-            <p class="caption">
-              Audience and effort guide these planning heuristics. They do not
-              predict reach.
-            </p>
-            <div id="channels"></div>
-          </section>
-        </div>
+          </details>
+        </section>
       </section>
       <section id="collateral" class="view" role="tabpanel" aria-labelledby="tab-collateral" tabindex="0" hidden>
         <section class="panel" aria-labelledby="collateral-heading">
@@ -267,6 +291,7 @@
         ><span id="updated"></span>
       </footer>
     </main>
+    <p id="upload-live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
     <aside id="notice" class="notice" hidden aria-label="Desk notification">
       <p id="status" role="status" aria-live="polite" aria-atomic="true"></p>
       <div class="actions"><button id="retry" hidden>Refresh evidence</button><button id="dismiss" aria-label="Dismiss notification">Dismiss</button></div>

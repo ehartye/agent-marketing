@@ -111,7 +111,7 @@ export function renderHierarchy({ workspace, selection, plans, plan }) {
     project,
     tree: buildTree(workspace.initiatives.filter((i) => i.projectId === project.id), selection.initiativeId),
   })).filter((x) => x.tree.length);
-  $("initiatives").innerHTML = trees.length
+  $("initiatives-list").innerHTML = trees.length
     ? trees.map(({ project, tree }) => `${selection.projectId ? "" : `<h3 class="project-head">${esc(project.name)}</h3>`}<ul class="init-tree">${tree.map((n) => initiativeNode(n, ctx)).join("")}</ul>`).join("")
     : empty("No initiatives yet. Import a campaign plan or use the market-campaign skill to create one.");
 }

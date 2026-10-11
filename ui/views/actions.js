@@ -1,5 +1,5 @@
 import { $, esc, empty } from "../shared.js";
-import { openAttr, draftAttr, draftValue, plural, daysFrom, dueBadge, statusChip, gotoButton} from "../hub-shared.js";
+import { openAttr, draftAttr, draftValue, plural, daysFrom, dueBadge, statusChip, gotoButton, selectedIf, hoursText } from "../hub-shared.js";
 
 // Actions: the concrete next steps, each with a status the owner can move in place.
 const OPEN = ["todo", "doing", "blocked"];
@@ -18,7 +18,6 @@ export function actionControls(a) {
   return button(a, "todo", "Reopen");
 }
 
-const hoursText = (h) => `${Math.round(h * 100) / 100} h`;
 export function actionRow(a, { workspace, today, showProject }) {
   const links = [
     a.gateId && gotoButton("gate", a.gateId, "Gate: " + (workspace.gates.find((g) => g.id === a.gateId)?.name ?? a.gateId)),
@@ -62,20 +61,24 @@ export const slug = (title, taken) => {
   return id;
 };
 
-function addForm({ workspace, selection }) {
+// Drafts are keyed by project, so a half-typed action never turns up under another project.
+export function addForm({ workspace, selection }) {
   if (!selection.projectId && workspace.projects.length > 1)
     return '<p class="caption">Choose a project above to add an action to it.</p>';
   const project = selection.projectId || workspace.projects[0]?.id;
   if (!project) return "";
-  const initiatives = workspace.initiatives.filter((i) => i.projectId === project);
+  const initiatives = workspace.initiatives.filter((i) => i.projectId === project),
+    key = (name) => `add-action:${project}:${name}`,
+    owner = draftValue(key("owner")) === "agent" ? "agent" : "owner",
+    initiative = initiatives.some((i) => i.id === draftValue(key("initiativeId"))) ? draftValue(key("initiativeId")) : "";
   return `<details class="add-action" ${openAttr("add-action")}><summary>Add an action</summary>
     <form class="stack-form" data-add-action="${esc(project)}">
-      <label>What needs doing<input name="title" required maxlength="200" ${draftAttr("add-action:title")} value="${esc(draftValue("add-action:title"))}" /></label>
+      <label>What needs doing<input name="title" required maxlength="200" ${draftAttr(key("title"))} value="${esc(draftValue(key("title")))}" /></label>
       <div class="form-row">
-        <label>Who<select name="owner"><option value="owner">Me (owner)</option><option value="agent">The agent</option></select></label>
-        <label>Due<input name="due" type="date" ${draftAttr("add-action:due")} value="${esc(draftValue("add-action:due"))}" /></label>
-        <label>Hours<input name="hours" type="number" min="0" step="0.25" inputmode="decimal" ${draftAttr("add-action:hours")} value="${esc(draftValue("add-action:hours"))}" /></label>
-        <label>For initiative<select name="initiativeId"><option value="">None</option>${initiatives.map((i) => `<option value="${esc(i.id)}">${esc(i.name)}</option>`).join("")}</select></label>
+        <label>Who<select name="owner" ${draftAttr(key("owner"))}><option value="owner"${selectedIf("owner", owner)}>Me (owner)</option><option value="agent"${selectedIf("agent", owner)}>The agent</option></select></label>
+        <label>Due<input name="due" type="date" ${draftAttr(key("due"))} value="${esc(draftValue(key("due")))}" /></label>
+        <label>Hours<input name="hours" type="number" min="0" step="0.25" inputmode="decimal" ${draftAttr(key("hours"))} value="${esc(draftValue(key("hours")))}" /></label>
+        <label>For initiative<select name="initiativeId" ${draftAttr(key("initiativeId"))}><option value=""${selectedIf("", initiative)}>None</option>${initiatives.map((i) => `<option value="${esc(i.id)}"${selectedIf(i.id, initiative)}>${esc(i.name)}</option>`).join("")}</select></label>
       </div>
       <button type="submit" class="primary">Add action</button>
     </form></details>`;
