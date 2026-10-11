@@ -6,8 +6,23 @@ import { esc } from "./shared.js";
 const opened = new Map(),
   drafts = new Map();
 
-export const setOpen = (key, value) => { opened.set(key, value); };
-export const isOpen = (key, fallback = false) => (opened.has(key) ? opened.get(key) : fallback);
+// A section of the Decide & plan page (key "section:...") is the owner's own layout choice, so it is
+// kept in this browser between visits. Storage may be blocked or missing: then it lives in memory only.
+const SECTION = "section:", stored = (key) => "desk.section." + key.slice(SECTION.length);
+const readSection = (key) => {
+  try {
+    const v = globalThis.localStorage?.getItem(stored(key));
+    return v === "1" ? true : v === "0" ? false : null;
+  } catch { return null; }
+};
+export const setOpen = (key, value) => {
+  opened.set(key, value);
+  if (key.startsWith(SECTION)) { try { globalThis.localStorage?.setItem(stored(key), value ? "1" : "0"); } catch { /* blocked: memory only */ } }
+};
+export const isOpen = (key, fallback = false) => {
+  if (opened.has(key)) return opened.get(key);
+  return (key.startsWith(SECTION) ? readSection(key) : null) ?? fallback;
+};
 // For a <details>: its key, so a toggle can be remembered, and `open` when it was left open.
 export const openAttr = (key, fallback = false) => `data-key="${esc(key)}"${isOpen(key, fallback) ? " open" : ""}`;
 
@@ -16,8 +31,15 @@ export const setDraft = (key, value) => { if (value === "") drafts.delete(key); 
 export const clearDrafts = (...keys) => { for (const key of keys) drafts.delete(key); };
 // A field whose text survives a redraw: it carries its key and starts from what was typed.
 export const draftAttr = (key) => `data-draft="${esc(key)}"`;
+// A <select> option marked chosen when it is what the owner picked (or, with no pick, the fallback).
+export const selectedIf = (value, current) => (String(value) === String(current) ? " selected" : "");
+// A different workspace is a different set of records: nothing half typed or left open carries over.
+export function resetHubState() { opened.clear(); drafts.clear(); }
+// Whether a record the desk was asked to show can actually be seen: not in a hidden tab or view.
+export const isShown = (el) => Boolean(el) && el.checkVisibility?.() !== false;
 
 export const plural = (n, one, many = one + "s") => `${n} ${n === 1 ? one : many}`;
+export const hoursText = (h) => `${Math.round(h * 100) / 100} h`;
 export const dayNumber = (date) => {
   const [y, m, d] = date.split("-").map(Number);
   return Math.round(Date.UTC(y, m - 1, d) / 86400000);
@@ -48,3 +70,5 @@ export const gotoButton = (kind, id, label, extra = "") =>
   `<button type="button" class="link-button${extra ? " " + extra : ""}" data-goto="${esc(kind)}:${esc(id)}">${esc(label)}</button>`;
 
 export const initiativeName = (workspace, id) => workspace.initiatives.find((i) => i.id === id)?.name ?? id;
+// Whether text is waiting half typed in this tab. A chosen option in a select is a preference, not work to lose.
+export const hasDrafts = () => [...drafts.keys()].some((k) => !/:(owner|initiativeId|kind|projectId)$/.test(k));
