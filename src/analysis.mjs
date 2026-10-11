@@ -417,7 +417,10 @@ export function plan(w, projectId) {
   };
 }
 // Actions from the plan check, present only when a ledger records gates, dependencies or hours.
-function planActions(project, p) {
+// `over` holds the over-cap weeks of work that is not yet complete: finished work cannot be moved
+// out of a week, so a week that is over the cap only because of it is not something to act on.
+// The plan itself still lists every status, as the record of what was planned.
+function planActions(project, p, over) {
   const actions = [],
     name = (id) => p.initiatives.find((i) => i.id === id).name,
     byStart = p.initiatives.toSorted((a, b) => a.start.localeCompare(b.start) || a.end.localeCompare(b.end));
@@ -460,15 +463,15 @@ function planActions(project, p) {
       referenceIds: [],
     });
   }
-  const over = p.load.weeks.filter((x) => x.overCap);
   if (over.length) {
     const n = over.length,
-      unknown = p.load.unknownHours.map(name);
+      unknown = p.load.unknownHours.filter((id) => p.initiatives.find((i) => i.id === id).status !== "complete").map(name),
+      finished = p.initiatives.some((i) => i.status === "complete" && i.hours > 0);
     actions.push({
       kind: "capacity",
       priority: 2,
       title: "Planned hours exceed the weekly cap",
-      reason: `${n} week${n === 1 ? " exceeds" : "s exceed"} the ${project.weeklyHours} hour weekly cap: ${over.slice(0, 3).map((x) => `${x.start} (${x.hours} h, ${x.overBy} over)`).join(", ")}${n > 3 ? `, and ${n - 3} more` : ""}.${unknown.length ? ` Initiatives without hours are not counted: ${unknown.join(", ")}.` : ""}`,
+      reason: `${n} week${n === 1 ? " exceeds" : "s exceed"} the ${project.weeklyHours} hour weekly cap: ${over.slice(0, 3).map((x) => `${x.start} (${x.hours} h, ${x.overBy} over)`).join(", ")}${n > 3 ? `, and ${n - 3} more` : ""}.${finished ? " Completed initiatives are not counted." : ""}${unknown.length ? ` Initiatives without hours are not counted: ${unknown.join(", ")}.` : ""}`,
       next: `Move work out of the heaviest week, shorten or drop an initiative, or ask the owner to raise the cap. Then run marketing plan ${project.id} again.`,
       stop: "Do not add an initiative to a week that is already over the cap.",
       evidence: [],
@@ -496,7 +499,16 @@ export function advise(w, projectId, filter = {}) {
         referenceIds: ["experimentation", "measurement"],
         ruleIds: ["activation-investigation"],
       });
-  actions.push(...planActions(project, p));
+  const unfinished = w.initiatives.filter((i) => i.projectId === projectId && i.status !== "complete");
+  actions.push(
+    ...planActions(
+      project,
+      p,
+      (unfinished.length === p.initiatives.length ? p.load.weeks : weeklyLoad(project.weeklyHours, unfinished)).filter(
+        (x) => x.overCap,
+      ),
+    ),
+  );
   // What the project's stage is for: a first session for a prototype, the best channel for a beta,
   // who returns for a launched project. An idea has nothing to try, so its viability and channel
   // actions carry the stage instead. A project with no usable stage gets none of this.

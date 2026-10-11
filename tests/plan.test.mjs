@@ -466,6 +466,29 @@ test("advise lists at most three over-cap weeks and counts the rest", () => {
   assert.match(action.reason, /and 5 more/);
 });
 
+test("advise leaves finished work out of the capacity action, and the plan still records it", () => {
+  // 30 hours over one finished week, against a 6 hour cap: nothing can be moved out of that week.
+  const done = W([I("a", "2025-03-03", "2025-03-09", 30, { status: "complete" })], [], { weeklyHours: 6 });
+  const p = plan(done, "game");
+  assert.equal(week(p, "2025-03-03").overCap, true);
+  assert.equal(week(p, "2025-03-03").hours, 30);
+  assert.equal(p.summary.overCapWeeks, 1);
+  assert.ok(!advise(done, "game").some((a) => a.kind === "capacity"));
+  // Finished work shares a week with planned work that fits once the finished work is set aside.
+  const fits = W([I("a", MON, "2026-10-18", 30, { status: "complete" }), I("b", MON, MON, 5)], [], { weeklyHours: 6 });
+  assert.equal(week(plan(fits, "game"), MON).overCap, true);
+  assert.ok(!advise(fits, "game").some((a) => a.kind === "capacity"));
+  // Planned work that is itself over the cap is named with its own hours, and the action says what it left out.
+  const over = W([I("a", MON, "2026-10-18", 30, { status: "complete" }), I("b", MON, MON, 8)], [], { weeklyHours: 6 });
+  const action = advise(over, "game").find((a) => a.kind === "capacity");
+  assert.match(action.reason, /1 week exceeds the 6 hour weekly cap: 2026-10-12 \(8 h, 2 over\)/);
+  assert.match(action.reason, /Completed initiatives are not counted/);
+  // The same week with the work still open is counted whole, as before.
+  const open = W([I("a", MON, "2026-10-18", 30, { status: "running" }), I("b", MON, MON, 8)], [], { weeklyHours: 6 });
+  assert.match(advise(open, "game").find((a) => a.kind === "capacity").reason, /\(38 h, 32 over\)/);
+  assert.doesNotMatch(advise(open, "game").find((a) => a.kind === "capacity").reason, /Completed initiatives/);
+});
+
 const cli = (file, ...args) =>
   spawnSync(process.execPath, [resolve("scripts/marketing.mjs"), ...args, "--workspace", file], { encoding: "utf8" });
 
