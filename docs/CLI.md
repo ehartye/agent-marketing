@@ -13,7 +13,7 @@ marketing put <collection> <record.json> --workspace <file> [--revision n] [--st
 marketing document save <strategy|campaign> <record-id> <brief.md> --workspace <file> --revision n
 marketing document show <strategy|campaign> <record-id> --workspace <file>
 marketing document export <strategy|campaign> <record-id> --workspace <file> [--out brief.md]
-marketing document save report <report-id> <report.md> --title <title> --workspace <file> --revision n [--project id --kind k --vault-url u]
+marketing document save report <report-id> <report.md> --title <title> --workspace <file> --revision n [--project id --kind k --vault-url u --initiative id --gate id --decision id]
 marketing document show report <report-id> --workspace <file>
 marketing document export report <report-id> --workspace <file> [--out report.md]
 marketing report --workspace <file> [--project id --initiative id --from YYYY-MM-DD --to YYYY-MM-DD]
@@ -89,6 +89,8 @@ A research report is workspace-level Markdown that you read in the desk: it appe
 ```powershell
 marketing document save report game-market-2026 report.md --title "Game market landscape" --kind market-landscape --workspace <ledger> --revision <current-revision>
 ```
+
+A report belongs to something. Pass `--project` with `--initiative`, `--gate` or `--decision` to file it under that initiative, gate or decision (each must exist in the project); the desk then shows it there, and saving the same report again without them keeps the parent it had. Saving a report that has a project also logs a `document` update.
 
 ## Record fields
 

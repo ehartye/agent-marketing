@@ -38,7 +38,7 @@ const help = {
     "import <json-or-csv> [--strict]",
     "put <collection> <record.json> [--strict]",
     "document save <strategy|campaign> <record-id> <brief.md> --revision n",
-    "document save report <report-id> <report.md> --title t --revision n [--project id --kind k --vault-url u]",
+    "document save report <report-id> <report.md> --title t --revision n [--project id --kind k --vault-url u --initiative id --gate id --decision id]",
     "document show <strategy|campaign|report> <record-id>",
     "document export <strategy|campaign|report> <record-id> [--out file.md]",
     "report [--project id --initiative id --from date --to date]",
@@ -195,6 +195,7 @@ try {
       result = { workspace: file, ...saveReport(file, {
         id, title: v.title, markdown: readFileSync(required(input, "report.md"), "utf8"),
         projectId: v.project, kind: v.kind, vaultUrl: v["vault-url"],
+        initiativeId: v.initiative, gateId: v.gate, decisionId: v.decision,
       }, Number(v.revision)) };
     } else if (action === "save") {
       result = { workspace: file, ...saveDocument(file, kind, id,
