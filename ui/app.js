@@ -1,5 +1,5 @@
 import { $, esc, num, restoreFocus, keepsDisabled } from "./shared.js";
-import { hasDrafts } from "./hub-shared.js";
+import { hasDrafts, clampMore } from "./hub-shared.js";
 import { api, uploadFile, createDeskClient, reviewDrafts, importMessage } from "./state.js";
 import { renderActivity, drawChart } from "./chart.js";
 import { renderCampaign } from "./views/campaign.js";
@@ -19,6 +19,16 @@ let metricKey = "", loading = true, writing = false, failed = false, generation 
 const filterIds = { projectId: "project", initiativeId: "initiative", from: "from", to: "to" };
 const selection = () => Object.fromEntries(Object.entries(filterIds).map(([key, id]) => [key, $(id).value]));
 const tabs = [...document.querySelectorAll("[role=tab]")];
+// The filters are always on show on a wide screen; on a phone they fold behind one line that says what is
+// chosen, so the desk starts with what needs the owner. Crossing the breakpoint sets them the way it wants.
+{
+  const fold = $("filters-fold"), narrow = globalThis.matchMedia?.("(max-width: 850px)");
+  if (fold && narrow) {
+    const set = () => { fold.open = !narrow.matches; };
+    set();
+    narrow.addEventListener?.("change", set);
+  }
+}
 
 // `retry` shows the button beside the message. It refreshes the page, or, when `retryNow` is given,
 // makes the change that was refused again.
@@ -54,6 +64,13 @@ function setView(id, focus = false) {
   history.replaceState(null, "", location.pathname + location.search + "#" + active.dataset.tab);
   if (focus) active.focus();
 }
+// A toggle is written only when its markup changes, so a redraw after a save does not fold what the owner opened.
+function setOnce(id, html) {
+  const el = $(id);
+  if (el.dataset.written === html) return;
+  el.dataset.written = html;
+  el.innerHTML = html;
+}
 function render(snapshot) {
   const { workspace, selection: scope, data } = snapshot;
   for (const [id, rows, chosen, all] of [
@@ -64,11 +81,17 @@ function render(snapshot) {
     $(id).value = chosen;
   }
   const project = workspace.projects.find(p => p.id === scope.projectId);
-  $("project-summary").textContent = project ? project.promise : "Choose a project, inspect its evidence, and plan the next small test.";
-  $("project-objective").textContent = project?.objective || "Select a project for a recommendation tied to its goal.";
+  // A long promise or objective shows a few lines and a toggle for the rest, so it cannot push the desk down.
+  const summary = project ? project.promise : "Choose a project, inspect its evidence, and plan the next small test.",
+    objective = project?.objective || "Select a project for a recommendation tied to its goal.";
+  $("project-summary").textContent = summary;
+  setOnce("project-summary-more", clampMore(summary, "Read the full promise", { at: 240 }));
+  $("project-objective").textContent = objective;
+  setOnce("project-objective-more", clampMore(objective, "Read the full objective", { at: 150 }));
   $("project-resources").textContent = project ? `${project.weeklyHours} hours/week · ${num(project.budget)} ${project.currency} test budget` : `${workspace.projects.length} projects in this workspace`;
   $("revision").textContent = `${workspaceLabel ? workspaceLabel + " · " : ""}Saved revision ${workspace.revision}`;
   $("scope-summary").textContent = `${project?.name || "All projects"} · ${scope.initiativeId ? workspace.initiatives.find(i => i.id === scope.initiativeId)?.name : "All initiatives"} · ${scope.from || "Beginning"} → ${scope.to || "Latest"}. Dates limit readings and feedback; plans and research stay visible.`;
+  $("filters-now").textContent = `${project?.name || "All projects"} · ${scope.initiativeId ? workspace.initiatives.find(i => i.id === scope.initiativeId)?.name : "All initiatives"}${scope.from || scope.to ? ` · ${scope.from || "Beginning"} → ${scope.to || "Latest"}` : ""}`;
   $("welcome").hidden = workspace.projects.length > 0;
   const vitals = [["rev", workspace.revision], ["projects", workspace.projects.length], ["initiatives", workspace.initiatives.length], ["gates", workspace.gates.length], ["evidence", workspace.evidence.length], ["reports", workspace.reports.length], ["sources", workspace.sources.length], ["sync", new Date().toLocaleTimeString([], { hour12: false })]];
   $("telemetry").innerHTML = `<span class="ws">ws<b>${esc(workspaceLabel || "workspace")}</b></span>` + vitals.map(([k, v]) => `<span>${k}<b>${esc(v)}</b></span>`).join("") + `<span class="cursor" aria-hidden="true">▮</span>`;

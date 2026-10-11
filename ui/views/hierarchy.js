@@ -73,6 +73,18 @@ export function collateralLine(node, workspace) {
   return `<p class="docs"><span class="label">Collateral</span><button type="button" class="link-button" data-collateral-for="${esc(i.id)}" aria-label="Open the Collateral tab for ${esc(i.name)}: ${esc(text)}">${esc(text)}</button></p>`;
 }
 
+// One line per initiative: its name, where it stands, when and for how many hours, how far its gates and
+// actions have come and the owner's note. Everything else (the hypothesis, the status control, the note
+// editor, what is linked to it) opens beneath, and a parent opens onto the rows of its children. Whether one
+// is open is kept in this browser like a section is.
+function progressBar(progress) {
+  const total = progress ? progress.gatesTotal + progress.actionsTotal : 0;
+  if (!total) return "";
+  const done = progress.gatesPassed + progress.actionsDone,
+    label = `${progress.gatesPassed} of ${progress.gatesTotal} gates passed, ${progress.actionsDone} of ${progress.actionsTotal} actions done`;
+  return `<span class="init-progress"><progress max="${total}" value="${done}" aria-label="${esc(label)}"></progress><span class="meta">${done} of ${total}</span></span>`;
+}
+
 export function initiativeNode(node, ctx) {
   const { initiative: i, children } = node,
     { workspace, planFor } = ctx,
@@ -84,22 +96,31 @@ export function initiativeNode(node, ctx) {
     end = p?.rollup?.end ?? i.end,
     hours = p ? p.hours : Number.isFinite(i.hours) ? i.hours : null,
     derived = p?.rollup?.status;
+  const own = `<div class="row">
+          <label>Status<select data-initiative="${esc(i.id)}">${STATUSES.map((s) => `<option ${i.status === s ? "selected" : ""}>${s}</option>`).join("")}</select></label>
+        </div>
+        <p>${esc(i.hypothesis)}</p>
+        <p class="caption">${esc(i.cta)}${parent ? " · dates and hours are across its children" : ""} · ${esc(i.owner)}</p>
+        ${flags.notes}
+        ${progress ? `<div class="meters">${meter("Gates passed", progress.gatesPassed, progress.gatesTotal, "No gates")}${meter("Actions done", progress.actionsDone, progress.actionsTotal, "No actions")}</div>` : ""}
+        ${noteForm(i)}
+        ${collateralLine(node, workspace)}
+        ${linked(i, workspace)}
+        ${documentCard(i, "campaign")}`;
   return `<li class="init-node">
-    <article class="initiative${parent ? " parent" : ""}" data-initiative-card="${esc(i.id)}" tabindex="-1">
-      <div class="row">
-        <div class="init-title"><span class="pill">${esc(i.channel)}</span>${flags.chips}${derived ? `<span class="pill rolled">${esc(derived)} overall</span>` : ""}<h3>${esc(i.name)}</h3></div>
-        <label>Status<select data-initiative="${esc(i.id)}">${STATUSES.map((s) => `<option ${i.status === s ? "selected" : ""}>${s}</option>`).join("")}</select></label>
-      </div>
-      <p>${esc(i.hypothesis)}</p>
-      <p class="caption">${esc(i.cta)} · ${esc(start)} → ${esc(end)}${parent ? " (across its children)" : ""} · ${esc(i.owner)} · ${hours === null ? "hours not set" : `${num(hours)} h${parent ? " in total" : ""}`}</p>
-      ${flags.notes}
-      ${progress ? `<div class="meters">${meter("Gates passed", progress.gatesPassed, progress.gatesTotal, "No gates")}${meter("Actions done", progress.actionsDone, progress.actionsTotal, "No actions")}</div>` : ""}
-      ${noteForm(i)}
-      ${collateralLine(node, workspace)}
-      ${linked(i, workspace)}
-      ${documentCard(i, "campaign")}
-    </article>
-    ${children.length ? `<ul class="init-children" aria-label="Parts of ${esc(i.name)}">${children.map((c) => initiativeNode(c, ctx)).join("")}</ul>` : ""}
+    <details class="initiative${parent ? " parent" : ""}" data-initiative-card="${esc(i.id)}" tabindex="-1" ${openAttr("section:init:" + i.id, parent)}>
+      <summary class="init-line">
+        <h3 class="init-name">${esc(i.name)}</h3>
+        <span class="row-chips">${statusChip(i.status)}${derived && derived !== i.status ? `<span class="pill rolled">${esc(derived)} overall</span>` : ""}${flags.chips}<span class="pill">${esc(i.channel)}</span></span>
+        <span class="init-facts meta">${esc(start)} → ${esc(end)} · ${hours === null ? "hours not set" : `${num(hours)} h${parent ? " in total" : ""}`}</span>
+        ${progressBar(progress)}
+        <span class="init-note${i.note ? "" : " none"}">${i.note ? esc(i.note) : "No status note"}</span>
+      </summary>
+      <div class="init-body">${parent
+        ? `<ul class="init-children" aria-label="Parts of ${esc(i.name)}">${children.map((c) => initiativeNode(c, ctx)).join("")}</ul>
+        <details class="init-own" ${openAttr("section:init-own:" + i.id)}><summary>About ${esc(i.name)}: hypothesis, status note and links</summary>${own}</details>`
+        : own}</div>
+    </details>
   </li>`;
 }
 

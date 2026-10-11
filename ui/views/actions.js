@@ -1,5 +1,5 @@
 import { $, esc, empty } from "../shared.js";
-import { openAttr, draftAttr, draftValue, plural, daysFrom, dueBadge, statusChip, gotoButton, selectedIf, hoursText } from "../hub-shared.js";
+import { openAttr, draftAttr, draftValue, plural, daysFrom, dueBadge, statusChip, gotoButton, selectedIf, hoursText, foldMain, fullTitle } from "../hub-shared.js";
 
 // Actions: the concrete next steps, each with a status the owner can move in place.
 const OPEN = ["todo", "doing", "blocked"];
@@ -18,24 +18,36 @@ export function actionControls(a) {
   return button(a, "todo", "Reopen");
 }
 
+// What to do now: the owner's own steps due within two weeks (or already late) and anything under way or
+// stuck, whoever it belongs to. The rest is folded away, each fold saying how many it holds: the owner's
+// steps further off or undated, the agent's own steps, and what is done or dropped. Every action lands in
+// exactly one of the four, in the order it was given.
+export const NOW_DAYS = 14;
+export function splitActions(list, today) {
+  const out = { now: [], later: [], agent: [], closed: [] };
+  for (const a of list) {
+    if (!isOpenAction(a)) out.closed.push(a);
+    else if (a.status !== "todo") out.now.push(a);
+    else if (a.owner !== "owner") out.agent.push(a);
+    else if (a.due && daysFrom(today, a.due) <= NOW_DAYS) out.now.push(a);
+    else out.later.push(a);
+  }
+  return out;
+}
+
+// One line: status, who, when and what, with the controls beside it. The notes, the reason it is blocked
+// and the links to its gate and decision wait behind the row's Details toggle.
 export function actionRow(a, { workspace, today, showProject }) {
   const links = [
     a.gateId && gotoButton("gate", a.gateId, "Gate: " + (workspace.gates.find((g) => g.id === a.gateId)?.name ?? a.gateId)),
     a.decisionId && gotoButton("decision", a.decisionId, "Decision: " + (workspace.decisions.find((d) => d.id === a.decisionId)?.title ?? a.decisionId)),
   ].filter(Boolean);
   const due = a.due && OPEN.includes(a.status) ? dueBadge(daysFrom(today, a.due), a.due) : a.due ? `<span class="meta">due ${esc(a.due)}</span>` : "";
-  const facts = [
-    a.hours !== undefined && hoursText(a.hours),
-    a.status === "done" && a.doneAt && "done " + new Date(a.doneAt).toLocaleDateString(),
-  ].filter(Boolean);
+  const done = a.status === "done" && a.doneAt ? "done " + new Date(a.doneAt).toLocaleDateString() : "";
+  const head = `<span class="row-chips">${statusChip(a.status)}<span class="pill owner-${esc(a.owner)}">${esc(a.owner)}</span>${due}${a.hours !== undefined ? `<span class="meta">${hoursText(a.hours)}</span>` : ""}${showProject ? `<span class="meta">${esc(workspace.projects.find((p) => p.id === a.projectId)?.name ?? a.projectId)}</span>` : ""}</span><strong class="row-title">${esc(a.title)}</strong>`;
+  const detail = `${fullTitle(a.title)}${a.status === "blocked" && a.blockedBy ? `<p class="caption waiting"><strong>Blocked by</strong> ${esc(a.blockedBy)}</p>` : ""}${a.notes ? `<p class="caption">${esc(a.notes)}</p>` : ""}${done || links.length ? `<p class="caption">${esc(done)}${done && links.length ? " · " : ""}${links.join(" ")}</p>` : ""}`;
   return `<li class="action-row ${esc(a.status)}" data-action="${esc(a.id)}">
-    <div class="action-main">
-      <div class="action-title"><strong>${esc(a.title)}</strong></div>
-      <div class="chips">${statusChip(a.status)}<span class="pill owner-${esc(a.owner)}">${esc(a.owner)}</span>${due}${showProject ? `<span class="meta">${esc(workspace.projects.find((p) => p.id === a.projectId)?.name ?? a.projectId)}</span>` : ""}</div>
-      ${a.status === "blocked" && a.blockedBy ? `<p class="caption waiting"><strong>Blocked by</strong> ${esc(a.blockedBy)}</p>` : ""}
-      ${a.notes ? `<p class="caption">${esc(a.notes)}</p>` : ""}
-      ${facts.length || links.length ? `<p class="caption">${facts.map(esc).join(" · ")}${facts.length && links.length ? " · " : ""}${links.join(" ")}</p>` : ""}
-    </div>
+    <div class="action-main">${foldMain({ key: "action:" + a.id, head, detail })}</div>
     <div class="action-controls">${actionControls(a)}</div>
   </li>`;
 }
@@ -87,16 +99,22 @@ export function addForm({ workspace, selection }) {
 export function renderActions({ workspace, selection, orderedInitiatives, inScope, today }) {
   const mine = workspace.actions.filter(inScope),
     open = mine.filter(isOpenAction),
-    closed = mine.filter((a) => !isOpenAction(a)),
+    { now, later, agent, closed } = splitActions(mine, today),
     ctx = { workspace, today, showProject: !selection.projectId },
-    done = mine.filter((a) => a.status === "done").length;
-  $("actions-summary").textContent = mine.length ? `${plural(open.length, "open action")} · ${done} done` : "";
-  const groups = groupActions(open, orderedInitiatives);
-  const list = open.length
-    ? groups.map((g) => `<section class="action-group"><h3>${g.id ? gotoButton("initiative", g.id, g.label, "heading-link") : esc(g.label)}</h3><ul class="action-list">${g.items.map((a) => actionRow(a, ctx)).join("")}</ul></section>`).join("")
-    : empty(mine.length ? "No open actions. Everything recorded is done or dropped." : "No actions yet. Add the next concrete step, or ask the agent to record the steps of a plan.");
-  const history = closed.length
-    ? `<details class="closed-actions" ${openAttr("actions-closed")}><summary>Done and dropped (${closed.length})</summary><ul class="action-list">${closed.toSorted((a, b) => (b.doneAt ?? "").localeCompare(a.doneAt ?? "")).map((a) => actionRow(a, ctx)).join("")}</ul></details>`
-    : "";
-  $("actions-list").innerHTML = list + history + addForm({ workspace, selection });
+    done = mine.filter((a) => a.status === "done").length,
+    byDue = (list) => list.toSorted((x, y) => (x.due ?? "9999").localeCompare(y.due ?? "9999")),
+    grouped = (list) => groupActions(byDue(list), orderedInitiatives)
+      .map((g) => `<section class="action-group"><h3>${g.id ? gotoButton("initiative", g.id, g.label, "heading-link") : esc(g.label)}</h3><ul class="action-list">${g.items.map((a) => actionRow(a, ctx)).join("")}</ul></section>`).join(""),
+    fold = (key, label, list, body) => (list.length ? `<details class="closed-actions" ${openAttr(key)}><summary>${label} (${list.length})</summary>${body}</details>` : "");
+  $("actions-summary").textContent = mine.length ? `${plural(now.length, "action")} to do now · ${open.length} open · ${done} done` : "";
+  const list = now.length
+    ? grouped(now)
+    : empty(!mine.length
+      ? "No actions yet. Add the next concrete step, or ask the agent to record the steps of a plan."
+      : open.length ? `Nothing is due in the next ${NOW_DAYS} days and nothing is under way. The rest is below.` : "No open actions. Everything recorded is done or dropped.");
+  $("actions-list").innerHTML = list
+    + fold("actions-later", "Later", later, grouped(later))
+    + fold("actions-agent", "Agent steps", agent, grouped(agent))
+    + fold("actions-closed", "Done and dropped", closed, `<ul class="action-list">${closed.toSorted((a, b) => (b.doneAt ?? "").localeCompare(a.doneAt ?? "")).map((a) => actionRow(a, ctx)).join("")}</ul>`)
+    + addForm({ workspace, selection });
 }
