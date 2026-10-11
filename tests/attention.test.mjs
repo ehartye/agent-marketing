@@ -40,6 +40,7 @@ test("an empty ledger needs nothing from the owner", () => {
     gates: [],
     blockedInitiatives: [],
     picks: [],
+    waiting: [],
     stale: [],
     recent: [],
     summary: { decisions: 0, overdueDecisions: 0, actions: 0, overdueActions: 0, gates: 0, overdueGates: 0, blockedInitiatives: 0, picks: 0, stale: 0, total: 0 },

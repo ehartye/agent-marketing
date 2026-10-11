@@ -238,15 +238,22 @@ function reference(r, key, p, known, noun) {
 }
 // An initiative's parent groups it for reading; it is separate from dependsOn, which orders work.
 // Each initiative has at most one parent, so the chain from any initiative either ends or repeats.
+// Each initiative is walked once: a chain that ends, or reaches one already walked, is cleared whole,
+// so a chain of thousands costs thousands of steps.
 function parentCycle(records) {
-  const byId = new Map(records.map((r) => [r.id, r]));
+  const byId = new Map(records.map((r) => [r.id, r])),
+    done = new Set();
   for (const first of records) {
-    const path = [first.id];
-    for (let at = byId.get(first.parentId); at; at = byId.get(at.parentId)) {
-      const seen = path.indexOf(at.id);
-      if (seen >= 0) return [...path.slice(seen), at.id];
+    if (done.has(first.id)) continue;
+    const path = [first.id],
+      index = new Map([[first.id, 0]]);
+    for (let at = byId.get(first.parentId); at && !done.has(at.id); at = byId.get(at.parentId)) {
+      const seen = index.get(at.id);
+      if (seen !== undefined) return [...path.slice(seen), at.id];
+      index.set(at.id, path.length);
       path.push(at.id);
     }
+    for (const id of path) done.add(id);
   }
 }
 // ---- Collateral: slots to fill and the candidate assets for each ---------------------------------

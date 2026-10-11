@@ -393,17 +393,44 @@ function descendants(id, family) {
 // A parent is complete when all its children are, running when any is, else planned while any
 // child is still planned and paused otherwise. A child that is itself a parent counts as its own
 // derived status.
-function derivedStatus(id, family, byId, path = new Set()) {
-  const children = family.get(id);
-  if (!children || path.has(id)) return byId.get(id).status;
-  const states = children.map((c) => derivedStatus(c, family, byId, new Set([...path, id])));
-  return states.every((s) => s === "complete")
-    ? "complete"
-    : states.includes("running")
-      ? "running"
-      : states.includes("planned")
-        ? "planned"
-        : "paused";
+// Worked out for every parent at once, iteratively and once each, so a chain of thousands of
+// parents costs thousands of steps and cannot exhaust the call stack. A child already on the
+// path (only a hand-made cycle) counts as its own status.
+function derivedStatuses(family, byId) {
+  const derived = new Map(),
+    combine = (states) =>
+      states.every((s) => s === "complete")
+        ? "complete"
+        : states.includes("running")
+          ? "running"
+          : states.includes("planned")
+            ? "planned"
+            : "paused";
+  for (const root of family.keys()) {
+    if (derived.has(root)) continue;
+    const stack = [{ id: root, next: 0, states: [] }],
+      onPath = new Set([root]);
+    while (stack.length) {
+      const top = stack.at(-1),
+        children = family.get(top.id);
+      if (top.next < children.length) {
+        const child = children[top.next++];
+        if (derived.has(child)) top.states.push(derived.get(child));
+        else if (!family.has(child) || onPath.has(child)) top.states.push(byId.get(child).status);
+        else {
+          onPath.add(child);
+          stack.push({ id: child, next: 0, states: [] });
+        }
+        continue;
+      }
+      stack.pop();
+      onPath.delete(top.id);
+      const status = combine(top.states);
+      derived.set(top.id, status);
+      stack.at(-1)?.states.push(status);
+    }
+  }
+  return derived;
 }
 // Gates passed of gates, actions done of actions, over a set of initiative IDs. A gate counts when
 // an initiative in the set waits on it or names it as its own; a dropped action no longer counts.
@@ -433,6 +460,7 @@ export function plan(w, projectId) {
     gates = new Map(ownGates.map((g) => [g.id, g])),
     byId = new Map(rows.map((i) => [i.id, i])),
     family = families(rows),
+    derived = derivedStatuses(family, byId),
     leaves = rows.filter((i) => !family.has(i.id)),
     warnings = [],
     requiredBy = new Map();
@@ -454,6 +482,10 @@ export function plan(w, projectId) {
       warnings.push(
         `Initiative "${i.id}" has children; its own ${i.hours} hours are ignored and its leaf initiatives' hours are counted instead`,
       );
+    if (children.length && i.budget > 0)
+      warnings.push(
+        `Initiative "${i.id}" has children; its own budget of ${i.budget} is ignored and its leaf initiatives' budgets are counted instead`,
+      );
     const known = leafBelow.filter((l) => Number.isFinite(l.hours)),
       rollup = children.length
         ? {
@@ -461,7 +493,7 @@ export function plan(w, projectId) {
             end: leafBelow.reduce((a, l) => (l.end > a ? l.end : a), leafBelow[0].end),
             hours: known.length ? round2(known.reduce((n, l) => n + l.hours, 0)) : null,
             unknownHours: leafBelow.filter((l) => !Number.isFinite(l.hours)).map((l) => l.id),
-            status: derivedStatus(i.id, family, byId),
+            status: derived.get(i.id),
             progress,
           }
         : null;
@@ -520,7 +552,7 @@ export function plan(w, projectId) {
       warnings.push(`Gate "${g.id}" has hours but no due date; its hours are not in the weekly load`);
   }
   const gateHours = round2(ownGates.filter(datedGate).reduce((n, g) => n + g.hours, 0)),
-    planned = round2(rows.reduce((n, i) => n + i.budget, 0)),
+    planned = round2(leaves.reduce((n, i) => n + i.budget, 0)),
     overBy = planned > project.budget ? round2(planned - project.budget) : 0,
     peak = weeks.reduce((best, x) => (x.hours > (best?.hours ?? 0) ? x : best), null);
   return {
@@ -595,7 +627,8 @@ export function attention(w, projectId, today) {
     left = (date) => (date === undefined ? null : dayNumber(date) - now),
     mine = (rows) => (rows ?? []).filter((r) => r.projectId === projectId),
     decisions = mine(w.decisions)
-      .filter((d) => d.status === "open" || (d.status === "deferred" && left(d.needBy) !== null && left(d.needBy) <= 0))
+      // A deferred decision comes back on its date; with no date it has no day to come back on, so it stays.
+      .filter((d) => d.status === "open" || (d.status === "deferred" && (left(d.needBy) === null || left(d.needBy) <= 0)))
       .map((d) => ({
         id: d.id,
         title: d.title,
@@ -605,6 +638,7 @@ export function attention(w, projectId, today) {
         daysLeft: left(d.needBy),
         overdue: left(d.needBy) !== null && left(d.needBy) < 0,
         recommendation: d.recommendation ?? null,
+        recommendedOptionId: d.recommendedOptionId ?? null,
         defaultIfSilent: d.defaultIfSilent ?? null,
         optionCount: d.options.length,
         initiativeId: d.initiativeId ?? null,
@@ -663,12 +697,19 @@ export function attention(w, projectId, today) {
     // Collateral to choose between: an open slot with two or more live candidates. One candidate is
     // nothing to choose, and a rejected or retired one is out of the running.
     live = Map.groupBy(mine(w.assets).filter((a) => a.status === "candidate"), (a) => a.slotId),
-    picks = mine(w.assetSlots)
-      .filter((s) => s.status === "open")
+    openSlots = mine(w.assetSlots).filter((s) => s.status === "open"),
+    byName = (a, b) => a.name.localeCompare(b.name) || a.slotId.localeCompare(b.slotId),
+    // A slot the owner has said is waiting on something (tests to run, an artist) is not asked about yet.
+    picks = openSlots
+      .filter((s) => !s.waitingOn)
       .map((s) => ({ s, ids: (live.get(s.id) ?? []).map((a) => a.id) }))
       .filter(({ ids }) => ids.length >= 2)
       .map(({ s, ids }) => ({ slotId: s.id, name: s.name, candidates: ids.length, candidateIds: ids, initiativeId: s.initiativeId ?? null }))
-      .toSorted((a, b) => a.name.localeCompare(b.name) || a.slotId.localeCompare(b.slotId)),
+      .toSorted(byName),
+    waiting = openSlots
+      .filter((s) => s.waitingOn)
+      .map((s) => ({ slotId: s.id, name: s.name, waitingOn: s.waitingOn, candidates: (live.get(s.id) ?? []).length, initiativeId: s.initiativeId ?? null }))
+      .toSorted(byName),
     stale = decisions
       .filter((d) => d.status === "open" && d.daysLeft !== null && d.daysLeft < -STALE_DAYS)
       .map((d) => ({ id: d.id, title: d.title, needBy: d.needBy, daysOverdue: -d.daysLeft }))
@@ -676,7 +717,7 @@ export function attention(w, projectId, today) {
     // Newest first; updates in the same instant keep the later record first.
     recent = mine(w.updates)
       .map((u, n) => ({ u, n }))
-      .toSorted((a, b) => b.u.at.localeCompare(a.u.at) || b.n - a.n)
+      .toSorted((a, b) => Date.parse(b.u.at) - Date.parse(a.u.at) || b.n - a.n)
       .slice(0, RECENT_UPDATES)
       .map(({ u }) => u);
   return {
@@ -687,6 +728,7 @@ export function attention(w, projectId, today) {
     gates,
     blockedInitiatives,
     picks,
+    waiting,
     stale,
     recent,
     summary: {
