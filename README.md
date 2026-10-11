@@ -56,6 +56,7 @@ Setup installs a content-verified runtime under `~/.agent-marketing/releases/` a
 | market-monitor | Supported API collection, export imports, local desk and what to read when a game has no analytics |
 | market-insights | Reach/reception/viability review and a bounded next action |
 | market-experiment | Experiment design, counts, uncertainty and stop review |
+| market-desk | Keep decisions, next steps, gate checks, documents and collateral picks in the ledger under an initiative, so Needs you now is true |
 
 The `.claude-plugin` manifest follows the sibling agent projects. The plugin is listed in hartye-plugins; this repository can also be loaded as a local plugin in a compatible host. The skills use relative resources and the absolute managed launcher. The skill entry points use portable Agent Skills metadata; retain the repository layout and shared resources when loading them. Optional agent-vids/prose/sprites/beeps integrations are advisory and do not affect core operation.
 

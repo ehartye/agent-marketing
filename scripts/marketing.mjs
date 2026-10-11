@@ -49,7 +49,7 @@ const help = {
     "defer <decision-id> [--until YYYY-MM-DD] [--note text] [--revision n]",
     "action add --id id --title text [--owner owner|agent] [--due YYYY-MM-DD] [--hours n] [--initiative id] [--gate id] [--decision id] [--note text] [--project id] [--revision n]",
     "action status <action-id> <todo|doing|done|blocked|dropped> [--note text] [--revision n]",
-    "gate set <gate-id> --status <open|passed|failed|waived> [--note text] [--evidence id,id] [--revision n]",
+    "gate set <gate-id> --status <open|passed|failed|waived> [--note text] [--evidence id,id] [--due YYYY-MM-DD] [--hours n] [--revision n]",
     "update add --text text [--kind note|decision|gate|initiative|action|asset|document] [--initiative id] [--ref id] [--project id] [--revision n]",
     "asset slot add --id id --name text --kind image|video|document|text|link [--spec text] [--initiative id] [--project id] [--note text] [--revision n]",
     "asset add --slot id --label text (--file path | --url https-url | --text copy) [--source text] [--id id] [--supersedes asset-id] [--revision n]",
@@ -272,6 +272,8 @@ try {
         status: required(v.status, "--status"),
         note,
         evidenceIds: v.evidence === undefined ? undefined : v.evidence.split(",").map((x) => x.trim()).filter(Boolean),
+        due: v.due,
+        hours: v.hours === undefined ? undefined : Number(v.hours),
         revision,
       });
     else if (command === "update" && p[0] === "add")

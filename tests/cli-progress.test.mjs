@@ -249,3 +249,13 @@ test("addAction is a store function too: it logs the new action in the same writ
     assert.equal(out.update.initiativeId, "video");
     assert.throws(() => addAction(file, { id: "a1", title: "again" }), /already exists/);
   }));
+
+test("gate set can move a gate's due date and hours", () =>
+  withCli((run, file) => {
+    const r = run("gate", "set", "playtest", "--status", "open", "--due", "2026-11-01", "--hours", "3");
+    assert.equal(r.status, 0, JSON.stringify(r.err));
+    const g = readWorkspace(file).gates.find((x) => x.id === "playtest");
+    assert.equal(g.due, "2026-11-01");
+    assert.equal(g.hours, 3);
+    assert.notEqual(run("gate", "set", "playtest", "--status", "open", "--hours", "lots").status, 0);
+  }));

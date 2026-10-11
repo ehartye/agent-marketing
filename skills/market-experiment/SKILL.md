@@ -14,3 +14,5 @@ Run `marketing experiment <id>` for counts, Wilson intervals and conservative di
 Do not repeatedly peek and stop on the best-looking result while calling it a fixed-design inference. Explain independence, repeated users, allocation and missing outcome data. The illustrative target of 100 is not a power calculation.
 
 Deliver a compact experiment memo: hypothesis, design, raw counts, uncertainty, limitations, fulfilled/unfulfilled stopping conditions, decision and next observation. Keep a new hypothesis under a new ID. Finish when the decision is proportionate to the evidence and the stopping conditions were actually checked.
+
+Log the stop or continue call with `marketing update add --initiative <id>` and record the owner's choice with `marketing decide` (see market-desk).

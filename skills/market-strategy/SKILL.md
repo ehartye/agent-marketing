@@ -22,3 +22,5 @@ Deliver an audience → message → asset → CTA → measurement → review pla
 Save the full Markdown rationale, source links, assumptions, tradeoffs and next test with `marketing document save strategy <project-id> <strategy.md> --workspace <ledger> --revision <current-revision>`. Follow the CLI contract's conflict handling and read the saved document back. Updating initiatives alone does not preserve the strategy.
 
 Finish when the rationale and tradeoffs are source-backed, the initiative validates, `marketing plan` shows no week over the cap, the saved strategy has been verified, and the owner has one feasible next action with a decision date. Report the workspace and project ID and where to reopen it: Decide & plan → Project strategy.
+
+Keep the desk current while you do this (see market-desk): record each channel choice the owner has to make as a `decisions` record with the five dimensions per option, group the initiatives under a parent, and end with `marketing next`.

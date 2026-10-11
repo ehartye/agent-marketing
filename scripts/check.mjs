@@ -42,7 +42,7 @@ validateWorkspace(json("examples/studio.json"));
 const skills = readdirSync(join(root, "skills"), { withFileTypes: true })
   .filter((e) => e.isDirectory())
   .map((e) => e.name);
-assert.equal(skills.length, 9);
+assert.equal(skills.length, 10);
 for (const name of skills) {
   const file = join(root, "skills", name, "SKILL.md"),
     content = readFileSync(file, "utf8");

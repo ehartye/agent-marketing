@@ -14,3 +14,5 @@ Choose the most consequential bottleneck or evidence gap. Explain the observed f
 Deliver one prioritized next test with a source-linked rationale, an owner, a time/spend cap, a prespecified outcome, and a stop/review condition. Preserve failed and contradictory results. Record planned follow-up in the ledger when requested; do not turn the review into unsolicited outreach or spending.
 
 Finish when the owner can tell what was measured, what remains unknown, and exactly which observation will change the next decision.
+
+Record the bottleneck choice as a `decisions` record and the follow-up as `actions` under an initiative, and finish by running `marketing next` so the owner sees what now needs them (see market-desk).
