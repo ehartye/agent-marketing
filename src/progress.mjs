@@ -135,17 +135,25 @@ export function setActionStatus(file, actionId, status, { notes, revision, ...ti
   });
 }
 
-export function setGate(file, gateId, { status, note, evidenceIds, revision, ...time } = {}) {
+// `due` and `hours` change the gate's deadline and maker-hours; a value of null clears one, and
+// leaving one out keeps it.
+export function setGate(file, gateId, { status, note, evidenceIds, due, hours, revision, ...time } = {}) {
   const { at, today } = clock(time);
   if (!gateStatuses.includes(status)) throw new Error(`Gate status must be one of ${words(gateStatuses)}`);
   return write(file, revision, (w) => {
     const g = find(w, "gates", "Gate", gateId);
     const sameEvidence = evidenceIds === undefined || JSON.stringify(evidenceIds) === JSON.stringify(g.evidenceIds ?? []);
-    if (g.status === status && g.checkedAt === today && (note === undefined || g.notes === note) && sameEvidence) return same(g);
+    const sameField = (key, value) => value === undefined || (g[key] ?? null) === value;
+    if (g.status === status && g.checkedAt === today && (note === undefined || g.notes === note) && sameEvidence && sameField("due", due) && sameField("hours", hours))
+      return same(g);
     g.status = status;
     g.checkedAt = today;
     if (note !== undefined) g.notes = note;
     if (evidenceIds !== undefined) g.evidenceIds = evidenceIds;
+    for (const [key, value] of Object.entries({ due, hours })) {
+      if (value === null) delete g[key];
+      else if (value !== undefined) g[key] = value;
+    }
     // The same two checks plan() warns about; the gate is saved, and the caller is told.
     const warnings = [];
     if (status === "passed" && !g.evidenceIds?.length) warnings.push(`Gate "${g.id}" is passed but cites no evidence`);
