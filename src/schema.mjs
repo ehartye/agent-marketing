@@ -125,7 +125,7 @@ function document(v, p) {
     fail(p + ".markdown", "expected nonempty Markdown (max 100000 characters)");
   timestamp(v.updatedAt, p + ".updatedAt");
 }
-const gateStatuses = ["open", "passed", "failed", "waived"];
+export const gateStatuses = ["open", "passed", "failed", "waived"];
 // hours and dependsOn are read by the plan check. A ledger that kept free text under either name
 // before then is refused, so the message says what to do about it.
 const renameHint = " (the plan check reads this field; if it holds something else, rename that field)";
