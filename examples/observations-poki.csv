@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+poki-fit-plays,orbit,orbit-video,poki,plays,500,2026-10-01,2026-10-07,period,"Plays counted in a Poki player fit test: 500 players tried the game; this test measures playtime only, so conversion to play is not recorded",https://example.com/poki-evidence,2026-10-08T12:00:00Z
+poki-fit-hours,orbit,orbit-video,poki,hours,37.5,2026-10-01,2026-10-07,period,"Total playtime in the player fit test, derived by hand from Poki's average playtime of 4.5 minutes x 500 plays / 60; Poki reports the average, not the total",https://example.com/poki-evidence,2026-10-08T12:00:00Z
+poki-web-plays,orbit,orbit-video,poki,plays,1840,2026-10-08,2026-10-14,period,"Plays from category pages during a Poki web fit test of about 7 days; Poki compares click-through rate and conversion to play with category averages and shows both as percentages",https://example.com/poki-evidence,2026-10-15T12:00:00Z

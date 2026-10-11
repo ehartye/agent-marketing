@@ -1,0 +1,5 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+gj-follows,orbit,orbit-video,gamejolt,follows,31,2026-10-01,2026-10-07,period,"Followers of the Game Jolt game page since it was published on 2026-10-01, read by hand from the page on 2026-10-07",https://example.com/gamejolt-evidence,2026-10-08T12:00:00Z
+gj-ratings,orbit,orbit-video,gamejolt,ratings,18,2026-10-01,2026-10-07,period,"Likes and dislikes together on the Game Jolt game page, counted by hand on 2026-10-07; Game Jolt turns them into voltage, which is not recorded",https://example.com/gamejolt-evidence,2026-10-08T12:00:00Z
+gj-comments,orbit,orbit-video,gamejolt,comments,6,2026-10-01,2026-10-07,period,"Comments on the Game Jolt game page read and logged by hand, including bug reports",https://example.com/gamejolt-evidence,2026-10-08T12:00:00Z
+gj-clicks,orbit,orbit-video,gamejolt,clicks,54,2026-10-01,2026-10-07,period,"Tagged visits from the devlog link (utm_source=gamejolt), counted by the site's own analytics",https://example.com/gamejolt-evidence,2026-10-08T12:00:00Z

@@ -29,6 +29,12 @@ export const channels = [
   "discord",
   "linkedin",
   "product-hunt",
+  "poki",
+  "crazygames",
+  "newgrounds",
+  "gamejolt",
+  "press",
+  "mastodon",
   "direct",
 ];
 export const metrics = [

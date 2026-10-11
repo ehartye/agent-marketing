@@ -1,0 +1,4 @@
+id,projectId,initiativeId,channel,metric,value,start,end,kind,definition,url,collectedAt
+masto-clicks,orbit,orbit-video,mastodon,clicks,28,2026-10-01,2026-10-07,period,"Tagged visits from the post link (utm_source=mastodon), counted by the site's own analytics",https://example.com/mastodon-evidence,2026-10-08T12:00:00Z
+masto-comments,orbit,orbit-video,mastodon,comments,9,2026-10-01,2026-10-07,period,"Replies to the post read and logged by hand, including objections",https://example.com/mastodon-evidence,2026-10-08T12:00:00Z
+masto-follows,orbit,orbit-video,mastodon,follows,14,2026-10-01,2026-10-07,period,"New followers of the account in the window, from the difference between follower counts read by hand on 2026-10-01 and 2026-10-07",https://example.com/mastodon-evidence,2026-10-08T12:00:00Z

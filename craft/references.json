@@ -808,5 +808,347 @@
     "checkedAt": "2026-10-08",
     "supports": "There is a US$25 one-time registration fee payable by listed credit or debit cards (prepaid not accepted); a government ID and credit card in the legal name may be requested and the fee is not refunded if the information is invalid; personal accounts created after November 13, 2023 must meet testing requirements before release and verify access to an Android device",
     "limit": "Page does not state app review time (the publishing page, answer 9859751, says standard updates are processed as soon as possible and some reviews can take up to 7 days or longer in exceptional cases, but it is not cited here); testing requirement details are on a separate page"
+  },
+  {
+    "id": "poki-revenue-deals",
+    "title": "Poki for Developers: how we partner with you (revenue and deal types)",
+    "url": "https://developers.poki.com/guide/revenue-deal-types",
+    "quality": "high",
+    "checkedAt": "2026-10-11",
+    "supports": "Poki offers two agreement types. Web exclusive is its preferred way: on the open web the game is published only on Poki, which covers browser, Discord and YouTube Playables, and by default runs for 5 years; Steam, mobile app stores and consoles are not part of the exclusivity. Non-exclusive is a one-time flat licence fee with no revenue share, for games already live on other web platforms or with a niche or short-term fit",
+    "limit": "Poki calls the 5-year term, the revenue share and the investment indicative and says the real terms are set out in the agreement; the page does not say whether an own-site build may stay live under an exclusive deal; the 100% and 50/50 revenue split is on the working-with-Poki page, not here"
+  },
+  {
+    "id": "poki-working",
+    "title": "Poki for Developers: working with Poki",
+    "url": "https://developers.poki.com/guide/working-with-poki",
+    "quality": "high",
+    "checkedAt": "2026-10-11",
+    "supports": "Every game on Poki is hand-picked; revenue from a player who arrives directly (bookmarks, search, social media or your own community) is 100% yours, and revenue from a player who arrives through Poki.com or a Poki marketing effort is split 50/50; Poki asks for web exclusivity in return for its investment while Steam, app stores and consoles stay yours",
+    "limit": "Describes the exclusive deal in general terms and does not mention the non-exclusive option that the deal-types page offers; the figures are Poki's own and indicative"
+  },
+  {
+    "id": "poki-requirements",
+    "title": "Poki for Developers: requirements and quality standards",
+    "url": "https://developers.poki.com/guide/requirements-quality",
+    "quality": "high",
+    "checkedAt": "2026-10-11",
+    "supports": "Hard requirements: desktop, mobile and tablet support, 16:9 scaling, localStorage wrapped for incognito mode, no external requests, no branding or external ads, playable with an ad blocker. Correct SDK events (gameplayStart on the first input, gameplayStop on any interruption, commercialBreak only when leaving a pause) are required for web fit testing and every release. In-app purchases and other ad systems are not allowed, and external links go through PokiSDK.openExternalLink",
+    "limit": "Lists what Poki QA checks, not what Poki accepts; says nothing about how a build made for itch.io or Steam must change beyond these rules"
+  },
+  {
+    "id": "poki-how-testing",
+    "title": "Poki for Developers: how testing works",
+    "url": "https://developers.poki.com/guide/how-testing-works",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "Five steps: add the game, playtests (10 recordings each), a player fit test (500 players, playtime only), a web fit test (about 7 days on real category pages, measuring click-through rate, time on page and conversion to play against category averages) and a final review in 1 to 2 weeks. A healthy player fit result is 3+ minutes average playtime with 25%+ of plays over 3 minutes; Poki suggests aiming for 65%+ conversion to play and 5+ minutes average playtime before requesting review. Tests are free and repeatable",
+    "limit": "The thresholds are Poki's own floors for moving forward and the 70% and 6+ minute averages are its own claim, not a forecast for another game; the pages read name conversion to play without defining its numerator and denominator"
+  },
+  {
+    "id": "poki-release-process",
+    "title": "Poki for Developers: release process",
+    "url": "https://developers.poki.com/guide/release-process",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "After an agreement the game goes through QA against the requirements, a soft release of about 2 to 3 weeks that cannot be skipped (the developer must be available to ship fixes) and then global release. During soft release Poki expects the developer to monitor conversion to play and engagement, errors, monetization (at least 1 ad per daily active user) and player feedback",
+    "limit": "Timings are Poki's estimates; the page does not say how a rejected QA report affects the schedule"
+  },
+  {
+    "id": "poki-final-review",
+    "title": "Poki for Developers: final review",
+    "url": "https://developers.poki.com/guide/final-review",
+    "quality": "high",
+    "checkedAt": "2026-10-11",
+    "supports": "The final review takes 1 to 2 weeks and judges the test results, the game's quality and originality and whether it is unique enough within its categories; after a pass the legal, QA, soft release and global release steps take roughly 2 to 3 months in total; a failed review means Poki sees no fit at that time",
+    "limit": "The 1 to 2 week and 2 to 3 month figures are Poki's estimates; a game that does not pass cannot be published on Poki at that time, and Poki invites other submissions"
+  },
+  {
+    "id": "poki-external-resources",
+    "title": "Poki for Developers: external resources policy",
+    "url": "https://developers.poki.com/guide/external-resources-policy",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "Poki blocks all external requests by default: no external assets, in-game chat or external account systems. Analytics, leaderboards and multiplayer servers can be approved case by case through Settings, CSP in Poki for Developers with a hosted privacy policy; Google products, including Google Analytics, cannot be approved",
+    "limit": "Says nothing about which analytics providers are approved in practice; a build that reports tagged visits or returns to its own analytics needs an approved exception first"
+  },
+  {
+    "id": "poki-content-safety",
+    "title": "Poki for Developers: content and player safety, quality guidelines and AI",
+    "url": "https://developers.poki.com/guide/content-player-safety",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "Games must suit all ages and chat is not allowed. Poki favours original, polished, web-first games and declines clones. On AI it says the game should reflect the developer's own perspective and meaningful improvement beyond the base tooling before the fit tests, and that developers should be able to show which tools were used, and their prompts and iterations, on request because AI-only creation can raise ownership issues",
+    "limit": "Poki reserves the right to decline any game that lacks originality even when it works and cannot always explain a decline; the page gives no view on the ownership of AI-assisted art"
+  },
+  {
+    "id": "cg-technical",
+    "title": "CrazyGames Documentation: technical requirements",
+    "url": "https://docs.crazygames.com/requirements/technical/",
+    "quality": "high",
+    "checkedAt": "2026-10-11",
+    "supports": "Total file size up to 250 MB and 1,500 files; initial download up to 50 MB (20 MB for the mobile homepage). With the SDK the initial download is measured from the start of loading to the first Gameplay start event; without the SDK total file size is used and must be 50 MB or less (20 MB for the mobile homepage). Relative paths only; the game should work in Chrome and Edge and smoothly on a 4 GB Chromebook",
+    "limit": "Does not address service workers, offline packs or caching; externally hosted files are judged on time to reach gameplay (20 seconds or less); limits are CrazyGames' own and can change"
+  },
+  {
+    "id": "cg-requirements-intro",
+    "title": "CrazyGames Documentation: requirements overview",
+    "url": "https://docs.crazygames.com/requirements/intro/",
+    "quality": "high",
+    "checkedAt": "2026-10-11",
+    "supports": "Two launch steps: Basic Launch (the SDK is optional and monetization is not available) and Full Launch (all requirements including the SDK, with ads served only through it). Basic requirements include PEGI 12 and no external ads. The Developer Dashboard shows players, average playtime, gameplay conversion, retention and revenue",
+    "limit": "A summary table; the revenue-share percentage and payment terms are not stated on it, and the developer terms page returned a not-found page when fetched"
+  },
+  {
+    "id": "cg-basic-launch-metrics",
+    "title": "CrazyGames Documentation: Basic Launch guide, the metrics that matter",
+    "url": "https://docs.crazygames.com/resources/basic-launch-metrics/",
+    "quality": "high",
+    "checkedAt": "2026-10-11",
+    "supports": "Basic Launch ends once the game has been live at least 7 days and has reached at least 500 plays, or after 21 days. The dashboard updates daily and tracks average play time (the average time a player spends in a single session), Day 1 retention (the percentage of players who come back the day after their first session) and conversion (the percentage of players who play at least one minute after starting). No SDK is needed and ads stay disabled",
+    "limit": "The 10+ minute, 10 to 15 percent and 80+ percent benchmarks describe successful or strong titles per CrazyGames and are not thresholds for Full Launch; the percentages' denominators are not defined further"
+  },
+  {
+    "id": "cg-gameplay",
+    "title": "CrazyGames Documentation: gameplay requirements",
+    "url": "https://docs.crazygames.com/requirements/gameplay/",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "English localization is required and content must be original. No cross-promotion, with exceptions: community links that do not lead directly to a playable web version, store links for desktop games only on the main menu or at the end of a demo, and links to games in the same series; app store links are never allowed in the game. The audience is aged 13 or more and the game must be PEGI 12 compliant",
+    "limit": "The link exceptions apply only when the link is not a main call to action on the menu; the page does not say how strictly each is enforced"
+  },
+  {
+    "id": "cg-faq",
+    "title": "CrazyGames Documentation: FAQ and contact",
+    "url": "https://docs.crazygames.com/faq/",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "A game already live elsewhere can be published if you hold the distribution rights, and the developer keeps 100% ownership. CrazyGames hosts the uploaded files on its CDN, does not iframe games hosted on competing browser game portals, and treats a build on your own domain as a regular submission that earns revenue only with a correctly integrated SDK. Rankings rest on play count, average playtime, retention, conversion and player feedback; players who leave a negative rating are asked why. Payments are monthly once the balance reaches EUR 100",
+    "limit": "The accordion answers needed the full page text rather than the visible text; the revenue-share percentage is not stated; the developer terms were not read"
+  },
+  {
+    "id": "cg-payouts",
+    "title": "CrazyGames Documentation: payouts",
+    "url": "https://docs.crazygames.com/payouts/",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "Monthly payouts run through Tipalti after onboarding in the Developer Portal, by wire transfer, direct deposit or ACH, eCheck or PayPal depending on country, with a minimum of EUR 100 in earnings before a payout",
+    "limit": "Fees and thresholds vary by method and country; CrazyGames gives no legal, tax or financial advice"
+  },
+  {
+    "id": "ng-game-guidelines",
+    "title": "Newgrounds Wiki: Game Guidelines",
+    "url": "https://www.newgrounds.com/wiki/help-information/terms-of-use/game-guidelines",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "You must be the creator and owner of the game and have rights to its music. On AI: do not share any games that were generated via an AI prompt (shovelware), disclose what and how AI was used in the author commentary, and do not use an AI-generated thumbnail; AI voice is allowed in some cases. Enforcement is subjective and AI-assisted work may be removed at Newgrounds' discretion. The game must work in a web browser without a download, must not auto-redirect or open pop-ups, and should not rely on third-party servers (tracking needs notice and an opt-out)",
+    "limit": "The page calls AI an evolving area and does not say whether agent-authored procedural art or synthesized sound counts as generated via an AI prompt; a game removed after judging should not be resubmitted without noticeable improvements"
+  },
+  {
+    "id": "ng-game-dev-resources",
+    "title": "Newgrounds Wiki: Game Dev Resources",
+    "url": "https://www.newgrounds.com/wiki/creator-resources/game-dev-resources",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "A majority of games are now HTML5; an HTML5 export is uploaded as a .zip whose root contains index.html, which is the file Newgrounds loads",
+    "limit": "No size or file-count limit appears on this page, and a separate HTML5 guide URL returned a not-found page when fetched"
+  },
+  {
+    "id": "ng-monetization",
+    "title": "Newgrounds Wiki: Monetization",
+    "url": "https://www.newgrounds.com/wiki/creator-resources/monetization",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "Newgrounds is attempting to transition to being ad free for everyone, with a revenue-sharing system as a goal once there are enough paying supporters; the revenue program and Flash ad information on the page are described as legacy systems that are no longer active",
+    "limit": "Does not say whether a replacement revenue-sharing system exists today"
+  },
+  {
+    "id": "ng-faq",
+    "title": "Newgrounds Wiki: Frequently Asked Questions (Game Portal)",
+    "url": "https://www.newgrounds.com/wiki/frequently-asked-questions",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "Users judge new submissions by voting 0 to 5, and a submission can be blammed (removed) or protected; users can post and delete reviews; games can carry medals",
+    "limit": "The page does not define the Views, vote or review counts shown on a game page, so copy the label you read into the observation definition"
+  },
+  {
+    "id": "gj-add-game",
+    "title": "Game Jolt Help Docs: add your game",
+    "url": "https://gamejolt.com/help-docs/creators/add-game",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "A game page needs a description, tags and a maturity rating (All Ages, Teen or Mature). Thumbnails must be 16:9, at least 588x331 pixels and at most 30 MB; headers 900 to 5120 pixels wide with a ratio from 2.7 to 6.3. Builds are organised in packages and versioned releases (MAJOR.MINOR.PATCH) that start hidden until published; a browser build is added by platform such as HTML. Game Jolt provides metrics for each release. Comments and ratings can be switched off per game, ratings are likes and dislikes that feed the game's voltage, and people follow game pages",
+    "limit": "The page names no size limit for HTML builds and does not list the analytics metrics, so their names were not captured"
+  },
+  {
+    "id": "gj-creator-requirements",
+    "title": "Game Jolt Help Docs: requirements for becoming a Creator",
+    "url": "https://gamejolt.com/help-docs/creators/requirements",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "Game Jolt users with 1,000 followers and quality content, or creators with 3,000 followers on another platform such as TikTok, Instagram, Twitch or YouTube, are considered for Creator status",
+    "limit": "Creator status is a Game Jolt choice, not a right; the page is short and gives no review time"
+  },
+  {
+    "id": "gj-monies",
+    "title": "Game Jolt Help Docs: getting paid",
+    "url": "https://gamejolt.com/help-docs/creators/monies",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "Creators earn from charged stickers (a share of the day's Game Jolt ad revenue, converted to Gems worth 1 cent USD each, held 7 business days) and from shop sales; the minimum withdrawal is $20 (2,000 Gems), paid by PayPal, wire transfer or ACH",
+    "limit": "Sticker value changes daily with platform ad revenue and Creator status is needed to earn from them"
+  },
+  {
+    "id": "gj-site-guidelines",
+    "title": "Game Jolt Help Docs: site guidelines",
+    "url": "https://gamejolt.com/help-docs/general/guidelines",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "Spam includes off-topic posts, excessive tagging, duplicate posts, repeated posting in quick succession, links to off-topic or monetized external websites and bots or scripts that post, like and follow at inhumane rates; uploading a game you did not create counts as theft; each Community adds its own rules",
+    "limit": "No rule on AI-generated content appears in the guidelines read, which is not permission; the livestreaming section is outdated"
+  },
+  {
+    "id": "mastodon-gamedev-about",
+    "title": "Gamedev Mastodon (mastodon.gamedev.place): about",
+    "url": "https://mastodon.gamedev.place/about",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "An independent server for game development and related topics run by one administrator, with about 4.2K active users, a code of conduct and usage guidelines; the page says feeds are chronological with no algorithms or ads",
+    "limit": "Describes one server; other Mastodon servers have other topics, rules and sizes; the active-user figure is the server's own count"
+  },
+  {
+    "id": "mastodon-gamedev-instance",
+    "title": "Gamedev Mastodon: instance data (API v2)",
+    "url": "https://mastodon.gamedev.place/api/v2/instance",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "New accounts need approval and a reason; posts are limited to 500 characters and 4 media attachments, with each link counted as 23 characters; six server rules cover sensitive media, hate, violence, harassment, content illegal in the EU and intentionally false or misleading information",
+    "limit": "Machine-readable settings read on one day; the six rules do not mention promotion, which is not permission because the code of conduct and usage guidelines also apply"
+  },
+  {
+    "id": "mastodon-gamedev-guidelines",
+    "title": "Gamedev Mastodon: usage guidelines",
+    "url": "https://gamedev.place/mastodon-guidelines.html",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "The server is for game developers and people interested in game development, across all specialities and experience levels; the local timeline is mostly about game development, the preferred language is English, and the administrator notes a smaller network means fewer people to interact with",
+    "limit": "The page does not address promotion of your own game or links to playable builds"
+  },
+  {
+    "id": "mastodon-posting",
+    "title": "Mastodon documentation: posting to your profile",
+    "url": "https://docs.joinmastodon.org/user/posting/",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "The default limit is 500 characters; links must start with http(s):// and count as 23 characters, and link shorteners are discouraged; a post can carry up to 4 images or one video or audio file; only Public posts appear in public feeds and search; hashtags make a post discoverable and media descriptions are recommended",
+    "limit": "Software defaults that each server can change; the page describes no analytics, so reach is not measurable from it"
+  },
+  {
+    "id": "steam-curators",
+    "title": "Steamworks Documentation: Curators and Curator Connect",
+    "url": "https://partner.steamgames.com/doc/marketing/curators",
+    "quality": "high",
+    "checkedAt": "2026-10-11",
+    "supports": "Curator Connect needs at least a public coming-soon page and the Generate CD Keys permission; a developer can send offers to 100 curators with a maximum of 5 copies each, and curators have no obligation to accept, play or review",
+    "limit": "Steam only, so a browser-only game with no Steam page has nothing to offer here; the page gives no acceptance or coverage rate"
+  },
+  {
+    "id": "steam-keys",
+    "title": "Steamworks Documentation: Steam keys",
+    "url": "https://partner.steamgames.com/doc/features/keys",
+    "quality": "high",
+    "checkedAt": "2026-10-11",
+    "supports": "Developers launching their first game wait three weeks after the AppID is created before requesting keys; Release State Override keys are generally limited to 2,500 total; free products cannot request keys by default and must submit a ticket; giveaways are disallowed unless very small (under 100 keys); Valve warns of fraudsters impersonating journalists or storefronts to obtain keys for resale",
+    "limit": "Rules and limits are Valve's and can change; key handling does not apply to a free browser game"
+  },
+  {
+    "id": "steam-next-fest",
+    "title": "Steamworks Documentation: Steam Next Fest, February 2027",
+    "url": "https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest/feb_2027",
+    "quality": "high",
+    "checkedAt": "2026-10-11",
+    "supports": "The February 2027 edition runs February 22 to March 1 (10:00 AM PST); registration closes January 10, 11:59pm PST, and all required items are due February 8. Eligibility: a published public store page, a publicly playable demo by the start, not a prologue or demo of existing content, a release after March 1, 2027, and a game may appear in only one Next Fest",
+    "limit": "Each edition has its own page (October 2026 closed to registration on August 31; June 2027 registration closes April 25); dates were read on 2026-10-11 and Valve can change them; a public store page needs the paid Steam Direct fee first"
+  },
+  {
+    "id": "wholesome-games",
+    "title": "Wholesome Games",
+    "url": "https://wholesomegames.com/",
+    "quality": "high",
+    "checkedAt": "2026-10-11",
+    "supports": "The organizer's FAQ states 'We stand firmly against AI-generated art and NFTs'; the site points to a mailing list for a reminder when the next submission form is live",
+    "limit": "A stance, not a form rule: a separate Wholesome Games Presents publishing form asks whether generative AI was used (not at all, for planning or prototyping such as concept art, or included in the game or marketing materials), and the Wholesome Direct showcase form was not live; whether agent-authored procedural art counts is not answered"
+  },
+  {
+    "id": "comfy-cozy-gaming",
+    "title": "Comfy Cozy Gaming: cozy games coming in August 2026",
+    "url": "https://www.comfycozygaming.com/2026/07/31/cozy-games-coming-august-2026/",
+    "quality": "medium",
+    "checkedAt": "2026-10-10",
+    "supports": "The post states 'We do our best not to highlight cozy games that use Generative AI at any level of development or marketing' and that the listed games have not reported or disclosed using it",
+    "limit": "An editorial statement in one monthly roundup post dated 2026-07-31, not a standalone policy page; no other outlet's AI policy was found"
+  },
+  {
+    "id": "press-kit-guide",
+    "title": "presskit.gg: the complete guide to indie game press kits",
+    "url": "https://presskit.gg/blog/indie-game-press-kit-guide",
+    "quality": "medium",
+    "checkedAt": "2026-10-10",
+    "supports": "Vendor and practitioner guidance: one public press page with a factsheet, short and long descriptions, 6 to 12 screenshots at 1920x1080 or larger without watermarks, a trailer, logos, team information and a contact email, kept current at each milestone",
+    "limit": "Written by the vendor of a press kit plugin and quoting journalists' preferences; no source read measures whether a press kit changes coverage"
+  },
+  {
+    "id": "keymailer-pricing",
+    "title": "Keymailer pricing (developer side now Partnier)",
+    "url": "https://keymailer.co/pricing/",
+    "quality": "medium",
+    "checkedAt": "2026-10-10",
+    "supports": "The page says it is always free for content creators and that the developer login has been rebranded to Partnier; it publishes no developer price and asks visitors to book a demo",
+    "limit": "Vendor marketing; reach figures such as 60,000+ influencers are the vendor's own claims; a third-party review's $24.99 a month entry tier was not verified"
+  },
+  {
+    "id": "lurkit-pricing",
+    "title": "Lurkit pricing",
+    "url": "https://www.lurkit.gg/pricing",
+    "quality": "medium",
+    "checkedAt": "2026-10-10",
+    "supports": "Paid creator campaigns ('Quests') carry a 20% commission fee per Quest, plan prices are 'Contact for pricing', and the page invites applications for up to a 70% discount",
+    "limit": "Vendor marketing; no developer price list is published, so cost cannot be planned from it"
+  },
+  {
+    "id": "press-scrutiny-kotaku",
+    "title": "Kotaku: Opening Night Live games with generative AI (2026-08-26)",
+    "url": "https://kotaku.com/opening-night-live-2026-genai-slop-games-geoff-keighley-2000728477",
+    "quality": "medium",
+    "checkedAt": "2026-10-10",
+    "supports": "Press checks games against Steam's AI disclosure: Kotaku listed Gamescom Opening Night Live games using generative AI and wrote that it had seen several examples of developers not disclosing genAI use on Steam until they had been caught",
+    "limit": "One outlet's article about one event; secondary reporting, not a platform rule"
+  },
+  {
+    "id": "poki-what-we-look-for",
+    "title": "Poki for Developers: what we look for",
+    "url": "https://developers.poki.com/guide/what-we-look-for",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "Poki curates on quality (UX, feel and the core game loop), player fit and tech (fast load times, stable frame rates and a lean file size on mobile and desktop web); beyond that it looks for originality, depth and replayability, a clear first impression, cross-device feel and room to grow. It says its audience is majority mobile, so a desktop-only game is at a disadvantage, and that the criteria are weighed together rather than scored against a pass mark",
+    "limit": "Poki's own criteria for its own curation; it publishes no acceptance rate"
+  },
+  {
+    "id": "gj-growth",
+    "title": "Game Jolt Help Docs: growth and analytics",
+    "url": "https://gamejolt.com/help-docs/creators/growth",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "The Creator HUD has an analytics dashboard showing where viewers come from and which content resonates; the guide recommends diversifying content, consistent posting, polls and sharing your Game Jolt link on other channels",
+    "limit": "Written for Creators and aimed at shop and sticker revenue; it names no analytics metrics and gives no reach or conversion figures"
+  },
+  {
+    "id": "press-outreach-norms",
+    "title": "Steam Page Analyzer: how to get streamers to play your game (2026 outreach playbook)",
+    "url": "https://www.steampageanalyzer.com/blog/how-to-get-streamers-to-play-your-game",
+    "quality": "medium",
+    "checkedAt": "2026-10-10",
+    "supports": "Vendor view: cold outreach to creators who have never heard of you typically gets single-digit response rates and zero is a normal early result, while opt-in platforms do better; creators check in the first seconds whether they can play now, whether it looks like content and whether it fits their channel; one developer who emailed about 30 creators got no replies",
+    "limit": "A vendor blog selling related tools, so its coverage figures are marketing claims; no measured reply rate exists and the 30-email case is one anecdote"
   }
 ]
