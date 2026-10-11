@@ -571,6 +571,127 @@ export function plan(w, projectId) {
     warnings,
   };
 }
+// ---- Attention: what needs the owner now ---------------------------------------------------
+// Work that falls due within this many days is shown; an open decision more than STALE_DAYS past
+// its date is stale.
+const SOON_DAYS = 14,
+  STALE_DAYS = 7,
+  RECENT_UPDATES = 10;
+const byDaysLeft = (a, b) =>
+  (a.daysLeft ?? Infinity) - (b.daysLeft ?? Infinity) || a.id.localeCompare(b.id);
+// The local calendar date as YYYY-MM-DD: the day the owner is living in, not the UTC day.
+export function localDate(now = new Date()) {
+  const two = (n) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`;
+}
+// What needs the owner now, most urgent first, for one project. `today` is a YYYY-MM-DD date the
+// caller supplies, so this is a pure function of the ledger and that date: it reads no clock.
+// daysLeft is the whole days from today to a date, negative once the date has passed.
+export function attention(w, projectId, today) {
+  if (typeof today !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(today) || !Number.isFinite(dayNumber(today)) || dayText(dayNumber(today)) !== today)
+    throw new Error("today must be a real YYYY-MM-DD date");
+  const p = plan(w, projectId),
+    now = dayNumber(today),
+    left = (date) => (date === undefined ? null : dayNumber(date) - now),
+    mine = (rows) => (rows ?? []).filter((r) => r.projectId === projectId),
+    decisions = mine(w.decisions)
+      .filter((d) => d.status === "open" || (d.status === "deferred" && left(d.needBy) !== null && left(d.needBy) <= 0))
+      .map((d) => ({
+        id: d.id,
+        title: d.title,
+        question: d.question,
+        status: d.status,
+        needBy: d.needBy ?? null,
+        daysLeft: left(d.needBy),
+        overdue: left(d.needBy) !== null && left(d.needBy) < 0,
+        recommendation: d.recommendation ?? null,
+        defaultIfSilent: d.defaultIfSilent ?? null,
+        optionCount: d.options.length,
+        initiativeId: d.initiativeId ?? null,
+        reportId: d.reportId ?? null,
+      }))
+      .toSorted(byDaysLeft),
+    actions = mine(w.actions)
+      .filter((a) => a.owner === "owner" && ["todo", "doing", "blocked"].includes(a.status))
+      .map((a) => ({ a, daysLeft: left(a.due) }))
+      .filter(({ a, daysLeft }) => a.status === "blocked" || (daysLeft !== null && daysLeft <= SOON_DAYS))
+      .map(({ a, daysLeft }) => ({
+        id: a.id,
+        title: a.title,
+        status: a.status,
+        due: a.due ?? null,
+        daysLeft,
+        overdue: daysLeft !== null && daysLeft < 0,
+        reason: a.status === "blocked" ? "blocked" : daysLeft < 0 ? "overdue" : "due-soon",
+        blockedBy: a.blockedBy ?? null,
+        hours: Number.isFinite(a.hours) ? a.hours : null,
+        initiativeId: a.initiativeId ?? null,
+        gateId: a.gateId ?? null,
+        decisionId: a.decisionId ?? null,
+      }))
+      .toSorted(byDaysLeft),
+    initiativeById = new Map(p.initiatives.map((i) => [i.id, i])),
+    gates = p.gates
+      .filter((g) => (g.status === "open" || g.status === "failed") && g.due !== null && left(g.due) <= SOON_DAYS)
+      .map((g) => ({
+        id: g.id,
+        name: g.name,
+        criteria: g.criteria,
+        status: g.status,
+        due: g.due,
+        daysLeft: left(g.due),
+        overdue: left(g.due) < 0,
+        hours: g.hours,
+        initiativeId: g.initiativeId,
+        blocks: g.requiredBy
+          .map((id) => initiativeById.get(id))
+          .filter((i) => i && i.status !== "complete")
+          .map((i) => ({ id: i.id, name: i.name, status: i.status })),
+      }))
+      .toSorted(byDaysLeft),
+    blockedInitiatives = p.initiatives
+      .filter((i) => i.blocked && (i.status === "running" || (i.status === "planned" && left(i.start) <= SOON_DAYS)))
+      .map((i) => ({
+        id: i.id,
+        name: i.name,
+        status: i.status,
+        start: i.start,
+        daysToStart: left(i.start),
+        blocker: i.blockedBy[0],
+      }))
+      .toSorted((a, b) => a.start.localeCompare(b.start) || a.id.localeCompare(b.id)),
+    stale = decisions
+      .filter((d) => d.status === "open" && d.daysLeft !== null && d.daysLeft < -STALE_DAYS)
+      .map((d) => ({ id: d.id, title: d.title, needBy: d.needBy, daysOverdue: -d.daysLeft }))
+      .toSorted((a, b) => b.daysOverdue - a.daysOverdue || a.id.localeCompare(b.id)),
+    // Newest first; updates in the same instant keep the later record first.
+    recent = mine(w.updates)
+      .map((u, n) => ({ u, n }))
+      .toSorted((a, b) => b.u.at.localeCompare(a.u.at) || b.n - a.n)
+      .slice(0, RECENT_UPDATES)
+      .map(({ u }) => u);
+  return {
+    projectId,
+    today,
+    decisions,
+    actions,
+    gates,
+    blockedInitiatives,
+    stale,
+    recent,
+    summary: {
+      decisions: decisions.length,
+      overdueDecisions: decisions.filter((d) => d.overdue).length,
+      actions: actions.length,
+      overdueActions: actions.filter((a) => a.overdue).length,
+      gates: gates.length,
+      overdueGates: gates.filter((g) => g.overdue).length,
+      blockedInitiatives: blockedInitiatives.length,
+      stale: stale.length,
+      total: decisions.length + actions.length + gates.length + blockedInitiatives.length,
+    },
+  };
+}
 // Actions from the plan check, present only when a ledger records gates, dependencies or hours.
 // `over` holds the over-cap weeks of work that is not yet complete: finished work cannot be moved
 // out of a week, so a week that is over the cap only because of it is not something to act on.
@@ -639,12 +760,45 @@ function planActions(project, p, over) {
   }
   return actions;
 }
-export function advise(w, projectId, filter = {}) {
+// The first action when the owner has decisions, actions or gates to settle, from attention(). A
+// blocked initiative is not counted here: the readiness actions already say what it waits on.
+function attentionAction(a) {
+  const d = a.decisions,
+    parts = [];
+  const when = (daysLeft, date, past = "overdue") =>
+    daysLeft === null ? "no date" : daysLeft < 0 ? `${past} since ${date}` : `needed by ${date}`;
+  if (d.length)
+    parts.push(
+      `${d.length} open decision${d.length === 1 ? "" : "s"}: ${some(d, (x) => `${x.title} (${when(x.daysLeft, x.needBy)})`, 3)}${a.stale.length ? `; ${a.stale.length} waited more than ${STALE_DAYS} days past the date` : ""}`,
+    );
+  if (a.actions.length)
+    parts.push(
+      `${a.actions.length} owner action${a.actions.length === 1 ? "" : "s"} due or blocked: ${some(a.actions, (x) => `${x.title} (${x.reason === "blocked" ? "blocked" : when(x.daysLeft, x.due, "overdue")})`, 3)}`,
+    );
+  if (a.gates.length)
+    parts.push(
+      `${a.gates.length} gate${a.gates.length === 1 ? "" : "s"} due or overdue: ${some(a.gates, (x) => `${x.name} (${when(x.daysLeft, x.due)})`, 3)}`,
+    );
+  return {
+    kind: "attention",
+    priority: 0,
+    title: "Decisions and actions are waiting on the owner",
+    reason: parts.join(". ") + ".",
+    next: `Run marketing next ${a.projectId} for the full list.${d.length ? " Settle a decision with marketing decide <decision-id> --option <option-id>, or move it with marketing defer <decision-id> --until <date>." : ""}${a.actions.length ? " Close an action with marketing action status <action-id> done." : ""}${a.gates.length ? " Record a gate check with marketing gate set <gate-id> --status passed|failed|waived." : ""}`,
+    stop: "Settle or defer each decision before starting work that depends on it; an undecided question is the default to stop at.",
+    evidence: [],
+    referenceIds: [],
+  };
+}
+// `today` is the date the owner's deadlines are measured from; it defaults to the local date.
+export function advise(w, projectId, filter = {}, today = localDate()) {
   const project = w.projects.find((p) => p.id === projectId);
   if (!project) throw new Error("Project does not exist");
   const r = report(w, { ...filter, projectId }),
     p = plan(w, projectId),
-    actions = [];
+    actions = [],
+    owed = attention(w, projectId, today);
+  if (owed.decisions.length + owed.actions.length + owed.gates.length) actions.push(attentionAction(owed));
   for (const f of r.funnels)
     if (f.rate !== null && f.rate < 0.2)
       actions.push({
