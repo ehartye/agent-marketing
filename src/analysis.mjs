@@ -272,7 +272,7 @@ const dayText = (n) => new Date(Math.min(LAST_DAY, Math.max(FIRST_DAY, n)) * DAY
 const mondayOf = (n) => n - ((((n + 3) % 7) + 7) % 7);
 const round2 = (x) => Math.round(x * 100) / 100 + 0;
 const loadMethod =
-  "Each initiative's hours are spread evenly over the days from its start to its end, both included. A calendar week, Monday to Sunday, receives the hours times the days of the initiative that fall in it, divided by its total days. An initiative without hours is unknown: it is listed for each week it is active and is never counted as zero. Weekly totals are rounded to two decimals, and a week is over the cap when its rounded total exceeds the project's weeklyHours.";
+  "Each initiative's hours are spread evenly over the days from its start to its end, both included. A calendar week, Monday to Sunday, receives the hours times the days of the initiative that fall in it, divided by its total days. Only leaf initiatives count: a parent initiative's own hours are ignored, because its children carry the work. A gate with both a due date and hours puts all its hours in the week it is due. An initiative without hours is unknown: it is listed for each week it is active and is never counted as zero. Weekly totals are rounded to two decimals, and a week is over the cap when its rounded total exceeds the project's weeklyHours.";
 const gateSettled = (g) => g.status === "passed" || g.status === "waived";
 // What an initiative still waits on: gates not passed or waived and initiatives not complete.
 // A dependency that cannot be found in the project counts as unmet, never as satisfied.
@@ -291,8 +291,11 @@ function unmetDependencies(i, gates, initiatives) {
 // the plan, the page and the advice build and carry half a million weeks. The count left out is
 // returned, with the span the initiatives cover, for the caller to say so.
 const MAX_WEEKS = 260;
-function weeklyLoad(weeklyHours, initiatives) {
-  const weeks = new Map();
+// A gate puts its hours in the week of its due date, and only a gate with both is counted.
+const datedGate = (g) => g.due !== undefined && Number.isFinite(g.hours);
+function weeklyLoad(weeklyHours, initiatives, gates = []) {
+  const weeks = new Map(),
+    dated = gates.filter(datedGate);
   let first = Infinity,
     last = -Infinity,
     from = Infinity,
@@ -305,13 +308,20 @@ function weeklyLoad(weeklyHours, initiatives) {
     from = Math.min(from, start);
     to = Math.max(to, end);
   }
+  for (const g of dated) {
+    const day = dayNumber(g.due);
+    first = Math.min(first, mondayOf(day));
+    last = Math.max(last, mondayOf(day));
+    from = Math.min(from, day);
+    to = Math.max(to, day);
+  }
   const stop = Math.min(last, first + (MAX_WEEKS - 1) * 7);
   for (const i of initiatives) {
     const start = dayNumber(i.start),
       end = dayNumber(i.end),
       days = end - start + 1;
     for (let monday = mondayOf(start); monday <= Math.min(end, stop); monday += 7) {
-      if (!weeks.has(monday)) weeks.set(monday, { shares: [], unknown: [] });
+      if (!weeks.has(monday)) weeks.set(monday, { shares: [], unknown: [], gates: [] });
       const week = weeks.get(monday);
       if (!Number.isFinite(i.hours)) week.unknown.push(i.id);
       else {
@@ -320,10 +330,16 @@ function weeklyLoad(weeklyHours, initiatives) {
       }
     }
   }
+  for (const g of dated) {
+    const monday = mondayOf(dayNumber(g.due));
+    if (monday > stop || !(g.hours > 0)) continue;
+    if (!weeks.has(monday)) weeks.set(monday, { shares: [], unknown: [], gates: [] });
+    weeks.get(monday).gates.push({ id: g.id, share: g.hours });
+  }
   const list = [];
   for (let monday = first; monday <= stop; monday += 7) {
-    const { shares, unknown } = weeks.get(monday) ?? { shares: [], unknown: [] },
-      hours = round2(shares.reduce((n, x) => n + x.share, 0)),
+    const { shares, unknown, gates: due } = weeks.get(monday) ?? { shares: [], unknown: [], gates: [] },
+      hours = round2(shares.reduce((n, x) => n + x.share, 0) + due.reduce((n, x) => n + x.share, 0)),
       overBy = hours > weeklyHours ? round2(hours - weeklyHours) : 0;
     list.push({
       start: dayText(monday),
@@ -333,6 +349,7 @@ function weeklyLoad(weeklyHours, initiatives) {
       overCap: overBy > 0,
       overBy,
       initiatives: shares.map((x) => ({ id: x.id, hours: round2(x.share) })),
+      gates: due.map((x) => ({ id: x.id, hours: round2(x.share) })),
       unknownHours: unknown,
     });
   }
@@ -349,6 +366,88 @@ const describeDependency = (d) =>
 // dependencies cannot make a message of thousands of names.
 const some = (items, show, limit = 5) =>
   items.slice(0, limit).map(show).join(", ") + (items.length > limit ? `, and ${items.length - limit} more` : "");
+// Parent initiatives group others for reading; only a leaf carries hours. `families` maps each
+// parent that exists in the project to its direct children, in record order.
+function families(rows) {
+  const ids = new Set(rows.map((i) => i.id)),
+    family = new Map();
+  for (const i of rows)
+    if (i.parentId !== undefined && i.parentId !== i.id && ids.has(i.parentId)) {
+      if (!family.has(i.parentId)) family.set(i.parentId, []);
+      family.get(i.parentId).push(i.id);
+    }
+  return family;
+}
+// Every initiative below one, nearest first. The seen set keeps a hand-made cycle from looping.
+function descendants(id, family) {
+  const seen = new Set([id]),
+    queue = [id];
+  for (let n = 0; n < queue.length; n++)
+    for (const child of family.get(queue[n]) ?? [])
+      if (!seen.has(child)) {
+        seen.add(child);
+        queue.push(child);
+      }
+  return queue.slice(1);
+}
+// A parent is complete when all its children are, running when any is, else planned while any
+// child is still planned and paused otherwise. A child that is itself a parent counts as its own
+// derived status.
+// Worked out for every parent at once, iteratively and once each, so a chain of thousands of
+// parents costs thousands of steps and cannot exhaust the call stack. A child already on the
+// path (only a hand-made cycle) counts as its own status.
+function derivedStatuses(family, byId) {
+  const derived = new Map(),
+    combine = (states) =>
+      states.every((s) => s === "complete")
+        ? "complete"
+        : states.includes("running")
+          ? "running"
+          : states.includes("planned")
+            ? "planned"
+            : "paused";
+  for (const root of family.keys()) {
+    if (derived.has(root)) continue;
+    const stack = [{ id: root, next: 0, states: [] }],
+      onPath = new Set([root]);
+    while (stack.length) {
+      const top = stack.at(-1),
+        children = family.get(top.id);
+      if (top.next < children.length) {
+        const child = children[top.next++];
+        if (derived.has(child)) top.states.push(derived.get(child));
+        else if (!family.has(child) || onPath.has(child)) top.states.push(byId.get(child).status);
+        else {
+          onPath.add(child);
+          stack.push({ id: child, next: 0, states: [] });
+        }
+        continue;
+      }
+      stack.pop();
+      onPath.delete(top.id);
+      const status = combine(top.states);
+      derived.set(top.id, status);
+      stack.at(-1)?.states.push(status);
+    }
+  }
+  return derived;
+}
+// Gates passed of gates, actions done of actions, over a set of initiative IDs. A gate counts when
+// an initiative in the set waits on it or names it as its own; a dropped action no longer counts.
+function progressOf(ids, rows, gates, actions) {
+  const wanted = new Set(
+    rows.filter((i) => ids.has(i.id)).flatMap((i) => i.dependsOn ?? []),
+  );
+  for (const g of gates) if (ids.has(g.initiativeId)) wanted.add(g.id);
+  const mine = gates.filter((g) => wanted.has(g.id)),
+    todo = actions.filter((a) => ids.has(a.initiativeId) && a.status !== "dropped");
+  return {
+    gatesPassed: mine.filter(gateSettled).length,
+    gatesTotal: mine.length,
+    actionsDone: todo.filter((a) => a.status === "done").length,
+    actionsTotal: todo.length,
+  };
+}
 // Gates with their status, whether each initiative is blocked and by what, the maker hours per
 // calendar week against the project's weeklyHours, and the initiative budgets against its
 // budget. Reads one project only. A pure function of the ledger: no clock, nothing is written.
@@ -357,8 +456,12 @@ export function plan(w, projectId) {
   if (!project) throw new Error("Project does not exist");
   const rows = w.initiatives.filter((i) => i.projectId === projectId),
     ownGates = (w.gates ?? []).filter((g) => g.projectId === projectId),
+    ownActions = (w.actions ?? []).filter((a) => a.projectId === projectId),
     gates = new Map(ownGates.map((g) => [g.id, g])),
     byId = new Map(rows.map((i) => [i.id, i])),
+    family = families(rows),
+    derived = derivedStatuses(family, byId),
+    leaves = rows.filter((i) => !family.has(i.id)),
     warnings = [],
     requiredBy = new Map();
   for (const i of rows)
@@ -367,9 +470,33 @@ export function plan(w, projectId) {
       requiredBy.get(id).push(i.id);
     }
   const initiatives = rows.map((i) => {
-    const unmet = unmetDependencies(i, gates, byId);
+    const unmet = unmetDependencies(i, gates, byId),
+      children = family.get(i.id) ?? [],
+      below = children.length ? descendants(i.id, family) : [],
+      leafBelow = below.filter((id) => !family.has(id)).map((id) => byId.get(id)),
+      ids = new Set([i.id, ...below]),
+      progress = progressOf(ids, rows, ownGates, ownActions);
     if (unmet.length && (i.status === "running" || i.status === "complete"))
       warnings.push(`Initiative "${i.id}" is ${i.status} although it waits on ${some(unmet, describeDependency)}`);
+    if (children.length && Number.isFinite(i.hours))
+      warnings.push(
+        `Initiative "${i.id}" has children; its own ${i.hours} hours are ignored and its leaf initiatives' hours are counted instead`,
+      );
+    if (children.length && i.budget > 0)
+      warnings.push(
+        `Initiative "${i.id}" has children; its own budget of ${i.budget} is ignored and its leaf initiatives' budgets are counted instead`,
+      );
+    const known = leafBelow.filter((l) => Number.isFinite(l.hours)),
+      rollup = children.length
+        ? {
+            start: leafBelow.reduce((a, l) => (l.start < a ? l.start : a), leafBelow[0].start),
+            end: leafBelow.reduce((a, l) => (l.end > a ? l.end : a), leafBelow[0].end),
+            hours: known.length ? round2(known.reduce((n, l) => n + l.hours, 0)) : null,
+            unknownHours: leafBelow.filter((l) => !Number.isFinite(l.hours)).map((l) => l.id),
+            status: derived.get(i.id),
+            progress,
+          }
+        : null;
     return {
       id: i.id,
       name: i.name,
@@ -377,23 +504,36 @@ export function plan(w, projectId) {
       status: i.status,
       start: i.start,
       end: i.end,
-      hours: Number.isFinite(i.hours) ? i.hours : null,
+      hours: rollup ? rollup.hours : Number.isFinite(i.hours) ? i.hours : null,
       budget: i.budget,
+      note: i.note ?? null,
+      parentId: byId.has(i.parentId) ? i.parentId : null,
+      children,
       dependsOn: i.dependsOn ?? [],
       blocked: i.status !== "complete" && unmet.length > 0,
       blockedBy: i.status === "complete" ? [] : unmet,
       overCapWeeks: [],
+      rollup,
+      progress,
     };
   });
-  const { weeks, omitted, from, to } = weeklyLoad(project.weeklyHours, rows),
-    entry = new Map(initiatives.map((i) => [i.id, i]));
+  const { weeks, omitted, from, to } = weeklyLoad(project.weeklyHours, leaves, ownGates),
+    entry = new Map(initiatives.map((i) => [i.id, i])),
+    gateWeeks = new Map(ownGates.map((g) => [g.id, []]));
   for (const week of weeks)
-    if (week.overCap) for (const { id } of week.initiatives) entry.get(id).overCapWeeks.push(week.start);
+    if (week.overCap) {
+      for (const { id } of week.initiatives) entry.get(id).overCapWeeks.push(week.start);
+      for (const { id } of week.gates) gateWeeks.get(id).push(week.start);
+    }
+  // A parent shows the over-cap weeks of the leaves below it.
+  for (const i of initiatives)
+    if (i.children.length)
+      i.overCapWeeks = [...new Set(descendants(i.id, family).flatMap((id) => entry.get(id).overCapWeeks))].toSorted();
   if (omitted)
     warnings.unshift(
       `The weekly load covers ${weeks.length} weeks (${weeks[0].start} to ${weeks.at(-1).end}) of the ${weeks.length + omitted} that the initiatives span (${from} to ${to}); the later ${omitted} are left out. Check the initiative dates.`,
     );
-  const unknownHours = initiatives.filter((i) => i.hours === null).map((i) => i.id);
+  const unknownHours = initiatives.filter((i) => !i.rollup && i.hours === null).map((i) => i.id);
   if (unknownHours.length)
     warnings.unshift(
       `${unknownHours.length} initiative${unknownHours.length === 1 ? " has" : "s have"} no hours (${some(unknownHours, String)}); the weekly load counts only initiatives with hours.`,
@@ -408,8 +548,11 @@ export function plan(w, projectId) {
   for (const g of ownGates) {
     if (g.status === "passed" && !g.evidenceIds?.length) warnings.push(`Gate "${g.id}" is passed but cites no evidence`);
     if (g.status === "waived" && !g.notes) warnings.push(`Gate "${g.id}" is waived without a note saying why`);
+    if (g.hours !== undefined && g.due === undefined)
+      warnings.push(`Gate "${g.id}" has hours but no due date; its hours are not in the weekly load`);
   }
-  const planned = round2(rows.reduce((n, i) => n + i.budget, 0)),
+  const gateHours = round2(ownGates.filter(datedGate).reduce((n, g) => n + g.hours, 0)),
+    planned = round2(leaves.reduce((n, i) => n + i.budget, 0)),
     overBy = planned > project.budget ? round2(planned - project.budget) : 0,
     peak = weeks.reduce((best, x) => (x.hours > (best?.hours ?? 0) ? x : best), null);
   return {
@@ -423,13 +566,20 @@ export function plan(w, projectId) {
       checkedAt: g.checkedAt ?? null,
       evidenceIds: g.evidenceIds ?? [],
       notes: g.notes ?? null,
+      due: g.due ?? null,
+      hours: Number.isFinite(g.hours) ? g.hours : null,
+      initiativeId: g.initiativeId ?? null,
+      overCapWeeks: gateWeeks.get(g.id),
       requiredBy: requiredBy.get(g.id) ?? [],
     })),
     initiatives,
     load: {
       method: loadMethod,
       weeklyHours: project.weeklyHours,
-      totalHours: round2(rows.reduce((n, i) => n + (Number.isFinite(i.hours) ? i.hours : 0), 0)),
+      totalHours: round2(
+        leaves.reduce((n, i) => n + (Number.isFinite(i.hours) ? i.hours : 0), 0) + gateHours,
+      ),
+      gateHours,
       capacityHours: round2(project.weeklyHours * weeks.length),
       unknownHours,
       omittedWeeks: omitted,
@@ -451,6 +601,148 @@ export function plan(w, projectId) {
       withoutHours: unknownHours.length,
     },
     warnings,
+  };
+}
+// ---- Attention: what needs the owner now ---------------------------------------------------
+// Work that falls due within this many days is shown; an open decision more than STALE_DAYS past
+// its date is stale.
+const SOON_DAYS = 14,
+  STALE_DAYS = 7,
+  RECENT_UPDATES = 10;
+const byDaysLeft = (a, b) =>
+  (a.daysLeft ?? Infinity) - (b.daysLeft ?? Infinity) || a.id.localeCompare(b.id);
+// The local calendar date as YYYY-MM-DD: the day the owner is living in, not the UTC day.
+export function localDate(now = new Date()) {
+  const two = (n) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`;
+}
+// What needs the owner now, most urgent first, for one project. `today` is a YYYY-MM-DD date the
+// caller supplies, so this is a pure function of the ledger and that date: it reads no clock.
+// daysLeft is the whole days from today to a date, negative once the date has passed.
+export function attention(w, projectId, today) {
+  if (typeof today !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(today) || !Number.isFinite(dayNumber(today)) || dayText(dayNumber(today)) !== today)
+    throw new Error("today must be a real YYYY-MM-DD date");
+  const p = plan(w, projectId),
+    now = dayNumber(today),
+    left = (date) => (date === undefined ? null : dayNumber(date) - now),
+    mine = (rows) => (rows ?? []).filter((r) => r.projectId === projectId),
+    decisions = mine(w.decisions)
+      // A deferred decision comes back on its date; with no date it has no day to come back on, so it stays.
+      .filter((d) => d.status === "open" || (d.status === "deferred" && (left(d.needBy) === null || left(d.needBy) <= 0)))
+      .map((d) => ({
+        id: d.id,
+        title: d.title,
+        question: d.question,
+        status: d.status,
+        needBy: d.needBy ?? null,
+        daysLeft: left(d.needBy),
+        overdue: left(d.needBy) !== null && left(d.needBy) < 0,
+        recommendation: d.recommendation ?? null,
+        recommendedOptionId: d.recommendedOptionId ?? null,
+        defaultIfSilent: d.defaultIfSilent ?? null,
+        optionCount: d.options.length,
+        initiativeId: d.initiativeId ?? null,
+        reportId: d.reportId ?? null,
+      }))
+      .toSorted(byDaysLeft),
+    actions = mine(w.actions)
+      .filter((a) => a.owner === "owner" && ["todo", "doing", "blocked"].includes(a.status))
+      .map((a) => ({ a, daysLeft: left(a.due) }))
+      .filter(({ a, daysLeft }) => a.status === "blocked" || (daysLeft !== null && daysLeft <= SOON_DAYS))
+      .map(({ a, daysLeft }) => ({
+        id: a.id,
+        title: a.title,
+        status: a.status,
+        due: a.due ?? null,
+        daysLeft,
+        overdue: daysLeft !== null && daysLeft < 0,
+        reason: a.status === "blocked" ? "blocked" : daysLeft < 0 ? "overdue" : "due-soon",
+        blockedBy: a.blockedBy ?? null,
+        hours: Number.isFinite(a.hours) ? a.hours : null,
+        initiativeId: a.initiativeId ?? null,
+        gateId: a.gateId ?? null,
+        decisionId: a.decisionId ?? null,
+      }))
+      .toSorted(byDaysLeft),
+    initiativeById = new Map(p.initiatives.map((i) => [i.id, i])),
+    gates = p.gates
+      .filter((g) => (g.status === "open" || g.status === "failed") && g.due !== null && left(g.due) <= SOON_DAYS)
+      .map((g) => ({
+        id: g.id,
+        name: g.name,
+        criteria: g.criteria,
+        status: g.status,
+        due: g.due,
+        daysLeft: left(g.due),
+        overdue: left(g.due) < 0,
+        hours: g.hours,
+        initiativeId: g.initiativeId,
+        blocks: g.requiredBy
+          .map((id) => initiativeById.get(id))
+          .filter((i) => i && i.status !== "complete")
+          .map((i) => ({ id: i.id, name: i.name, status: i.status })),
+      }))
+      .toSorted(byDaysLeft),
+    blockedInitiatives = p.initiatives
+      .filter((i) => i.blocked && (i.status === "running" || (i.status === "planned" && left(i.start) <= SOON_DAYS)))
+      .map((i) => ({
+        id: i.id,
+        name: i.name,
+        status: i.status,
+        start: i.start,
+        daysToStart: left(i.start),
+        blocker: i.blockedBy[0],
+      }))
+      .toSorted((a, b) => a.start.localeCompare(b.start) || a.id.localeCompare(b.id)),
+    // Collateral to choose between: an open slot with two or more live candidates. One candidate is
+    // nothing to choose, and a rejected or retired one is out of the running.
+    live = Map.groupBy(mine(w.assets).filter((a) => a.status === "candidate"), (a) => a.slotId),
+    openSlots = mine(w.assetSlots).filter((s) => s.status === "open"),
+    byName = (a, b) => a.name.localeCompare(b.name) || a.slotId.localeCompare(b.slotId),
+    // A slot the owner has said is waiting on something (tests to run, an artist) is not asked about yet.
+    picks = openSlots
+      .filter((s) => !s.waitingOn)
+      .map((s) => ({ s, ids: (live.get(s.id) ?? []).map((a) => a.id) }))
+      .filter(({ ids }) => ids.length >= 2)
+      .map(({ s, ids }) => ({ slotId: s.id, name: s.name, candidates: ids.length, candidateIds: ids, initiativeId: s.initiativeId ?? null }))
+      .toSorted(byName),
+    waiting = openSlots
+      .filter((s) => s.waitingOn)
+      .map((s) => ({ slotId: s.id, name: s.name, waitingOn: s.waitingOn, candidates: (live.get(s.id) ?? []).length, initiativeId: s.initiativeId ?? null }))
+      .toSorted(byName),
+    stale = decisions
+      .filter((d) => d.status === "open" && d.daysLeft !== null && d.daysLeft < -STALE_DAYS)
+      .map((d) => ({ id: d.id, title: d.title, needBy: d.needBy, daysOverdue: -d.daysLeft }))
+      .toSorted((a, b) => b.daysOverdue - a.daysOverdue || a.id.localeCompare(b.id)),
+    // Newest first; updates in the same instant keep the later record first.
+    recent = mine(w.updates)
+      .map((u, n) => ({ u, n }))
+      .toSorted((a, b) => Date.parse(b.u.at) - Date.parse(a.u.at) || b.n - a.n)
+      .slice(0, RECENT_UPDATES)
+      .map(({ u }) => u);
+  return {
+    projectId,
+    today,
+    decisions,
+    actions,
+    gates,
+    blockedInitiatives,
+    picks,
+    waiting,
+    stale,
+    recent,
+    summary: {
+      decisions: decisions.length,
+      overdueDecisions: decisions.filter((d) => d.overdue).length,
+      actions: actions.length,
+      overdueActions: actions.filter((a) => a.overdue).length,
+      gates: gates.length,
+      overdueGates: gates.filter((g) => g.overdue).length,
+      blockedInitiatives: blockedInitiatives.length,
+      picks: picks.length,
+      stale: stale.length,
+      total: decisions.length + actions.length + gates.length + blockedInitiatives.length + picks.length,
+    },
   };
 }
 // Actions from the plan check, present only when a ledger records gates, dependencies or hours.
@@ -521,12 +813,45 @@ function planActions(project, p, over) {
   }
   return actions;
 }
-export function advise(w, projectId, filter = {}) {
+// The first action when the owner has decisions, actions or gates to settle, from attention(). A
+// blocked initiative is not counted here: the readiness actions already say what it waits on.
+function attentionAction(a) {
+  const d = a.decisions,
+    parts = [];
+  const when = (daysLeft, date, past = "overdue") =>
+    daysLeft === null ? "no date" : daysLeft < 0 ? `${past} since ${date}` : `needed by ${date}`;
+  if (d.length)
+    parts.push(
+      `${d.length} open decision${d.length === 1 ? "" : "s"}: ${some(d, (x) => `${x.title} (${when(x.daysLeft, x.needBy)})`, 3)}${a.stale.length ? `; ${a.stale.length} waited more than ${STALE_DAYS} days past the date` : ""}`,
+    );
+  if (a.actions.length)
+    parts.push(
+      `${a.actions.length} owner action${a.actions.length === 1 ? "" : "s"} due or blocked: ${some(a.actions, (x) => `${x.title} (${x.reason === "blocked" ? "blocked" : when(x.daysLeft, x.due, "overdue")})`, 3)}`,
+    );
+  if (a.gates.length)
+    parts.push(
+      `${a.gates.length} gate${a.gates.length === 1 ? "" : "s"} due or overdue: ${some(a.gates, (x) => `${x.name} (${when(x.daysLeft, x.due)})`, 3)}`,
+    );
+  return {
+    kind: "attention",
+    priority: 0,
+    title: "Decisions and actions are waiting on the owner",
+    reason: parts.join(". ") + ".",
+    next: `Run marketing next ${a.projectId} for the full list.${d.length ? " Settle a decision with marketing decide <decision-id> --option <option-id>, or move it with marketing defer <decision-id> --until <date>." : ""}${a.actions.length ? " Close an action with marketing action status <action-id> done." : ""}${a.gates.length ? " Record a gate check with marketing gate set <gate-id> --status passed|failed|waived." : ""}`,
+    stop: "Settle or defer each decision before starting work that depends on it; an undecided question is the default to stop at.",
+    evidence: [],
+    referenceIds: [],
+  };
+}
+// `today` is the date the owner's deadlines are measured from; it defaults to the local date.
+export function advise(w, projectId, filter = {}, today = localDate()) {
   const project = w.projects.find((p) => p.id === projectId);
   if (!project) throw new Error("Project does not exist");
   const r = report(w, { ...filter, projectId }),
     p = plan(w, projectId),
-    actions = [];
+    actions = [],
+    owed = attention(w, projectId, today);
+  if (owed.decisions.length + owed.actions.length + owed.gates.length) actions.push(attentionAction(owed));
   for (const f of r.funnels)
     if (f.rate !== null && f.rate < 0.2)
       actions.push({
@@ -540,14 +865,17 @@ export function advise(w, projectId, filter = {}) {
         referenceIds: ["experimentation", "measurement"],
         ruleIds: ["activation-investigation"],
       });
-  const unfinished = w.initiatives.filter((i) => i.projectId === projectId && i.status !== "complete");
+  // Finished work and settled gates cannot be moved out of a week, so only the rest is compared to the cap.
+  const own = w.initiatives.filter((i) => i.projectId === projectId),
+    parents = families(own),
+    unfinished = own.filter((i) => i.status !== "complete" && !parents.has(i.id)),
+    openGates = (w.gates ?? []).filter((g) => g.projectId === projectId && !gateSettled(g)),
+    everything = unfinished.length === p.initiatives.filter((i) => !i.rollup).length && openGates.length === p.gates.length;
   actions.push(
     ...planActions(
       project,
       p,
-      (unfinished.length === p.initiatives.length ? p.load.weeks : weeklyLoad(project.weeklyHours, unfinished).weeks).filter(
-        (x) => x.overCap,
-      ),
+      (everything ? p.load.weeks : weeklyLoad(project.weeklyHours, unfinished, openGates).weeks).filter((x) => x.overCap),
     ),
   );
   // What the project's stage is for: a first session for a prototype, the best channel for a beta,

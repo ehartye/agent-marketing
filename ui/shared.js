@@ -17,3 +17,6 @@ export function restoreFocus(key) {
   if (!key) return;
   document.querySelector(key)?.focus({ preventScroll: true });
 }
+// A control the page disabled on purpose (the standing choice in "Change to"). Redrawing the busy
+// state must not switch it back on.
+export const keepsDisabled = el => Boolean(el.hasAttribute?.("data-keep-disabled") || el.getAttribute?.("aria-disabled") === "true");

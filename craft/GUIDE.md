@@ -14,5 +14,6 @@ The guides distinguish published findings, practitioner methods, derived arithme
 - [Measurement](measurement.md): definitions, snapshots, attribution, costs and imports.
 - [Reception](reception.md): source context, sentiment review and silent users.
 - [Experiments](experiments.md): sample uncertainty and stopping decisions.
+- [Keeping the desk current](desk.md): a parent for every record, decisions with options, actions, gate checks, collateral picks, and the start and end of a session.
 
 The project ledger is evidence you can inspect. It stores no ad-account credentials and performs no outreach. Monitoring reads supported APIs; platform exports and source-linked manual records cover other channels.

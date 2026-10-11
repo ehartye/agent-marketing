@@ -9,7 +9,14 @@ export const collections = [
   "sources",
   "reports",
   "gates",
+  "decisions",
+  "actions",
+  "updates",
+  "assetSlots",
+  "assets",
 ];
+// Collections that workspaces saved by an earlier release do not have; they gain an empty one.
+const addedLater = ["reports", "gates", "decisions", "actions", "updates", "assetSlots", "assets"];
 export const channels = [
   "youtube",
   "tiktok",
@@ -90,13 +97,26 @@ function number(v, p, integer = false) {
 function one(v, items, p) {
   if (!items.includes(v)) fail(p, `expected one of ${items.join(", ")}`);
 }
+const isDate = (v) =>
+  typeof v === "string" &&
+  /^\d{4}-\d{2}-\d{2}$/.test(v) &&
+  Number.isFinite(Date.parse(v)) &&
+  new Date(v).toISOString().slice(0, 10) === v;
 function date(v, p) {
-  if (
-    typeof v !== "string" ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(v) ||
-    new Date(v).toISOString().slice(0, 10) !== v
-  )
-    fail(p, "expected a real YYYY-MM-DD date");
+  if (!isDate(v)) fail(p, "expected a real YYYY-MM-DD date");
+}
+// These fields were free text in a ledger written before the release that gave them a meaning (0.11).
+// A value that does not fit is refused as any wrong value is, but the message names the record, the
+// field, what was found and what is expected, and says the field is typed now, so the owner can see
+// it is the field that changed and not the file that is damaged.
+const typedSince = "0.11";
+const shown = (v) => {
+  const t = JSON.stringify(v) ?? String(v);
+  return t.length > 40 ? t.slice(0, 40) + "…" : t;
+};
+function typed(record, key, p, ok, expected) {
+  if (!ok)
+    fail(`${p}.${key}`, `${shown(record[key])} is not ${expected}; ${key} is a typed field since ${typedSince} (if it holds something else, rename that field)`);
 }
 function timestamp(v, p) {
   if (
@@ -120,7 +140,7 @@ function document(v, p) {
     fail(p + ".markdown", "expected nonempty Markdown (max 100000 characters)");
   timestamp(v.updatedAt, p + ".updatedAt");
 }
-const gateStatuses = ["open", "passed", "failed", "waived"];
+export const gateStatuses = ["open", "passed", "failed", "waived"];
 // hours and dependsOn are read by the plan check. A ledger that kept free text under either name
 // before then is refused, so the message says what to do about it.
 const renameHint = " (the plan check reads this field; if it holds something else, rename that field)";
@@ -180,6 +200,195 @@ function cycleText(cycle) {
     ? cycle.join(" -> ")
     : `${cycle.slice(0, shown).join(" -> ")} -> … (${cycle.length - 1} initiatives in the cycle)`;
 }
+export const decisionStatuses = ["open", "decided", "deferred", "superseded"];
+export const actionStatuses = ["todo", "doing", "done", "blocked", "dropped"];
+export const updateKinds = ["decision", "gate", "initiative", "action", "asset", "document", "note"];
+const idPattern = /^[a-zA-Z0-9_.:-]{1,160}$/;
+// The dimensions the owner wants every option to state. Each is optional text, so a draft decision
+// can be saved before they are all written, but docs/CLI.md asks for all five.
+export const optionDimensions = ["time", "risk", "complexity", "bestPractice", "maintainability"];
+function options(r, p) {
+  const where = p + ".options";
+  if (!Array.isArray(r.options))
+    fail(where, "expected an array of {id, label, summary?, time?, risk?, complexity?, bestPractice?, maintainability?}");
+  const seen = new Set();
+  for (const o of r.options) {
+    if (!o || typeof o !== "object" || Array.isArray(o)) fail(where, "expected an option record");
+    text(o.id, where + ".id");
+    if (!idPattern.test(o.id)) fail(where + ".id", "invalid option ID");
+    if (seen.has(o.id)) fail(where, `duplicate option ID "${o.id}"`);
+    seen.add(o.id);
+    text(o.label, `${where}.${o.id}.label`);
+    for (const key of ["summary", ...optionDimensions]) if (o[key] !== undefined) text(o[key], `${where}.${o.id}.${key}`);
+  }
+}
+// Earlier choices of a decision that was changed, oldest first.
+function decisionHistory(r, p) {
+  if (!Array.isArray(r.history)) fail(p + ".history", "expected an array of {chosen, rationale?, decidedAt}");
+  for (const h of r.history) {
+    if (!h || typeof h !== "object" || Array.isArray(h)) fail(p + ".history", "expected {chosen, rationale?, decidedAt}");
+    text(h.chosen, p + ".history.chosen");
+    if (h.rationale !== undefined) text(h.rationale, p + ".history.rationale");
+    timestamp(h.decidedAt, p + ".history.decidedAt");
+  }
+}
+// A list of IDs, each a record of the same project in `known`.
+function references(r, key, p, known, noun) {
+  const where = `${p}.${key}`;
+  if (!Array.isArray(r[key])) fail(where, `expected an array of ${noun} IDs`);
+  const seen = new Set();
+  for (const id of r[key]) {
+    if (typeof id !== "string" || !id) fail(where, `expected an array of ${noun} IDs`);
+    if (seen.has(id)) fail(where, `duplicate ${noun} "${id}"`);
+    seen.add(id);
+    if (known.get(id)?.projectId !== r.projectId) fail(where, `"${id}" is not a ${noun} in this project`);
+  }
+}
+// One optional ID of a record of the same project in `known`.
+function reference(r, key, p, known, noun) {
+  if (r[key] === undefined) return;
+  if (known.get(r[key])?.projectId !== r.projectId) fail(`${p}.${key}`, `"${r[key]}" is not a ${noun} in this project`);
+}
+// An initiative's parent groups it for reading; it is separate from dependsOn, which orders work.
+// Each initiative has at most one parent, so the chain from any initiative either ends or repeats.
+// Each initiative is walked once: a chain that ends, or reaches one already walked, is cleared whole,
+// so a chain of thousands costs thousands of steps.
+function parentCycle(records) {
+  const byId = new Map(records.map((r) => [r.id, r])),
+    done = new Set();
+  for (const first of records) {
+    if (done.has(first.id)) continue;
+    const path = [first.id],
+      index = new Map([[first.id, 0]]);
+    for (let at = byId.get(first.parentId); at && !done.has(at.id); at = byId.get(at.parentId)) {
+      const seen = index.get(at.id);
+      if (seen !== undefined) return [...path.slice(seen), at.id];
+      index.set(at.id, path.length);
+      path.push(at.id);
+    }
+    for (const id of path) done.add(id);
+  }
+}
+// ---- Collateral: slots to fill and the candidate assets for each ---------------------------------
+export const assetKinds = ["image", "video", "document", "text", "link"];
+export const slotStatuses = ["open", "picked"];
+export const assetStatuses = ["candidate", "selected", "rejected", "retired"];
+// The only file types an asset may be. Each extension names one media type; the desk serves these
+// and nothing else, so there is deliberately no SVG, HTML, script or executable.
+export const assetExtensions = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
+  ".pdf": "application/pdf",
+  ".txt": "text/plain",
+  ".md": "text/markdown",
+  ".markdown": "text/markdown",
+};
+export const assetMediaTypes = [...new Set(Object.values(assetExtensions))];
+export const maxAssetBytes = 50 * 1024 * 1024;
+export const maxAssetText = 4000;
+// A path inside the assets folder, written with forward slashes: no drive, no leading slash, no
+// backslash, no empty, "." or ".." segment, and no character a Windows file name cannot hold
+// (a colon would open an alternate data stream). Returns the reason it is refused, or undefined.
+export function assetPathProblem(v) {
+  if (typeof v !== "string" || !v || v.length > 300) return "expected a relative path of at most 300 characters";
+  if (v.includes("\\")) return "must use forward slashes, not backslashes";
+  if (v.startsWith("/") || /^[a-zA-Z]:/.test(v)) return "must be relative to the assets folder, not absolute";
+  for (const segment of v.split("/")) {
+    if (segment === "..") return 'must not contain ".."';
+    if (!segment || segment === ".") return "must not contain empty or . segments";
+    if (/[\u0000-\u001f<>:"|?*\x5c]/.test(segment) || /[. ]$/.test(segment)) return "has a segment that is not a portable file name";
+  }
+}
+function assetFilePath(v, p) {
+  const problem = assetPathProblem(v);
+  if (problem) fail(p, problem);
+}
+function httpsUrl(v, p) {
+  let ok = false;
+  try {
+    const u = new URL(v);
+    ok = u.protocol === "https:" && !u.username && !u.password && v.length <= 2000;
+  } catch {}
+  if (!ok) fail(p, "expected an https URL without credentials (max 2000 characters)");
+}
+const mediaFamily = { image: /^image\//, video: /^video\//, document: /^(application\/pdf|text\/)/, text: /^text\// };
+function assetRecord(r, p, slots) {
+  const slot = slots.get(r.slotId);
+  if (!slot) fail(p + ".slotId", `"${r.slotId}" is not an asset slot`);
+  if (slot.projectId !== r.projectId) fail(p + ".slotId", `"${r.slotId}" is not an asset slot in this project`);
+  text(r.label, p + ".label");
+  one(r.kind, assetKinds, p + ".kind");
+  one(r.status, assetStatuses, p + ".status");
+  const payloads = ["file", "url", "text"].filter((k) => r[k] !== undefined);
+  if (payloads.length !== 1) fail(p, "exactly one of file, url or text is required");
+  if (r.file !== undefined) {
+    assetFilePath(r.file, p + ".file");
+    if (!["image", "video", "document", "text"].includes(r.kind)) fail(p + ".kind", "a file asset is an image, video, document or text, not a link");
+    const ext = /\.[^./]+$/.exec(r.file)?.[0].toLowerCase();
+    if (!assetExtensions[ext]) fail(p + ".file", `extension must be one of ${Object.keys(assetExtensions).join(", ")}`);
+    if (r.mediaType === undefined) fail(p + ".mediaType", "a file asset needs its media type");
+    if (assetExtensions[ext] !== r.mediaType) fail(p + ".mediaType", `"${r.mediaType}" does not match the file extension ${ext}`);
+  }
+  if (r.url !== undefined) {
+    httpsUrl(r.url, p + ".url");
+    if (r.kind !== "link") fail(p + ".kind", "an asset with a url is a link");
+  }
+  if (r.text !== undefined) {
+    if (typeof r.text !== "string" || !r.text.trim() || r.text.length > maxAssetText)
+      fail(p + ".text", `expected nonempty text (max ${maxAssetText} characters)`);
+    if (r.kind !== "text") fail(p + ".kind", "an asset with text is text");
+  }
+  if (r.mediaType !== undefined) {
+    one(r.mediaType, assetMediaTypes, p + ".mediaType");
+    if (!mediaFamily[r.kind]?.test(r.mediaType)) fail(p + ".mediaType", `"${r.mediaType}" does not fit kind ${r.kind}`);
+  }
+  if (r.bytes !== undefined) {
+    number(r.bytes, p + ".bytes", true);
+    if (r.bytes > maxAssetBytes) fail(p + ".bytes", `more than the ${maxAssetBytes} byte limit`);
+  }
+  if (r.sha256 !== undefined && !(typeof r.sha256 === "string" && /^[0-9a-f]{64}$/.test(r.sha256)))
+    fail(p + ".sha256", "expected 64 lowercase hex digits");
+  for (const key of ["width", "height"])
+    if (r[key] !== undefined) {
+      number(r[key], `${p}.${key}`, true);
+      if (r[key] < 1) fail(`${p}.${key}`, "expected a positive integer");
+    }
+  for (const key of ["rationale", "source"]) if (r[key] !== undefined) text(r[key], `${p}.${key}`);
+  timestamp(r.createdAt, p + ".createdAt");
+  if (r.decidedAt !== undefined) timestamp(r.decidedAt, p + ".decidedAt");
+  if (r.supersedes !== undefined) {
+    text(r.supersedes, p + ".supersedes");
+    if (r.supersedes === r.id) fail(p + ".supersedes", "an asset cannot supersede itself");
+  }
+}
+// Cross-record rules of a slot and its assets: at most one selected asset per slot, and a slot is
+// picked exactly when it names that asset.
+function slotRecord(r, p, assets, bySlot, decisions) {
+  text(r.name, p + ".name");
+  one(r.kind, assetKinds, p + ".kind");
+  one(r.status, slotStatuses, p + ".status");
+  for (const key of ["spec", "notes"]) if (r[key] !== undefined) text(r[key], `${p}.${key}`);
+  if (r.waitingOn !== undefined && (typeof r.waitingOn !== "string" || !r.waitingOn.trim() || r.waitingOn.length > 200))
+    fail(p + ".waitingOn", "expected nonempty text of at most 200 characters");
+  const selected = (bySlot.get(r.id) ?? []).filter((a) => a.status === "selected");
+  if (selected.length > 1) fail(p, `more than one selected asset (${selected.map((a) => a.id).join(", ")})`);
+  if (r.status === "picked") {
+    if (r.selectedAssetId === undefined) fail(p + ".selectedAssetId", "a picked slot needs the asset selected");
+    if (assets.get(r.selectedAssetId)?.slotId !== r.id)
+      fail(p + ".selectedAssetId", `"${r.selectedAssetId}" is not an asset in this slot`);
+    if (assets.get(r.selectedAssetId).status !== "selected")
+      fail(p + ".selectedAssetId", `"${r.selectedAssetId}" is not selected`);
+  } else {
+    if (r.selectedAssetId !== undefined) fail(p + ".selectedAssetId", "an open slot has no selected asset");
+    if (selected.length) fail(p, `an open slot has a selected asset (${selected[0].id})`);
+  }
+  reference(r, "decisionId", p, decisions, "decision");
+}
 const reportKinds = ["market-landscape", "demand", "competition", "positioning", "other"];
 const levels = ["high", "medium", "low"];
 const evidenceStatuses = [
@@ -222,21 +431,23 @@ function vaultLink(v, p) {
 export function validateWorkspace(w) {
   if (!w || w.schema !== "marketing/workspace@1")
     fail("schema", "expected marketing/workspace@1");
-  // Workspaces saved before reports or gates existed have no such collection; they gain an empty one.
-  for (const k of ["reports", "gates"]) if (w[k] === undefined) w[k] = [];
+  // Workspaces saved before these collections existed have none; they gain an empty one.
+  for (const k of addedLater) if (w[k] === undefined) w[k] = [];
   number(w.revision, "revision", true);
   for (const k of Object.keys(w))
     if (!["schema", "revision", ...collections].includes(k))
       fail(k, "unknown workspace collection");
   for (const k of collections) {
-    if (!Array.isArray(w[k]) || w[k].length > 50000)
-      fail(k, "expected array (max 50000 records)");
+    // The progress log grows with every command, so it has the most room; no entry is ever dropped.
+    const most = k === "updates" ? 200000 : 50000;
+    if (!Array.isArray(w[k]) || w[k].length > most)
+      fail(k, `expected array (max ${most} records)`);
     const ids = new Set();
     for (const r of w[k]) {
       if (!r || typeof r !== "object" || Array.isArray(r))
         fail(k, "expected record");
       text(r.id, `${k}.id`);
-      if (!/^[a-zA-Z0-9_.:-]{1,160}$/.test(r.id)) fail(k, "invalid ID");
+      if (!idPattern.test(r.id)) fail(k, "invalid ID");
       if (ids.has(r.id)) fail(k, `duplicate ID ${r.id}`);
       ids.add(r.id);
     }
@@ -244,6 +455,11 @@ export function validateWorkspace(w) {
   const projects = new Map(w.projects.map((r) => [r.id, r])),
     initiatives = new Map(w.initiatives.map((r) => [r.id, r])),
     gates = new Map(w.gates.map((r) => [r.id, r])),
+    decisions = new Map(w.decisions.map((r) => [r.id, r])),
+    reports = new Map(w.reports.map((r) => [r.id, r])),
+    slots = new Map(w.assetSlots.map((r) => [r.id, r])),
+    assets = new Map(w.assets.map((r) => [r.id, r])),
+    bySlot = Map.groupBy(w.assets, (a) => a.slotId),
     evidence = new Map(w.evidence.map((r) => [r.id, r]));
   for (const k of collections)
     for (const r of w[k]) {
@@ -293,12 +509,20 @@ export function validateWorkspace(w) {
           n("budget");
           if (r.hours !== undefined) plannedHours(r.hours, p + ".hours");
           if (r.dependsOn !== undefined) dependencies(r, p, gates, initiatives);
+          if (r.note !== undefined)
+            typed(r, "note", p, typeof r.note === "string" && r.note.trim() && r.note.length <= 20000, "nonempty text (at most 20000 characters)");
+          if (r.parentId !== undefined) {
+            if (r.parentId === r.id) fail(p + ".parentId", "an initiative cannot be its own parent");
+            typed(r, "parentId", p, initiatives.get(r.parentId)?.projectId === r.projectId, "an initiative in this project");
+          }
           break;
         case "gates":
           for (const key of ["name", "criteria"]) t(key);
           one(r.status, gateStatuses, p + ".status");
           if (r.checkedAt !== undefined) date(r.checkedAt, p + ".checkedAt");
           if (r.notes !== undefined) t("notes");
+          if (r.due !== undefined) typed(r, "due", p, isDate(r.due), "a YYYY-MM-DD date");
+          if (r.hours !== undefined) typed(r, "hours", p, Number.isFinite(r.hours) && r.hours >= 0, "a nonnegative number of maker-hours");
           if (initiatives.get(r.id)?.projectId === r.projectId)
             fail(p, "ID is also an initiative in this project; a dependency must name one or the other");
           if (r.evidenceIds !== undefined) {
@@ -404,6 +628,66 @@ export function validateWorkspace(w) {
           document({ markdown: r.markdown, updatedAt: r.updatedAt }, p);
           if (r.kind !== undefined) one(r.kind, reportKinds, p + ".kind");
           if (r.vaultUrl !== undefined) vaultLink(r.vaultUrl, p + ".vaultUrl");
+          if (r.gateId !== undefined) typed(r, "gateId", p, gates.get(r.gateId)?.projectId === r.projectId, "a gate in this project");
+          if (r.decisionId !== undefined) typed(r, "decisionId", p, decisions.get(r.decisionId)?.projectId === r.projectId, "a decision in this project");
+          break;
+        case "decisions": {
+          for (const key of ["title", "question"]) t(key);
+          one(r.status, decisionStatuses, p + ".status");
+          if (r.needBy !== undefined) date(r.needBy, p + ".needBy");
+          for (const key of ["defaultIfSilent", "recommendation", "rationale"]) if (r[key] !== undefined) t(key);
+          options(r, p);
+          if (r.chosen !== undefined && !r.options.some((o) => o.id === r.chosen))
+            fail(p + ".chosen", `"${r.chosen}" is not one of the options`);
+          if (r.recommendedOptionId !== undefined && !r.options.some((o) => o.id === r.recommendedOptionId))
+            fail(p + ".recommendedOptionId", `${shown(r.recommendedOptionId)} is not one of the options (the recommendation text goes in recommendation)`);
+          if (r.status === "decided") {
+            if (r.chosen === undefined) fail(p + ".chosen", "a decided decision needs the option chosen");
+            if (r.decidedAt === undefined) fail(p + ".decidedAt", "a decided decision needs the time it was decided");
+          }
+          if (r.decidedAt !== undefined) timestamp(r.decidedAt, p + ".decidedAt");
+          if (r.history !== undefined) decisionHistory(r, p);
+          if (r.reportId !== undefined) {
+            const memo = reports.get(r.reportId);
+            if (!memo || (memo.projectId !== undefined && memo.projectId !== r.projectId))
+              fail(p + ".reportId", `"${r.reportId}" is not a report of this project or of the workspace`);
+          }
+          if (r.gateIds !== undefined) references(r, "gateIds", p, gates, "gate");
+          if (r.status === "superseded" && r.supersededBy === undefined)
+            fail(p + ".supersededBy", "a superseded decision needs the decision that replaced it");
+          if (r.supersededBy !== undefined) {
+            if (r.supersededBy === r.id) fail(p + ".supersededBy", "a decision cannot supersede itself");
+            reference(r, "supersededBy", p, decisions, "decision");
+          }
+          break;
+        }
+        case "actions":
+          t("title");
+          one(r.owner, ["owner", "agent"], p + ".owner");
+          one(r.status, actionStatuses, p + ".status");
+          if (r.due !== undefined) date(r.due, p + ".due");
+          if (r.hours !== undefined) n("hours");
+          for (const key of ["notes", "blockedBy"]) if (r[key] !== undefined) t(key);
+          if (r.doneAt !== undefined) timestamp(r.doneAt, p + ".doneAt");
+          reference(r, "gateId", p, gates, "gate");
+          reference(r, "decisionId", p, decisions, "decision");
+          break;
+        case "updates":
+          timestamp(r.at, p + ".at");
+          one(r.kind, updateKinds, p + ".kind");
+          t("text");
+          // refId is not checked: the log is a history, and it must stay valid if a record it names is removed.
+          if (r.refId !== undefined) t("refId");
+          break;
+        case "assetSlots":
+          slotRecord(r, p, assets, bySlot, decisions);
+          break;
+        case "assets":
+          assetRecord(r, p, slots);
+          if (r.status === "selected" && slots.get(r.slotId).selectedAssetId !== r.id)
+            fail(p + ".status", `the slot "${r.slotId}" does not name this asset as its selection`);
+          if (r.supersedes !== undefined && assets.get(r.supersedes)?.slotId !== r.slotId)
+            fail(p + ".supersedes", `"${r.supersedes}" is not an asset in the same slot`);
           break;
         case "sources":
           t("name");
@@ -424,6 +708,8 @@ export function validateWorkspace(w) {
     }
   const cycle = dependencyCycle(w.initiatives);
   if (cycle) fail(`initiatives.${cycle[0]}.dependsOn`, "dependency cycle " + cycleText(cycle));
+  const family = parentCycle(w.initiatives);
+  if (family) fail(`initiatives.${family[0]}.parentId`, "parent cycle " + cycleText(family));
   return w;
 }
 
@@ -433,19 +719,28 @@ export function validateWorkspace(w) {
 // A field that a new feature reads must be added here.
 export const recordFields = {
   projects: ["id", "name", "audience", "category", "problem", "promise", "stage", "objective", "weeklyHours", "budget", "currency", "strategy"],
-  initiatives: ["id", "projectId", "name", "channel", "hypothesis", "cta", "status", "start", "end", "budget", "owner", "brief", "hours", "dependsOn"],
+  initiatives: ["id", "projectId", "name", "channel", "hypothesis", "cta", "status", "start", "end", "budget", "owner", "brief", "hours", "dependsOn", "parentId", "note"],
   observations: ["id", "projectId", "initiativeId", "channel", "metric", "value", "start", "end", "kind", "series", "definition", "url", "collectedAt", "currency", "cohort"],
   reactions: ["id", "projectId", "initiativeId", "channel", "text", "url", "collectedAt", "sentiment", "reviewed", "theme"],
   competitors: ["id", "projectId", "initiativeId", "name", "kind", "positioning", "url", "checkedAt", "claims"],
   experiments: ["id", "projectId", "initiativeId", "name", "hypothesis", "primaryMetric", "stoppingRule", "targetPerArm", "randomized", "arms"],
   evidence: ["id", "projectId", "initiativeId", "claim", "dimension", "result", "strength", "url", "checkedAt", "publishedAt", "dataPeriod", "denominator", "limit", "credibility", "relevance", "status"],
   sources: ["id", "projectId", "initiativeId", "name", "adapter", "channel", "target", "traffic", "lastCheckedAt", "lastError"],
-  reports: ["id", "projectId", "title", "markdown", "updatedAt", "kind", "vaultUrl"],
-  gates: ["id", "projectId", "name", "criteria", "status", "checkedAt", "evidenceIds", "notes"],
+  reports: ["id", "projectId", "title", "markdown", "updatedAt", "kind", "vaultUrl", "initiativeId", "gateId", "decisionId"],
+  gates: ["id", "projectId", "name", "criteria", "status", "checkedAt", "evidenceIds", "notes", "due", "hours", "initiativeId"],
+  decisions: ["id", "projectId", "initiativeId", "title", "question", "status", "needBy", "defaultIfSilent", "recommendation", "recommendedOptionId", "options", "chosen", "rationale", "decidedAt", "reportId", "gateIds", "supersededBy", "history"],
+  actions: ["id", "projectId", "initiativeId", "gateId", "decisionId", "title", "owner", "status", "due", "hours", "notes", "doneAt", "blockedBy"],
+  updates: ["id", "projectId", "initiativeId", "at", "kind", "refId", "text"],
+  assetSlots: ["id", "projectId", "initiativeId", "name", "kind", "spec", "status", "selectedAssetId", "decisionId", "notes", "waitingOn"],
+  assets: ["id", "projectId", "slotId", "label", "kind", "file", "url", "text", "mediaType", "bytes", "sha256", "width", "height", "status", "rationale", "source", "createdAt", "decidedAt", "supersedes"],
 };
 const nestedFields = {
   competitors: { claims: ["dimension", "value", "url", "checkedAt"] },
   experiments: { arms: ["name", "trials", "successes"] },
+  decisions: {
+    options: ["id", "label", "summary", ...optionDimensions],
+    history: ["chosen", "rationale", "decidedAt"],
+  },
 };
 // Optimal string alignment distance: insert, delete, substitute or swap two neighbours.
 function distance(a, b) {

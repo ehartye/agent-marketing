@@ -130,3 +130,37 @@ test("CLI saves, shows and exports a report", () => {
     assert.equal(readFileSync(out, "utf8"), "# Hello report\n\nBody\n");
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test("a saved report can name its parent, keeps it when saved again, and logs an update", () => {
+  const dir = mkdtempSync(join(tmpdir(), "marketing-report-parent-")), file = join(dir, "w.json");
+  try {
+    createWorkspace(file, ledger());
+    const save = (extra, id = "memo") => saveReport(file, { id, title: "Memo", markdown: "# Memo\n", projectId: "game", ...extra }, readWorkspace(file).revision);
+    save({ initiativeId: "video" });
+    let w = readWorkspace(file);
+    assert.equal(w.reports[0].initiativeId, "video");
+    assert.equal(w.updates.length, 1);
+    assert.equal(w.updates[0].kind, "document");
+    assert.equal(w.updates[0].initiativeId, "video");
+    assert.equal(w.updates[0].refId, "memo");
+    save({});
+    w = readWorkspace(file);
+    assert.equal(w.reports[0].initiativeId, "video", "a save without a parent keeps the one it had");
+    assert.equal(w.updates.length, 2);
+    assert.throws(() => save({ initiativeId: "nope" }), /initiative/i);
+    assert.equal(readWorkspace(file).updates.length, 2, "a refused save changes nothing");
+    assert.throws(() => saveReport(file, { id: "x", title: "X", markdown: "# X\n", initiativeId: "video" }, readWorkspace(file).revision), /project/i);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("report save on the command line takes --initiative, --gate and --decision", () => {
+  const dir = mkdtempSync(join(tmpdir(), "marketing-report-cli-")), file = join(dir, "w.json");
+  try {
+    createWorkspace(file, ledger());
+    writeFileSync(join(dir, "m.md"), "# Memo\n");
+    const run = (...args) => spawnSync(process.execPath, [resolve("scripts/marketing.mjs"), ...args], { encoding: "utf8" });
+    const out = run("document", "save", "report", "memo", join(dir, "m.md"), "--title", "Memo", "--project", "game", "--initiative", "video", "--workspace", file, "--revision", String(readWorkspace(file).revision));
+    assert.equal(out.status, 0, out.stderr);
+    assert.equal(readWorkspace(file).reports[0].initiativeId, "video");
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

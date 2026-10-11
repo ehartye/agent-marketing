@@ -16,3 +16,5 @@ A game with no analytics still has measures. Read [game launch craft](../../craf
 Run `marketing serve --workspace <file>` to open the loopback campaign desk; it stops itself after 30 idle minutes (`--idle-minutes` changes this, 0 disables), so start it again when the owner returns. It filters evidence, changes initiative status, reviews reactions, imports files and exports the ledger. Periodic collection can use an owner-chosen scheduler calling the one-shot monitor command; no scheduler is installed implicitly. Recommend weekly GitHub traffic capture because its history is only 14 days, and wait for complete reporting days where analytics is delayed.
 
 Finish by reporting source coverage/errors, validating the ledger, and recording the next review date. Do not imply unrestricted social-listening API access or automatically publish replies.
+
+After collecting, log what changed with `marketing update add --initiative <id>` and finish with `marketing next` (see market-desk).

@@ -16,3 +16,5 @@ For a game's store page, read [game launch craft](../../craft/games.md): Steam's
 Use available agent-vids/prose/sprites/beeps skills only when the requested asset needs them. They are optional; a concise text-and-screenshot draft can stand alone. Current platform dimensions/specifications should come from official sources.
 
 Deliver the actual draft/artifact plus a brief claim and CTA review. Finish when it is reviewable at its target size and every material claim matches the product. Publication remains an explicitly instructed action.
+
+Put the work in collateral slots (see market-desk): one slot per place an asset goes, every candidate added with `marketing asset add` and its source, the owner's choice recorded with `asset pick` and each reject with its reason. Candidates are kept; an artifact can be linked but is not where the choice lives.

@@ -1,3 +1,11 @@
+const unreachable = () => new Error("Cannot reach the desk. Check that it is running, then try again.");
+function refusal(status, value) {
+  const error = new Error(status === 409
+    ? "The workspace changed. Refresh, review the latest records, then save again."
+    : value?.error || "The request failed. Try again.");
+  error.status = status;
+  return error;
+}
 export async function api(path, body) {
   let response;
   try {
@@ -7,17 +15,30 @@ export async function api(path, body) {
       body: JSON.stringify(body),
     });
   } catch {
-    throw new Error("Cannot reach the desk. Check that it is running, then try again.");
+    throw unreachable();
   }
   const value = await response.json();
-  if (!response.ok) {
-    const error = new Error(response.status === 409
-      ? "The workspace changed. Refresh, review the latest records, then save again."
-      : value.error || "The request failed. Try again.");
-    error.status = response.status;
-    throw error;
-  }
+  if (!response.ok) throw refusal(response.status, value);
   return value;
+}
+
+// Sends one file as the raw body of a request, with everything else in the query, and reports how
+// much has gone as a fraction. (fetch cannot report upload progress; XMLHttpRequest can.)
+export function uploadFile(query, file, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/asset/upload?" + new URLSearchParams(Object.entries(query).filter(([, v]) => v !== undefined && v !== "")));
+    xhr.setRequestHeader("Content-Type", "application/octet-stream");
+    xhr.upload.onprogress = event => { if (event.lengthComputable) onProgress?.(event.loaded / event.total); };
+    xhr.onerror = () => reject(unreachable());
+    xhr.onload = () => {
+      let value = null;
+      try { value = JSON.parse(xhr.responseText); } catch {}
+      if (xhr.status >= 200 && xhr.status < 300 && value) resolve(value);
+      else reject(refusal(xhr.status, value));
+    };
+    xhr.send(file);
+  });
 }
 
 // What the desk says after an import: the first warnings about fields no record defines, then a count.
@@ -47,14 +68,26 @@ export function createDeskClient(request = api) {
         selection.initiativeId = "";
       const query = new URLSearchParams(Object.entries(selection).filter(([,value]) => value)).toString();
       const suffix = query ? "?" + query : "";
-      const [data, actions, channels, refs, plan] = await Promise.all([
+      // What needs the owner is read for the project in view, or for every project when none is; the
+      // hierarchy needs a plan for every project it shows, so with no project chosen each gets its own.
+      const each = (path) => Promise.all(workspace.projects.map(p => request(path + encodeURIComponent(p.id))));
+      const [data, actions, channels, refs, plan, attention, plans, attentionList] = await Promise.all([
         request("/api/report" + suffix), request("/api/advise" + suffix),
         request("/api/channels" + suffix), references || request("/api/references"),
         request("/api/plan" + suffix),
+        selection.projectId ? request("/api/attention?projectId=" + encodeURIComponent(selection.projectId)) : null,
+        selection.projectId ? null : each("/api/plan?projectId="),
+        selection.projectId ? null : each("/api/attention?projectId="),
       ]);
       if (current !== generation) return null;
       references = refs;
-      snapshot = { workspace, selection, data, actions, channels, refs, plan };
+      const byProject = selection.projectId
+        ? { [selection.projectId]: plan }
+        : Object.fromEntries(workspace.projects.map((p, n) => [p.id, plans[n]]));
+      const attentions = selection.projectId
+        ? (attention ? { [selection.projectId]: attention } : {})
+        : Object.fromEntries(workspace.projects.map((p, n) => [p.id, attentionList[n]]).filter(([, a]) => a));
+      snapshot = { workspace, selection, data, actions, channels, refs, plan, plans: byProject, attention, attentions };
       return snapshot;
     },
   };

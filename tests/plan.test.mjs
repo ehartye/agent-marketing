@@ -59,6 +59,10 @@ test("plan lists the project's gates with their status, criteria and the work th
     checkedAt: null,
     evidenceIds: [],
     notes: null,
+    due: null,
+    hours: null,
+    initiativeId: null,
+    overCapWeeks: [],
     requiredBy: ["a", "b"],
   });
   assert.equal(p.gates[1].checkedAt, "2026-10-10");

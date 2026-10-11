@@ -1,4 +1,5 @@
 import { $, esc, empty, link } from "../shared.js";
+import { openAttr } from "../hub-shared.js";
 
 // The plan check in the desk: readiness gates, and the maker hours each calendar week against the
 // project's weekly cap. Everything here is a pure function of the /api/plan result except
@@ -19,6 +20,24 @@ export const hasPlanData = (plan) =>
 export const gateChip = (status) =>
   `<span class="pill gate-chip ${esc(status)}"><span aria-hidden="true">${GLYPH[status] ?? "•"}</span> ${esc(status)}</span>`;
 
+// The form that records a check: the result, a note, the date it is due, the hours it takes and
+// the findings that show it. It saves through /api/gate, which also logs the change.
+export function gateForm(g, plan, workspace) {
+  const own = (workspace.evidence ?? []).filter((e) => e.projectId === plan.projectId),
+    cited = new Set(g.evidenceIds);
+  return `<details class="gate-edit" ${openAttr("gate:" + g.id)}><summary>Record a check</summary>
+    <form class="stack-form" data-gate-form="${esc(g.id)}">
+      <div class="form-row">
+        <label>Result<select name="status">${["open", "passed", "failed", "waived"].map((s) => `<option${s === g.status ? " selected" : ""}>${s}</option>`).join("")}</select></label>
+        <label>Due<input name="due" type="date" value="${esc(g.due ?? "")}" /></label>
+        <label>Hours<input name="hours" type="number" min="0" step="0.25" inputmode="decimal" value="${esc(g.hours ?? "")}" /></label>
+      </div>
+      <label>Note <span class="optional">(say why when waiving)</span><input name="notes" maxlength="300" value="${esc(g.notes ?? "")}" /></label>
+      ${own.length ? `<fieldset class="findings"><legend>Findings that show it</legend>${own.map((e) => `<label class="check"><input type="checkbox" name="evidenceIds" value="${esc(e.id)}"${cited.has(e.id) ? " checked" : ""} /><span>${esc(e.claim)}</span></label>`).join("")}</fieldset>` : ""}
+      <button type="submit">Save check</button>
+    </form></details>`;
+}
+
 export function gateCard(g, plan, workspace) {
   const needed = g.requiredBy.map((id) => plan.initiatives.find((i) => i.id === id)?.name ?? id),
     evidence = g.evidenceIds.map((id) => {
@@ -30,8 +49,12 @@ export function gateCard(g, plan, workspace) {
       g.checkedAt && `Checked ${esc(g.checkedAt)}`,
       evidence.length && `Evidence: ${evidence.join(", ")}`,
       needed.length && `Needed by ${needed.map(esc).join(", ")}`,
-    ].filter(Boolean);
-  return `<article class="gate" data-gate="${esc(g.id)}"><div class="row"><h3>${esc(g.name)}</h3>${gateChip(g.status)}</div><p class="criteria"><span class="label">Pass when</span>${esc(g.criteria)}</p>${facts.length ? `<p class="caption">${facts.join(" · ")}</p>` : ""}${g.notes ? `<p class="caption">Note: ${esc(g.notes)}</p>` : ""}</article>`;
+      g.due && `Due ${esc(g.due)}`,
+      g.hours !== null && g.hours !== undefined && `${hours(g.hours)} h of your time`,
+    ].filter(Boolean),
+    memos = (workspace.reports ?? []).filter((r) => r.gateId === g.id),
+    docs = memos.length ? `<p class="caption">Document: ${memos.map((r) => `<button type="button" class="link-button" data-goto="report:${esc(r.id)}">${esc(r.title)}</button>`).join(" ")}</p>` : "";
+  return `<article class="gate" data-gate="${esc(g.id)}" tabindex="-1"><div class="row"><h3>${esc(g.name)}</h3>${gateChip(g.status)}</div><p class="criteria"><span class="label">Pass when</span>${esc(g.criteria)}</p>${facts.length ? `<p class="caption">${facts.join(" · ")}</p>` : ""}${g.notes ? `<p class="caption">Note: ${esc(g.notes)}</p>` : ""}${docs}${gateForm(g, plan, workspace)}</article>`;
 }
 
 // One column per calendar week, drawn at one SVG unit to the pixel inside a scrolling box, so the
@@ -62,7 +85,8 @@ export function loadStrip(plan, available = 0) {
         unknown = w.unknownHours.length,
         month = Number(w.start.slice(5, 7)) - 1,
         previous = n && Number(weeks[n - 1].start.slice(5, 7)) - 1,
-        said = [`${hours(w.hours)} h`];
+        fromGates = (w.gates ?? []).reduce((n, g) => n + g.hours, 0),
+        said = [`${hours(w.hours)} h${fromGates ? ` (${hours(fromGates)} h of it from gates)` : ""}`];
       if (w.overCap) said.push(`${hours(w.overBy)} h over the ${hours(cap)} h cap`);
       if (unknown) said.push(`plus hours not yet set for ${plural(unknown, "initiative")}`);
       return `<g class="week${w.overCap ? " over" : ""}"><title>Week of ${esc(w.start)}: ${said.join(", ")}</title>`
@@ -80,14 +104,15 @@ export function loadStrip(plan, available = 0) {
 
 // The strip's numbers as a table, for readers who skip the graphic.
 export function weeksTable(plan) {
-  const name = (id) => plan.initiatives.find((i) => i.id === id)?.name ?? id;
+  const name = (id) => plan.initiatives.find((i) => i.id === id)?.name ?? id,
+    gateName = (id) => plan.gates.find((g) => g.id === id)?.name ?? id;
   const rows = plan.load.weeks
     .map((w) => {
-      const work = [...w.initiatives.map((x) => `${esc(name(x.id))} ${hours(x.hours)} h`), ...w.unknownHours.map((id) => `${esc(name(id))} (hours not set)`)];
+      const work = [...w.initiatives.map((x) => `${esc(name(x.id))} ${hours(x.hours)} h`), ...(w.gates ?? []).map((x) => `Gate: ${esc(gateName(x.id))} ${hours(x.hours)} h`), ...w.unknownHours.map((id) => `${esc(name(id))} (hours not set)`)];
       return `<tr><td>${esc(w.start)} → ${esc(w.end)}</td><td>${hours(w.hours)}</td><td>${w.overCap ? hours(w.overBy) : "—"}</td><td>${work.join("; ") || "—"}</td></tr>`;
     })
     .join("");
-  return `<details><summary class="caption">Read weekly hours</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Maker hours per week"><table><thead><tr><th>Week</th><th>Hours</th><th>Over cap by</th><th>Initiatives</th></tr></thead><tbody>${rows}</tbody></table></div></details>`;
+  return `<details><summary class="caption">Read weekly hours</summary><div class="table-scroll" tabindex="0" role="region" aria-label="Maker hours per week"><table><thead><tr><th>Week</th><th>Hours</th><th>Over cap by</th><th>Work</th></tr></thead><tbody>${rows}</tbody></table></div></details>`;
 }
 
 // What shows on an initiative card: chips beside its channel and notes under its text.
@@ -120,7 +145,13 @@ export function planSummary(plan) {
 export function renderPlan({ workspace, plan }) {
   const show = hasPlanData(plan);
   $("plan-view").hidden = !show;
-  if (!show) return;
+  if (!show) {
+    // Nothing to show: leave nothing behind either, or the last project's cards stay in the hidden view and a
+    // jump to one of them would land on something nobody can see.
+    for (const id of ["gates", "load"]) $(id).innerHTML = "";
+    for (const id of ["gate-summary", "load-summary"]) $(id).textContent = "";
+    return;
+  }
   const summary = planSummary(plan),
     { load, budget } = plan;
   $("gate-summary").textContent = summary.gates;
@@ -134,4 +165,14 @@ export function renderPlan({ workspace, plan }) {
     + `<p class="caption">${totals}</p>`
     + (load.weeks.length ? weeksTable(plan) : "")
     + (plan.warnings.length ? `<ul class="plan-notes caption">${plan.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul>` : "");
+}
+
+// The weekly strip is drawn to the width of its box, which a folded section does not have. When the
+// section opens, only the strip is redrawn, so the gate cards (and the focus a jump just put on one) stay.
+export function redrawLoad({ plan }) {
+  const box = $("load"), old = box.querySelector(".load-scroll, .empty");
+  if (!hasPlanData(plan) || !old || !box.clientWidth) return;
+  const next = document.createElement("template");
+  next.innerHTML = loadStrip(plan, box.clientWidth);
+  old.replaceWith(next.content);
 }

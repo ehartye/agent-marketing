@@ -69,6 +69,9 @@ export function createWorkspace(file, w = emptyWorkspace()) {
 export function readWorkspace(file) {
   return validateWorkspace(JSON.parse(readFileSync(file, "utf8")));
 }
+// An edit returns this when it found nothing to change: the file is left as it was, so the
+// revision does not move and a repeated command is not a write.
+export const unchanged = Symbol("unchanged");
 export function mutateWorkspace(file, action, expectedRevision) {
   return locked(file, (path) => {
     const w = readWorkspace(path);
@@ -76,7 +79,7 @@ export function mutateWorkspace(file, action, expectedRevision) {
       throw new Error(
         `Revision conflict: expected ${expectedRevision}, current ${w.revision}. Reload and reconcile your edit.`,
       );
-    action(w);
+    if (action(w) === unchanged) return w;
     w.revision++;
     return writeAtomic(path, w);
   });

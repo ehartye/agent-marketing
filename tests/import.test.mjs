@@ -25,6 +25,11 @@ test("a complete exported ledger imports as validated collection arrays", () => 
       ),
       reports: [], // ledgers saved before reports existed gain an empty collection
       gates: [], // and so do ledgers saved before gates existed
+      decisions: [], // decisions, actions and updates likewise
+      actions: [],
+      updates: [],
+      assetSlots: [], // and collateral slots and assets
+      assets: [],
     },
   );
 });

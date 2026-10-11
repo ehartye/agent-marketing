@@ -1,4 +1,5 @@
 import { mutateWorkspace } from "./store.mjs";
+import { log } from "./progress.mjs";
 
 function target(workspace, kind, id) {
   if (!["strategy", "campaign"].includes(kind))
@@ -37,16 +38,28 @@ export function readDocument(workspace, kind, id) {
 }
 
 // Reports are workspace-level documents: no project is required, and a save replaces by id.
-export function saveReport(file, { id, title, markdown, projectId, kind, vaultUrl }, revision) {
+export function saveReport(file, { id, title, markdown, projectId, kind, vaultUrl, initiativeId, gateId, decisionId }, revision) {
   if (!Number.isSafeInteger(revision) || revision < 0)
     throw new Error("Current revision required; validate the workspace before saving a report");
   if (typeof title !== "string" || !title.trim()) throw new Error("A report needs a --title");
   const workspace = mutateWorkspace(file, w => {
-    const record = { id, title, markdown, updatedAt: new Date().toISOString() };
-    if (projectId) record.projectId = projectId;
+    const at = new Date().toISOString(), before = (w.reports || []).find(r => r.id === id);
+    const record = { id, title, markdown, updatedAt: at };
+    // A save replaces the record, so a project the caller does not restate is kept too.
+    const project = projectId || before?.projectId;
+    if (project) record.projectId = project;
     if (kind) record.kind = kind;
     if (vaultUrl) record.vaultUrl = vaultUrl;
+    // A save replaces the record, so a parent the caller does not restate is kept, not dropped.
+    for (const [field, value] of Object.entries({ initiativeId, gateId, decisionId })) {
+      const kept = value || before?.[field];
+      if (kept) record[field] = kept;
+    }
     w.reports = [...(w.reports || []).filter(r => r.id !== id), record];
+    if (record.projectId) {
+      w.updates = w.updates || [];
+      log(w, { projectId: record.projectId, initiativeId: record.initiativeId, kind: "document", refId: id, at, text: `${before ? "Updated" : "Saved"} report: ${title}` });
+    }
   }, revision);
   return readDocument(workspace, "report", id);
 }
