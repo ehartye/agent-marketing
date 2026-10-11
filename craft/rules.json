@@ -116,5 +116,45 @@
     "rule": "Divide additional fixed delivery cost by net contribution per incremental retained sale; include QA and updates, regional realized receipts and buyers who would already buy English.",
     "referenceIds": ["localization-economics", "steam-pricing", "localization-results"],
     "reason": "Break-even arithmetic is not a sales forecast; a new-game decision must also include development cost."
+  },
+  {
+    "id": "stage-sets-the-next-test",
+    "topic": "stage",
+    "kind": "heuristic",
+    "rule": "Match the next test to the project's stage: at idea, evidence that the problem or desire is real; at prototype, intended strangers reaching and finishing a first session; at beta, widening on the best-evidenced channel while the first session is fixed; at launched, a returning cohort, reviewed reception and a cadence the maker can sustain.",
+    "referenceIds": ["discovery", "experimentation", "measurement"],
+    "reason": "House stage playbook built on the four-dimension discovery rubric (problem, activation, retention, payment). The stages are the owner's own labels and the order is a planning inference, not a published finding."
+  },
+  {
+    "id": "measure-what-can-occur",
+    "topic": "stage",
+    "kind": "derived",
+    "rule": "Do not ask for activation or return evidence before something can be tried, and do not read a rate without its denominator: a return rate needs a cohort of starts, an activation ratio needs visitors and starts for the same window.",
+    "referenceIds": ["measurement", "discovery"],
+    "reason": "A return rate is returns divided by starts for one cohort and window (craft/measurement.md). With nothing to try there are 0 starts, so the denominator is 0 and the rate is unknown, not zero."
+  },
+  {
+    "id": "widen-by-observed-ratio",
+    "topic": "stage",
+    "kind": "heuristic",
+    "rule": "When several channels have a visitors-and-starts pair for the same window, take the next test to the one with the highest observed ratio and keep the others as comparisons; the ratio ranks what to try next and does not predict what more traffic would do.",
+    "referenceIds": ["measurement", "causality", "channels"],
+    "reason": "Observed ratios come from different audiences and unrandomized assignment (craft/experiments.md), and the counts may be different people, so they are descriptive."
+  },
+  {
+    "id": "free-web-before-store-page",
+    "topic": "games",
+    "kind": "derived",
+    "rule": "For a free game, test on a venue that costs nothing to enter (an itch.io page, a web portal's own test) before paying a store fee, and open a paid store page once first-session and return evidence exist.",
+    "referenceIds": ["steam-direct", "apple-developer-program-enrollment", "google-play-registration", "cg-basic-launch-metrics", "poki-how-testing"],
+    "reason": "Entry costs on the cited pages: Steam $100 per product, not refundable and recouped only once the product has $1,000 adjusted gross revenue from the store and in-app purchases; Apple $99 a year; Google Play $25 once, and new personal accounts must also meet testing requirements before release. CrazyGames Basic Launch and Poki's tests cost nothing to enter. A free game with no in-app purchases has no adjusted gross revenue, so the Steam fee is not recouped from it. This is arithmetic on documented fees, not a forecast of what a store page earns."
+  },
+  {
+    "id": "store-page-after-gates",
+    "topic": "games",
+    "kind": "heuristic",
+    "rule": "Open a store page only after its readiness gates pass: the name is settled, the page copy matches the pinned build, the store assets meet the store's current rules and the measurement works. Check recorded gates with marketing plan.",
+    "referenceIds": ["steam-coming-soon", "steam-review-process", "steam-assets-standard", "steam-assets-rules"],
+    "reason": "Valve advises waiting to show a game until its art direction and core features are settled, reviews the page and the build against each other, and requires gameplay-only screenshots and only launch features; a new product's page must also be public for at least two weeks. Ordering the page behind its gates is a house planning rule, not a Valve requirement."
   }
 ]

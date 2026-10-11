@@ -1,6 +1,6 @@
 # Channels and approaches
 
-[Channel cards](../library/channels.json) include audience cues, category, effort, cost, risk, complexity and maintenance. `marketing channels <project-id>` orders these with a transparent house heuristic: +3 category match, +2 audience cue, +1 within weekly time or −2 over it. This is a starting hypothesis, not a forecast. Audience membership, format quality and current local norms matter more than the score.
+[Channel cards](../library/channels.json) include audience cues, category, effort, cost, risk, complexity and maintenance. `marketing channels <project-id>` orders these with a transparent house heuristic: +3 category match, +2 audience cue, +1 within weekly time or −2 over it, +1 when the card suits the project's stage or −2 when it does not, and, for a game that has not launched, −1 on a store that charges before release. A project with no usable stage is scored on the first three terms alone. This is a starting hypothesis, not a forecast. Audience membership, format quality and current local norms matter more than the score.
 
 | Project and situation | First hypothesis to test | Evidence that changes the choice |
 |---|---|---|
@@ -14,6 +14,19 @@
 These recommendations are original planning inferences. No bundled source proves a universal best channel. SEO introduces a longer feedback lag; a launch community can respond quickly but needs active support. A new Discord server adds ongoing moderation before demand is established. Paid promotion adds spending risk and requires a useful outcome measure before scaling.
 
 Check [Show HN eligibility](https://news.ycombinator.com/showhn.html): substantive maker work people can try, rather than a signup-only landing page or a quickly generated one-off. Inspect each community's own rules as well as [Reddit's spam policy](https://support.reddithelp.com/hc/en-us/articles/360043504051-Spam). Do not turn the CLI into a promotion bot. [Product Hunt](https://www.producthunt.com/launch) permits maker launches but prohibits upvote solicitation. Platform rules and access can change; check them on the actual planning date.
+
+## By stage
+
+A project's `stage` changes what a first test can be. Each card lists the stages where its own approach can be carried out (`stages` in the library), and `marketing advise` names the work that fits the stage. The order is a house planning inference, not a published sequence; the rules behind it are `marketing rules stage` and, for games, `marketing rules games`.
+
+| Stage | What a test can be | Cards that fit | `advise` leads with |
+|---|---|---|---|
+| idea | Nothing can be tried, so only desire can be observed: conversations about the problem and what people use now | Reddit and Discord, where a question is welcome | Check the promise matters before building more; listen where the audience already talks |
+| prototype | Intended strangers reaching and finishing a first session | Adds itch.io, Newgrounds, Game Jolt, video and social channels, GitHub, Show HN, search, LinkedIn | Get intended strangers to a first session, until starts are recorded |
+| beta | Widening on the channel with the best first-session ratio, while the first session is fixed | Adds the stores, Poki, CrazyGames, press, email and Product Hunt | Widen through the best-evidenced channel |
+| launched | Who returns, what players say, and an update cadence the maker can keep | Every card | Read who returns and what players say |
+
+For a game, a venue that is free to enter comes before a paid store page: Steam charges $100 per product that is recouped only after $1,000 adjusted gross revenue, Apple $99 a year and Google Play $25 once, while an itch.io page and the portals' own tests cost nothing to enter. The three cards that charge before release carry `paidEntry` and are scored −1 until the game has launched. A store page then opens only after its readiness gates pass; `marketing plan` reads the gates and `advise` names the ones that are open or failed.
 
 ## TikTok
 

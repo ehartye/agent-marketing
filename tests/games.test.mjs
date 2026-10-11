@@ -13,6 +13,7 @@ const gameReferences = {
   "steam-assets-library": /3840x1240/,
   "steam-assets-rules": /game artwork, the game name/,
   "steam-trailer": /5,000/,
+  "steam-coming-soon": /unless the game changes a lot/,
   "steam-review-process": /Steam Wallet/,
   "steam-onboarding": /21-day/,
   "steam-gs-faq": /2-7 business days/,

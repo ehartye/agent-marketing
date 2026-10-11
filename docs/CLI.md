@@ -135,6 +135,19 @@ marketing put gates playtest-gate.json --workspace <ledger>
 marketing plan <project-id> --workspace <ledger>
 ```
 
+## Stage-aware advice and channels
+
+A project's `stage` (`idea`, `prototype`, `beta`, `launched`) is read by `advise` and `channels`, so a live game is no longer told to collect the viability evidence an idea needs. The stage playbook is a house planning inference built on the discovery rubric. Every piece of advice cites the rules it rests on, and `marketing rules stage` and `marketing rules games` print them with their kind (`external`, `heuristic` or `derived`), the working in `reason` and their references; `marketing rules` without a topic still prints every rule.
+
+- **`advise` reads the project's `stage`.** The viability action still lists the missing primary-support dimensions in the fixed order (`problem, activation, retention, payment`) and adds a sentence saying which of them the stage can act on. An `idea` has nothing to try, so it leads with a viability action ("Check the promise matters before building more", priority 1) and a channel action that listens before it posts. A `prototype` with no recorded starts gets a `stage` action to get intended strangers to a first session (priority 1); it steps aside once starts exist, and a weak funnel then leads as the `activation` action. A `beta` gets a `stage` action to widen through the channel with the highest observed visitors-and-starts ratio, or to run a first tagged test when no channel has a comparable pair (priority 2). A `launched` project gets a `stage` action to read the cohort return rate (`returnRates` in `report`) and the reviewed reactions (priority 1). For a game, the beta action also reads the project's gates: a free web release (an itch.io page, a web portal's own test) comes before a paid store page, and the store page waits for its readiness gates. Actions keep the fields they had and add a new action kind `stage` and `ruleIds`, the IDs of the rules the action rests on (empty for actions from the plan check). A project with no usable stage, such as a hand-made record without one, gets the advice it got before stages were read.
+- **`channels` scores the stage.** Each card in the library has `stages` and, for the three stores that charge before release, `paidEntry`. `stages` lists the stages where the card's own approach can be carried out, in order. The planning score adds +1 when the card suits the project's stage and −2 when it does not, and takes 1 off a `paidEntry` card for a game that has not launched; the rationale says why. The three original terms and the output fields are unchanged, and a project with no usable stage is scored on the original terms alone.
+
+```powershell
+marketing rules stage
+marketing rules games
+marketing advise <project-id> --workspace <ledger>
+```
+
 ## Unknown fields
 
 `validate`, `put` and `import` warn about a field that no record type defines; `put` and `import` still save the record. A warning names the record and the field and, for a near-miss by edit distance (about one typo per four letters, ignoring case, and never a field the record already has), suggests the field you probably meant: `evidence.e1: unknown field "credibilty"; did you mean "credibility"?`. A field with no close match, such as `targets` or `platforms` on an initiative, reads `unknown field "targets"; nothing reads it`: it is stored, but no command or desk view uses it. The same field on many records is one warning that names the first three, so a CSV with a stray vendor column prints one line.

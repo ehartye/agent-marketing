@@ -1,3 +1,4 @@
+import { stageAction, viabilityGuide, channelGuide } from "./stages.mjs";
 export function wilson(successes, trials) {
   if (
     !Number.isSafeInteger(trials) ||
@@ -480,6 +481,7 @@ export function advise(w, projectId, filter = {}) {
   const project = w.projects.find((p) => p.id === projectId);
   if (!project) throw new Error("Project does not exist");
   const r = report(w, { ...filter, projectId }),
+    p = plan(w, projectId),
     actions = [];
   for (const f of r.funnels)
     if (f.rate !== null && f.rate < 0.2)
@@ -492,8 +494,14 @@ export function advise(w, projectId, filter = {}) {
         stop: "Stop after three sessions or two hours; record whether the same obstacle repeats.",
         evidence: f.evidence,
         referenceIds: ["experimentation", "measurement"],
+        ruleIds: ["activation-investigation"],
       });
-  actions.push(...planActions(project, plan(w, projectId)));
+  actions.push(...planActions(project, p));
+  // What the project's stage is for: a first session for a prototype, the best channel for a beta,
+  // who returns for a launched project. An idea has nothing to try, so its viability and channel
+  // actions carry the stage instead. A project with no usable stage gets none of this.
+  const staged = stageAction(project, r, p);
+  if (staged) actions.push(staged);
   const gaps = ["problem", "activation", "retention", "payment"].filter(
     (d) =>
       !w.evidence.some(
@@ -506,24 +514,31 @@ export function advise(w, projectId, filter = {}) {
           e.status !== "product-fact",
       ),
   );
+  const guide = viabilityGuide(project, gaps);
   actions.push({
     kind: "viability",
-    priority: 2,
-    title: gaps.length
-      ? "Collect missing viability evidence"
-      : "Review viability evidence",
-    reason: gaps.length
-      ? `Missing primary support: ${gaps.join(", ")}. Views and favorable reactions do not fill these gaps.`
-      : "All four dimensions have supporting records; inspect samples, contradictions and dates before committing money.",
+    priority: guide?.priority ?? 2,
+    title:
+      guide?.title ??
+      (gaps.length
+        ? "Collect missing viability evidence"
+        : "Review viability evidence"),
+    reason:
+      (gaps.length
+        ? `Missing primary support: ${gaps.join(", ")}. Views and favorable reactions do not fill these gaps.`
+        : "All four dimensions have supporting records; inspect samples, contradictions and dates before committing money.") +
+      (guide ? ` ${guide.reason}` : ""),
     next:
-      project.category === "game"
+      guide?.next ??
+      (project.category === "game"
         ? "Measure second-session return in a defined player cohort and ask intended players what would make them come back."
-        : "Interview intended users about a recent instance of the problem; test activation, repeat use and an honest price offer.",
+        : "Interview intended users about a recent instance of the problem; test activation, repeat use and an honest price offer."),
     stop: `Keep the next test within ${project.weeklyHours} hours and ${project.budget} ${project.currency}; decide the success criterion before running.`,
     evidence: w.evidence
       .filter((e) => e.projectId === projectId)
       .map((e) => e.id),
     referenceIds: ["discovery", "experimentation", "measurement"],
+    ruleIds: ["viability-dimensions", ...(guide?.ruleIds ?? [])],
   });
   const negatives = r.reactions.filter(
     (x) => x.reviewed && ["negative", "mixed"].includes(x.sentiment),
@@ -538,23 +553,36 @@ export function advise(w, projectId, filter = {}) {
       stop: "Review up to five source threads; choose one objection to test.",
       evidence: negatives.map((x) => x.id),
       referenceIds: ["sentiment"],
+      ruleIds: ["comments-are-a-sample", "sentiment-needs-review"],
     });
   if (
     !w.initiatives.some(
       (x) => x.projectId === projectId && x.status === "running",
     )
-  )
+  ) {
+    const channel = channelGuide(project);
     actions.push({
       kind: "channel",
       priority: 3,
-      title: "Run one focused channel test",
-      reason: "No running initiative is recorded.",
-      next: "Choose the channel where the intended audience already discusses this problem. Write a native contribution with a single measurable CTA.",
-      stop: "Prespecify a seven-day window and an effort cap; record visits, activation and reaction context.",
+      title: channel?.title ?? "Run one focused channel test",
+      reason: channel?.reason ?? "No running initiative is recorded.",
+      next:
+        (channel?.next ??
+          "Choose the channel where the intended audience already discusses this problem. Write a native contribution with a single measurable CTA.") +
+        (channel?.nextSuffix ?? ""),
+      stop:
+        channel?.stop ??
+        "Prespecify a seven-day window and an effort cap; record visits, activation and reaction context.",
       evidence: [],
-      referenceIds: ["channels"],
+      referenceIds: channel?.referenceIds ?? ["channels"],
+      ruleIds: channel?.ruleIds ?? ["audience-before-channel"],
     });
-  return actions.toSorted((a, b) => a.priority - b.priority);
+  }
+  // Actions from the plan check cite no rule; they read the gates, dependencies and hours the
+  // ledger records (docs/CLI.md).
+  return actions
+    .map((a) => ({ ...a, ruleIds: a.ruleIds ?? [] }))
+    .toSorted((a, b) => a.priority - b.priority);
 }
 export function sentimentSuggestion(text) {
   const words = text.toLowerCase(),

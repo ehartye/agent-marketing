@@ -1188,6 +1188,15 @@
     "limit": "The gameplay-first and HUD-visible lines are recommendations, not requirements, and the page gives no length guidance"
   },
   {
+    "id": "steam-coming-soon",
+    "title": "Steamworks Documentation: Coming Soon",
+    "url": "https://partner.steamgames.com/doc/store/coming_soon",
+    "quality": "high",
+    "checkedAt": "2026-10-10",
+    "supports": "A new product must have a public Coming Soon page for at least two weeks before release; the page needs branding images, a description and ideally a gameplay trailer, and must be reviewed and approved first (request review at least 7 business days before the page should go live). Valve suggests waiting to show a game until the art direction and core features are settled, because wishlisters of a game that changes a lot may be confused, and sees no strong downside to an early page unless the game changes a lot",
+    "limit": "Guidance and a rule in one page: only the two-week minimum is a requirement. The page gives no wishlist-to-sales conversion figure, so a wishlist remains intent, not payment"
+  },
+  {
     "id": "steam-review-process",
     "title": "Steamworks Documentation: Review Process",
     "url": "https://partner.steamgames.com/doc/store/review_process",
