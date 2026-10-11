@@ -156,5 +156,81 @@
     "rule": "Open a store page only after its readiness gates pass: the name is settled, the page copy matches the pinned build, the store assets meet the store's current rules and the measurement works. Check recorded gates with marketing plan.",
     "referenceIds": ["steam-coming-soon", "steam-review-process", "steam-assets-standard", "steam-assets-rules"],
     "reason": "Valve advises waiting to show a game until its art direction and core features are settled, reviews the page and the build against each other, and requires gameplay-only screenshots and only launch features; a new product's page must also be public for at least two weeks. Ordering the page behind its gates is a house planning rule, not a Valve requirement."
+  },
+  {
+    "id": "store-assets-conform",
+    "topic": "games",
+    "kind": "external",
+    "rule": "Meet the store's written asset rules before review: on Steam, capsules at the exact pixel sizes carrying only game artwork, the game name and at most an official subtitle, and at least five gameplay-only screenshots of 1920x1080 or more at 16:9, on a page that lists only features available at launch.",
+    "referenceIds": ["steam-assets-standard", "steam-assets-rules", "steam-assets-library", "steam-review-process", "steam-trailer"]
+  },
+  {
+    "id": "calendar-from-the-longest-wait",
+    "topic": "games",
+    "kind": "derived",
+    "rule": "Plan a Steam release from the longest wait Valve's pages state: the fee date plus 30 days (one page says 21), a public coming-soon page for at least two weeks, and a request for page and build review at least 7 business days before each go-live.",
+    "referenceIds": ["steam-direct", "steam-onboarding", "steam-gs-faq", "steam-coming-soon", "steam-review-process"],
+    "reason": "The Steam Direct page states a 30-day wait before a first release and the Onboarding page 21. Tax verification is 2-7 business days in the Getting Started FAQ and 10 to 15 on Onboarding. Reviews are 1-5 days on two pages, and typically 3-5 business days with 7 business days of lead time on the Review Process page. Taking the longer figure of each pair cannot make a plan late by either page. The earliest release date is the latest of: fee date + 30 days, public coming-soon date + 14 days, and review request + 7 business days."
+  },
+  {
+    "id": "trailer-benchmarks-are-descriptive",
+    "topic": "games",
+    "kind": "derived",
+    "rule": "Quote a trailer benchmark with its sample, median and n, and treat it as a description of trailers that exist, not of trailers that worked; Valve's own advice is that the first trailer be primarily gameplay.",
+    "referenceIds": ["steam-trailer"],
+    "reason": "The first (page-lead) trailers of 27 comparable Steam pages have a median length of 67.8 s (quartiles 55.75 and 82.65 s, range 17.8 to 182.0 s, 18 of 27 over 60 s). The sample mixes launch, teaser, update and sales trailers, so it is not a launch-trailer benchmark, and nothing in it measures what a trailer did for wishlists."
+  },
+  {
+    "id": "base-rates-need-a-fixed-denominator",
+    "topic": "games",
+    "kind": "derived",
+    "rule": "Record the query, the sort order and the date with any tag-based supply count, and re-run it under a second sort before quoting a denominator or a median.",
+    "referenceIds": ["steam-tag-search"],
+    "reason": "The same Farming Sim plus Space search returned 18 games sorted by Reviews_DESC (which drops games under 10 reviews), 30 sorted by Released_DESC and 60 by relevance (which includes unreleased pages). A first count of 33 Farming Sim plus Space-or-Sci-fi games with a median of 48 reviews became 53 released games with a median of 21 under a second sort."
+  },
+  {
+    "id": "ai-disclosure-follows-shipped-content",
+    "topic": "games",
+    "kind": "external",
+    "rule": "Answer each venue's AI disclosure from an inventory of what ships and how it was made: Steam asks about content that ships and is consumed by players (artwork, sound, narrative, localization) and holds the game to its marketing; itch.io asks for a tag per kind of content (graphics, sound, text and dialog, code); Newgrounds disallows games generated via an AI prompt and asks for disclosure in the author commentary.",
+    "referenceIds": ["steam-content-survey", "itch-quality-guidelines", "itch-ai-disclosure-post", "ng-game-guidelines"]
+  },
+  {
+    "id": "ai-sentiment-has-a-population",
+    "topic": "games",
+    "kind": "external",
+    "rule": "Quote an AI-sentiment figure with the population that gave it: surveyed Steam players, surveyed core gamers and the reviews of games that disclosed measure different groups, and no source read measures cozy or casual players.",
+    "referenceIds": ["gamediscoverco-ai-poll", "quantic-gen-ai-survey", "arxiv-genai-steam-reviews", "game-oracle-ai-disclosure"]
+  },
+  {
+    "id": "no-identifiers-where-children-may-play",
+    "topic": "games",
+    "kind": "external",
+    "rule": "Decide the audience before choosing measurement: where children under 13 may play, a persistent identifier such as a cookie value, an IP address or a device ID is personal information under COPPA and marketing materials weigh in whether a service is child-directed, so add no identifier without asking counsel.",
+    "referenceIds": ["coppa-312-2", "coppa-rule-2025", "steam-subscriber-agreement", "youtube-made-for-kids", "google-play-families"]
+  },
+  {
+    "id": "venue-dashboards-first",
+    "topic": "games",
+    "kind": "heuristic",
+    "rule": "For a game with no analytics, read what each venue's own dashboard measures, record it under that venue's definition, tag the link where a venue reads tags, and never add one venue's counts to another's.",
+    "referenceIds": ["itch-getting-started", "steam-wishlist-reporting", "steam-utm-analytics", "cg-basic-launch-metrics", "poki-how-testing", "github-traffic-guide"],
+    "reason": "A static host gives no visit counts (GitHub's documentation describes repository traffic, not visits to a Pages site), and a tagged query string survives in the address bar of a static game but nothing counts it unless the page or an analytics tool reads it (observed on one game, online and offline). The dashboards define views, plays and sessions differently (craft/measurement.md), so a sum would mix definitions."
+  },
+  {
+    "id": "check-the-name-before-registering",
+    "topic": "games",
+    "kind": "heuristic",
+    "rule": "Search the name on the stores you plan to use, in the trademark register, and for domains and handles before paying a store fee or producing assets, and treat a same-name listing or a live registration as a decision for the owner and counsel. Marketing prior art is not legal clearance.",
+    "referenceIds": ["uspto-trademark-search", "steam-direct"],
+    "reason": "The $100 Steam fee, the capsule art and the trailer are all spent against a name nobody has tested; a collision found afterwards means renaming the page, the assets and the trailer."
+  },
+  {
+    "id": "readiness-gates-carry-a-number",
+    "topic": "games",
+    "kind": "heuristic",
+    "rule": "Write each readiness gate as a check with a number taken from a documented limit or the project's own measurement; where no figure is known, record that it is an owner decision instead of inventing a threshold.",
+    "referenceIds": ["cg-technical", "steam-assets-standard", "poki-how-testing", "steam-review-process"],
+    "reason": "A pair of wishlist bands in one dry-run plan (270 to continue, under 150 to stop within 14 days) had no source and borrowed a festival yield; an unsourced number reads like a benchmark and misleads more than an open owner decision."
   }
 ]

@@ -1071,6 +1071,24 @@
     "limit": "Each edition has its own page (October 2026 closed to registration on August 31; June 2027 registration closes April 25); dates were read on 2026-10-11 and Valve can change them; a public store page needs the paid Steam Direct fee first"
   },
   {
+    "id": "steam-next-fest-oct-2026",
+    "title": "Steamworks Documentation: Steam Next Fest, October 2026",
+    "url": "https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest/2026october",
+    "quality": "high",
+    "checkedAt": "2026-10-11",
+    "supports": "The October 2026 edition runs October 19 to October 26 (10:00 AM PDT); registration closed August 31 (11:59pm PDT) and required items were due September 28",
+    "limit": "Registration is closed, so this is a calendar anchor and not an option; the festival had not yet run on the date checked, and Valve can change dates"
+  },
+  {
+    "id": "steam-next-fest-jun-2027",
+    "title": "Steamworks Documentation: Steam Next Fest, June 2027",
+    "url": "https://partner.steamgames.com/doc/marketing/upcoming_events/nextfest/june_2027",
+    "quality": "high",
+    "checkedAt": "2026-10-11",
+    "supports": "The June 2027 edition runs June 14 to June 21 (10:00 AM PDT); registration closes April 25 (11:59pm PDT)",
+    "limit": "Only the dates and the registration deadline were recorded, so read the page for the other deadlines and the eligibility rules of that edition; Valve can change them"
+  },
+  {
     "id": "wholesome-games",
     "title": "Wholesome Games",
     "url": "https://wholesomegames.com/",
@@ -1267,6 +1285,15 @@
     "checkedAt": "2026-10-11",
     "supports": "The project edit page asks whether a project contains generative AI and, if so, which kinds: Graphics, Sound, Text & Dialog and Code. A yes adds the AI Generated tag and sub-tags and a no adds No AI. The field is required for asset creators, whose untagged generative AI assets are no longer indexed on browse pages; staff replies encourage everyone else to fill it in and say code synthesized by a large language model counts",
     "limit": "A staff post and replies in a community forum, not a policy page, so the rule can change without notice. It makes disclosure mandatory only for asset pages. It reads LLM-written code as generative AI content, which is stricter than Steam's survey (steam-content-survey)"
+  },
+  {
+    "id": "itch-terms",
+    "title": "itch.io Terms of Service",
+    "url": "https://itch.io/docs/legal/terms",
+    "quality": "high",
+    "checkedAt": "2026-10-11",
+    "supports": "Users must be 13 or older and itch.io is not intended for children under 13; publishers must be at least 18 or have the legal right to enter into the agreement, which the terms phrase as legal parental or guardian consent",
+    "limit": "The 13-or-older clause attaches to registering an account, and an HTML5 game plays in a browser with no account, so it does not stop a child from playing logged out; the terms say nothing about analytics"
   },
   {
     "id": "github-pages-limits",

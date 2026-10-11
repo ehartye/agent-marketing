@@ -7,6 +7,7 @@ The guides distinguish published findings, practitioner methods, derived arithme
 - [Discovery and viability](discovery.md): distinguish encouragement, use, retention and paid demand.
 - [Demand research](demand.md): find underserved paying cohorts, assess sources and compare language markets with a falsifiable test and a readable [report](../library/demand-report.md).
 - [Channels](channels.md): choose an audience and a sustainable distribution test.
+- [Games](games.md): free web release before a store page, what Steam requires and charges, store assets and trailers, measuring a game with no analytics, AI-assistance disclosure, the name check and numeric readiness gates.
 - [Competition and positioning](competition.md): research alternatives and explain distinctive value.
 - [Campaigns](campaigns.md): connect hypothesis, asset, CTA, measurement and review.
 - [Collateral](collateral.md): help people understand, try and explain the project.
