@@ -201,6 +201,9 @@ export function addSlot(file, { id, projectId, initiativeId, name, kind, spec, n
   if (problem) throw new Error(`Slot ID "${id}" becomes a folder name and ${problem}`);
   return write(file, revision, (w) => {
     if (w.assetSlots.some((s) => s.id === id)) throw new Error(`Asset slot "${id}" already exists`);
+    // Slots and assets are looked up by the same ID (asset pick takes either), and an ID is a file name.
+    if (w.assets.some((a) => sameId(a.id, id))) throw new Error(`Slot ID "${id}" is already the ID of an asset (${w.assets.find((a) => sameId(a.id, id)).id}); choose another`);
+    if (w.assetSlots.some((s) => sameId(s.id, id))) throw new Error(`Asset slot "${id}" differs from an existing slot only by letter case, which is the same folder on Windows; choose another`);
     const named = initiativeId && find(w, "initiatives", "Initiative", initiativeId);
     const record = { id, projectId: onlyProject(w, projectId, named), ...(initiativeId ? { initiativeId } : {}), name, kind };
     if (spec !== undefined) record.spec = spec;
@@ -219,11 +222,16 @@ export function addSlot(file, { id, projectId, initiativeId, name, kind, spec, n
   });
 }
 
-// The first free ID for a new asset of a slot: <slot>-1, <slot>-2 ...
-function nextAssetId(w, slotId) {
-  const taken = new Set(w.assets.map((a) => a.id));
+// IDs are file names, and on Windows a file name ignores case, so two IDs are the same when they
+// differ only by case.
+const sameId = (a, b) => a.toLowerCase() === b.toLowerCase();
+
+// The first free ID for a new asset of a slot: <slot>-1, <slot>-2 ... It skips the ID of any asset or
+// slot (they share one lookup), in any case, and any in `skip`, the IDs whose file turned out to exist.
+function nextAssetId(w, slotId, skip = new Set()) {
+  const taken = new Set([...w.assets.map((a) => a.id), ...w.assetSlots.map((s) => s.id), ...skip].map((id) => id.toLowerCase()));
   let n = w.assets.filter((a) => a.slotId === slotId).length + 1;
-  while (taken.has(`${slotId}-${n}`)) n++;
+  while (taken.has(`${slotId}-${n}`.toLowerCase())) n++;
   return `${slotId}-${n}`;
 }
 
@@ -254,21 +262,41 @@ export function addAsset(file, { slotId, label, from, url, text, source, superse
     return write(file, revision, (w) => {
       const slot = find(w, "assetSlots", "Asset slot", slotId);
       if (id !== undefined && w.assets.some((a) => a.id === id)) throw new Error(`Asset "${id}" already exists`);
+      if (id !== undefined && w.assets.some((a) => sameId(a.id, id)))
+        throw new Error(`Asset "${id}" differs from the existing asset "${w.assets.find((a) => sameId(a.id, id)).id}" only by letter case, which is the same file name on Windows; choose another`);
+      if (id !== undefined && w.assetSlots.some((s) => sameId(s.id, id)))
+        throw new Error(`"${id}" is the ID of an asset slot; slots and assets share their IDs, so choose another`);
       if (supersedes !== undefined && w.assets.find((a) => a.id === supersedes)?.slotId !== slotId)
         throw new Error(`"${supersedes}" is not an asset in slot "${slotId}"`);
       if (media) {
         const twin = w.assets.find((a) => a.slotId === slotId && a.sha256 === media.sha256);
         if (twin) throw new Error(`Slot "${slotId}" already has this file as asset "${twin.id}" (${quote(twin.label)}, ${twin.status}); it was not added again`);
       }
-      const assetId = id ?? nextAssetId(w, slotId),
-        record = { id: assetId, projectId: slot.projectId, slotId, label, kind: media?.kind ?? (url !== undefined ? "link" : "text") };
+      let assetId = id ?? nextAssetId(w, slotId);
+      const record = { id: assetId, projectId: slot.projectId, slotId, label, kind: media?.kind ?? (url !== undefined ? "link" : "text") };
       if (media) {
-        record.file = `${slotId}/${assetId}${media.extension}`;
-        const problem = assetPathProblem(record.file);
-        if (problem) throw new Error(`Slot "${slotId}" and asset "${assetId}" cannot make a file path: ${problem}`);
+        // A file already at the place this one would go is not the ledger's (the ledger would have an
+        // asset there): a generated ID moves on to the next free one, a chosen ID is refused. Nothing is
+        // ever overwritten.
+        const tried = new Set();
+        for (;;) {
+          record.id = assetId;
+          record.file = `${slotId}/${assetId}${media.extension}`;
+          const problem = assetPathProblem(record.file);
+          if (problem) throw new Error(`Slot "${slotId}" and asset "${assetId}" cannot make a file path: ${problem}`);
+          try {
+            copy = copyIn(dir, record.file, media.buffer);
+            break;
+          } catch (e) {
+            if (e.code !== "EEXIST") throw e;
+            if (id !== undefined)
+              throw new Error(`A file named ${record.file} already exists in the assets folder although no asset uses it; move it away or choose another asset ID`);
+            tried.add(assetId);
+            assetId = nextAssetId(w, slotId, tried);
+          }
+        }
         Object.assign(record, { mediaType: media.mediaType, bytes: media.bytes, sha256: media.sha256 });
         if (media.width) Object.assign(record, { width: media.width, height: media.height });
-        copy = copyIn(dir, record.file, media.buffer);
       } else if (url !== undefined) record.url = url;
       else record.text = text;
       record.status = "candidate";
@@ -343,6 +371,10 @@ export function pickAsset(file, target, { rationale, revision, ...time } = {}) {
     if (!asset) {
       const named = w.assetSlots.find((s) => s.id === target);
       if (!named) throw Object.assign(new Error(`Asset "${target}" does not exist`), { status: 404 });
+      if (named.status !== "open") {
+        const held = w.assets.find((a) => a.id === named.selectedAssetId);
+        throw new Error(`Slot "${named.id}" already has a pick (${quote(held?.label ?? named.selectedAssetId)}); name the asset to change it`);
+      }
       const candidates = w.assets.filter((a) => a.slotId === named.id && a.status === "candidate");
       if (candidates.length !== 1)
         throw new Error(`Slot "${named.id}" has ${candidates.length} candidates${candidates.length ? ` (${words(candidates.map((a) => a.id))})` : ""}; name the asset to pick`);
@@ -375,6 +407,8 @@ export function pickAsset(file, target, { rationale, revision, ...time } = {}) {
       previous.rationale = `Replaced by ${quote(asset.label)}${previous.rationale ? ` (was picked: ${previous.rationale})` : ""}`;
       previous.decidedAt = at;
     }
+    // A rejected asset that is picked after all keeps the reason it was turned down in the update.
+    const wasRejected = asset.status === "rejected" && asset.rationale ? `; ${quote(asset.label)} was rejected: ${asset.rationale}` : "";
     asset.status = "selected";
     if (rationale) asset.rationale = rationale;
     else delete asset.rationale;
@@ -390,7 +424,7 @@ export function pickAsset(file, target, { rationale, revision, ...time } = {}) {
       initiativeId: slot.initiativeId,
       kind: "asset",
       refId: asset.id,
-      text: `${from ? `Changed the pick for ${quote(slot.name)} from ${quote(from)} to ${quote(asset.label)}` : `Picked ${quote(asset.label)} for ${quote(slot.name)}`}${reason(rationale)}`,
+      text: `${from ? `Changed the pick for ${quote(slot.name)} from ${quote(from)} to ${quote(asset.label)}` : `Picked ${quote(asset.label)} for ${quote(slot.name)}`}${reason(rationale)}${wasRejected}`,
       at,
     });
     return { record: structuredClone(asset), update, extra: { slot: structuredClone(slot), decision: structuredClone(d) } };
@@ -474,7 +508,8 @@ export function retireAsset(file, assetId, { rationale, revision, ...time } = {}
   return write(file, revision, (w) => {
     const a = find(w, "assets", "Asset", assetId),
       slot = find(w, "assetSlots", "Asset slot", a.slotId);
-    if (a.status === "retired") return same(a);
+    const again = a.status === "retired";
+    if (again && (!rationale || a.rationale === rationale)) return same(a);
     const reopened = reopen(slot, a);
     a.status = "retired";
     if (rationale) a.rationale = rationale;
@@ -484,7 +519,9 @@ export function retireAsset(file, assetId, { rationale, revision, ...time } = {}
       initiativeId: slot.initiativeId,
       kind: "asset",
       refId: a.id,
-      text: `Retired ${quote(a.label)} in ${quote(slot.name)}${reason(rationale)}${reopened ? `; ${quote(slot.name)} is open again` : ""}`,
+      text: again
+        ? `Updated why ${quote(a.label)} was retired in ${quote(slot.name)}: ${rationale}`
+        : `Retired ${quote(a.label)} in ${quote(slot.name)}${reason(rationale)}${reopened ? `; ${quote(slot.name)} is open again` : ""}`,
       at,
     });
     return { record: structuredClone(a), update, extra: { slot: structuredClone(slot) } };

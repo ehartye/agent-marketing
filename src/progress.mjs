@@ -83,10 +83,18 @@ export function settleDecision(d, { optionId, rationale, change = false, at }) {
   return rationale ? `${text} (${rationale})` : text;
 }
 
+// A decision that records the pick for an asset slot is changed by picking, which moves the slot and
+// the decision together; settling it here would leave the two disagreeing.
+function notAPick(w, d) {
+  const slot = w.assetSlots?.find((s) => s.decisionId === d.id);
+  if (slot) throw new Error(`Decision "${d.id}" records the pick for asset slot "${slot.id}"; change it with asset pick <asset-id>, not decide or defer`);
+}
+
 export function decide(file, decisionId, { optionId, rationale, change = false, revision, ...time } = {}) {
   const { at } = clock(time);
   return write(file, revision, (w) => {
     const d = find(w, "decisions", "Decision", decisionId);
+    notAPick(w, d);
     const text = settleDecision(d, { optionId, rationale, change, at });
     const update = log(w, {
       projectId: d.projectId,
@@ -104,6 +112,7 @@ export function defer(file, decisionId, { until, note, revision, ...time } = {})
   const { at } = clock(time);
   return write(file, revision, (w) => {
     const d = find(w, "decisions", "Decision", decisionId);
+    notAPick(w, d);
     if (d.status === "decided") throw new Error(`Decision "${d.id}" is already decided; change it with decide instead`);
     if (d.status === "superseded") throw new Error(`Decision "${d.id}" was superseded by ${d.supersededBy}`);
     if (d.status === "deferred" && (until === undefined || until === d.needBy) && note === undefined) return same(d);
